@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { ThemeProvider } from '@/components/theme-provider'
 import { WalletProvider, WalletModalProvider, MidenWalletAdapter, WalletAdapterNetwork, DecryptPermission } from '@demox-labs/miden-wallet-adapter'
 import '@demox-labs/miden-wallet-adapter-reactui/dist/styles.css'
 
@@ -16,7 +17,9 @@ createRoot(document.getElementById('root')!).render(
       //autoConnect={true}
     >
       <WalletModalProvider>
-        <App />
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </WalletModalProvider>
     </WalletProvider>
   </StrictMode>,
