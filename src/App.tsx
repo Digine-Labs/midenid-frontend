@@ -1,7 +1,6 @@
 
 import './App.css'
 import SiteHeader from './components/site-header'
-import { Coins } from 'lucide-react'
 
 function App() {
 

@@ -12,11 +12,6 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 const STORAGE_KEY = "vite-ui-theme"
 
-function getPreferredScheme(): "light" | "dark" {
-  if (typeof window === "undefined") return "light"
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-}
-
 function applyDocumentClass(mode: "light" | "dark") {
   if (typeof document === "undefined") return
   const root = document.documentElement
@@ -24,7 +19,7 @@ function applyDocumentClass(mode: "light" | "dark") {
   else root.classList.remove("dark")
 }
 
-export function ThemeProvider({ children, defaultTheme = "light" as Theme }: { children: React.ReactNode; defaultTheme?: Theme }) {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Force light mode regardless of stored or requested theme
   const [theme, setThemeState] = useState<Theme>(() => "light")
 

@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from '@/components/theme-provider'
-import { WalletProvider, WalletModalProvider, MidenWalletAdapter, WalletAdapterNetwork, DecryptPermission } from '@demox-labs/miden-wallet-adapter'
+import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter'
 import '@demox-labs/miden-wallet-adapter-reactui/dist/styles.css'
 
 const wallets = [new MidenWalletAdapter({ appName: 'Miden.ID' })]
