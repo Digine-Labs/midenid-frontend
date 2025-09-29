@@ -5,20 +5,51 @@ import App from './App.tsx'
 import { ThemeProvider } from '@/components/theme-provider'
 import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter'
 import '@demox-labs/miden-wallet-adapter-reactui/dist/styles.css'
+import { createBrowserRouter, RouterProvider } from 'react-router'
+
+import Home from '@/pages/home/page'
+import Profile from '@/pages/profile/page'
+import About from '@/pages/about/page'
+import Register from '@/pages/register/page'
 
 const wallets = [new MidenWalletAdapter({ appName: 'Miden.ID' })]
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      {
+        index: true,
+        element: <Home />
+      },
+      {
+        path: "profile",
+        element: <Profile />
+      },
+      {
+        path: "about",
+        element: <About />
+      },
+      {
+        path: "register",
+        element: <Register />
+      }
+    ]
+  }
+])
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <WalletProvider
       wallets={wallets}
-      //network={WalletAdapterNetwork.Testnet}
-      //decryptPermission={DecryptPermission.UponRequest}
-      //autoConnect={true}
+    //network={WalletAdapterNetwork.Testnet}
+    //decryptPermission={DecryptPermission.UponRequest}
+    //autoConnect={true}
     >
       <WalletModalProvider>
         <ThemeProvider>
-          <App />
+          <RouterProvider router={router} />
         </ThemeProvider>
       </WalletModalProvider>
     </WalletProvider>

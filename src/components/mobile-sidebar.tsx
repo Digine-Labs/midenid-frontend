@@ -1,0 +1,83 @@
+import { Link } from 'react-router'
+import { Menu } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
+import { ConnectWallet } from './connectWallet'
+
+export function MobileSidebar() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          aria-label="Toggle menu"
+        >
+          <Menu size={20} />
+        </Button>
+      </SheetTrigger>
+
+      <SheetContent side="right" className="w-80 md:hidden flex flex-col h-full p-0">
+        <div className="p-6 pb-0">
+          <SheetHeader className="text-left">
+            <SheetTitle asChild>
+              <SheetClose asChild>
+                <Link
+                  to="/"
+                  className="text-lg font-bold tracking-tight luckiest-guy-regular text-2xl hover:text-primary transition-colors"
+                >
+                  Miden.ID
+                </Link>
+              </SheetClose>
+            </SheetTitle>
+          </SheetHeader>
+
+          {/* Navigation */}
+          <nav className="flex flex-col mt-8 space-y-4">
+            <SheetClose asChild>
+              <Link
+                to="/"
+                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
+              >
+                Home
+              </Link>
+            </SheetClose>
+            <SheetClose asChild>
+              <Link
+                to="/profile"
+                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
+              >
+                Profile
+              </Link>
+            </SheetClose>
+            <SheetClose asChild>
+              <Link
+                to="/about"
+                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
+              >
+                About
+              </Link>
+            </SheetClose>
+          </nav>
+        </div>
+
+        {/* Wallet button */}
+        <div className="p-6 pt-0 relative">
+          <SheetClose asChild>
+            <div>
+              <ConnectWallet />
+            </div>
+          </SheetClose>
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}

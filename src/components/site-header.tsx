@@ -1,17 +1,40 @@
 import { Menubar } from '@/components/ui/menubar'
 //import { ThemeToggle } from '@/components/theme-toggle'
-import { WalletMultiButton  } from '@demox-labs/miden-wallet-adapter'
+import { Link } from 'react-router'
+import { MobileSidebar } from './mobile-sidebar'
+import { ConnectWallet } from './connectWallet'
 
 export function SiteHeader() {
   return (
-    <header className="w-full border-b">
-      <Menubar className="h-14 w-full border-0 px-4">
+    <header className="fixed top-0 left-0 w-full border-b bg-background/80 backdrop-blur-sm z-50">
+      <Menubar className="h-14 w-full border-0 px-4 md:px-6">
         <div className="flex w-full items-center justify-between">
-          <div className="text-lg font-bold tracking-tight luckiest-guy-regular text-2xl">Miden.ID</div>
-          <div className="flex items-center gap-2">
+          {/* Logo */}
+          <Link to="/" className="text-lg font-bold tracking-tight luckiest-guy-regular text-xl md:text-2xl hover:text-primary transition-colors">
+            Miden.ID
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link to="/profile" className="text-sm font-medium hover:text-primary transition-colors">
+              Profile
+            </Link>
+            <Link to="/about" className="text-sm font-medium hover:text-primary transition-colors">
+              About
+            </Link>
+          </nav>
+
+          {/* Desktop Wallet Button */}
+          <div className="hidden md:flex items-center gap-2">
             {/*<ThemeToggle />*/}
-            <WalletMultiButton />
+            <ConnectWallet />
           </div>
+
+          {/* Mobile Menu */}
+          <MobileSidebar />
         </div>
       </Menubar>
     </header>

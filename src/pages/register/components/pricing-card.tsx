@@ -1,0 +1,138 @@
+import { useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Info } from 'lucide-react'
+
+interface PricingCardProps {
+  domain: string
+  years: number | string
+  onSubscriptionChange: (checked: boolean) => void
+  onTermsChange: (checked: boolean) => void
+}
+
+// Calculate price per year based on domain length
+const getDomainLengthMultiplier = (length: number): number => {
+  switch (length) {
+    case 1: return 5
+    case 2: return 4
+    case 3: return 3
+    case 4: return 2
+    default: return 1 // 5 characters and more
+  }
+}
+
+export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange }: PricingCardProps) {
+  const [subscriptionEnabled, setSubscriptionEnabled] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
+
+  const basePricePerYear = 0.05 // 0.05 MIDEN base price
+  const lengthMultiplier = getDomainLengthMultiplier(domain.length)
+  const pricePerYear = basePricePerYear * lengthMultiplier
+  const numericYears = typeof years === 'string' ? parseInt(years) || 1 : years
+  const totalPrice = (pricePerYear * numericYears).toFixed(3)
+
+  const handleSubscriptionChange = (checked: boolean) => {
+    setSubscriptionEnabled(checked)
+    onSubscriptionChange(checked)
+  }
+
+  const handleTermsChange = (checked: boolean) => {
+    setTermsAccepted(checked)
+    onTermsChange(checked)
+  }
+
+  return (
+    <Card className="bg-gray-50">
+      <CardHeader>
+        <CardTitle className="text-xl font-semibold">Pricing Details</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Price per year:</span>
+          <span className="font-medium">{pricePerYear.toFixed(3)} MIDEN</span>
+        </div>
+        <div className="flex justify-between items-center text-lg font-semibold">
+          <span>Total Price:</span>
+          <span>{totalPrice} MIDEN</span>
+        </div>
+
+        <div className="border-t pt-4 space-y-4">
+          <div className="flex items-start space-x-3">
+            <Checkbox
+              id="subscription"
+              checked={subscriptionEnabled}
+              onCheckedChange={handleSubscriptionChange}
+            />
+            <div className="flex-1 flex items-start justify-between">
+              <label
+                htmlFor="subscription"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                Enable subscription and don't pay gas for your renewal
+              </label>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0 ml-2"
+                      type="button"
+                    >
+                      <Info className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p>
+                      Enabling a subscription permits Miden ID to renew your domain automatically every year for you!
+                      This approval gives us only the possibility to renew your domain once per year (maximum 0.009 MIDEN/year)
+                      and we'll cover the transaction fee for you!
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3">
+            <Checkbox
+              id="terms"
+              checked={termsAccepted}
+              onCheckedChange={handleTermsChange}
+            />
+            <div className="flex-1 flex items-start justify-between">
+              <label
+                htmlFor="terms"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                I have read and accept the Terms and Conditions
+              </label>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0 ml-2"
+                      type="button"
+                    >
+                      <Info className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p>
+                      By checking this box, you agree to our terms of service and privacy policy.
+                      You acknowledge that you understand the domain registration process and associated costs.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
