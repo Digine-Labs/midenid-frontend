@@ -1,4 +1,4 @@
-import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
+import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-reactui";
 import type { CSSProperties } from "react";
 
 interface ConnectWalletProps {

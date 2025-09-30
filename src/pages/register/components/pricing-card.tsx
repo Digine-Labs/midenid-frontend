@@ -3,7 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
+import { Info, RefreshCw } from 'lucide-react'
+import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
+
+interface Asset {
+  faucetId: string
+  amount: string
+}
 
 interface PricingCardProps {
   domain: string
@@ -24,8 +30,13 @@ const getDomainLengthMultiplier = (length: number): number => {
 }
 
 export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange }: PricingCardProps) {
+  const { requestAssets, accountId } = useWallet()
   const [subscriptionEnabled, setSubscriptionEnabled] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [assets, setAssets] = useState<Asset[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [hasRequested, setHasRequested] = useState(false)
 
   const basePricePerYear = 0.05 // 0.05 MIDEN base price
   const lengthMultiplier = getDomainLengthMultiplier(domain.length)
@@ -43,12 +54,75 @@ export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange
     onTermsChange(checked)
   }
 
+  const handleRequestAssets = async () => {
+    if (!accountId || !requestAssets) return
+
+    try {
+      setError(null)
+      setLoading(true)
+      const fetchedAssets = await requestAssets() || []
+      setAssets(fetchedAssets)
+      setHasRequested(true)
+    } catch (err: any) {
+      console.error('Error requesting assets:', err)
+      setError(err?.message ?? 'Failed to fetch assets')
+      setHasRequested(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Card className="bg-gray-50">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">Pricing Details</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl font-semibold">Pricing Details</CardTitle>
+          <Button
+            onClick={handleRequestAssets}
+            disabled={!accountId || loading}
+            size="sm"
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Loading...' : 'Get Assets'}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Assets Display */}
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        {hasRequested && assets.length > 0 && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md space-y-2">
+            <h3 className="text-sm font-semibold text-blue-900">Your Assets</h3>
+            <div className="space-y-1">
+              {assets.map((asset, i) => (
+                <div key={i} className="text-xs text-blue-800 flex justify-between">
+                  <span className="font-mono truncate">{asset.faucetId}</span>
+                  <span className="font-semibold ml-2">{asset.amount}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hasRequested && assets.length === 0 && !loading && !error && (
+          <div className="p-3 bg-gray-100 border border-gray-300 rounded-md">
+            <p className="text-sm text-gray-700">No assets found on this account</p>
+          </div>
+        )}
+
+        {!hasRequested && !loading && !error && accountId && (
+          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p className="text-sm text-yellow-700">Click "Get Assets" to view your balance</p>
+          </div>
+        )}
+
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground">Price per year:</span>
           <span className="font-medium">{pricePerYear.toFixed(3)} MIDEN</span>

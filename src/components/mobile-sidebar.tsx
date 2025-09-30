@@ -50,7 +50,8 @@ export function MobileSidebar() {
                 Home
               </Link>
             </SheetClose>
-            <SheetClose asChild>
+            <p className="cursor-pointer text-base font-medium py-2 px-3 rounded-md text-gray-400">Profile - Coming Soon</p>
+            {/* <SheetClose asChild>
               <Link
                 to="/profile"
                 className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
@@ -65,7 +66,7 @@ export function MobileSidebar() {
               >
                 About
               </Link>
-            </SheetClose>
+            </SheetClose> */}
           </nav>
         </div>
 

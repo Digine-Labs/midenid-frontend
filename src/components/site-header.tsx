@@ -19,12 +19,13 @@ export function SiteHeader() {
             <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
               Home
             </Link>
-            <Link to="/profile" className="text-sm font-medium hover:text-primary transition-colors">
+            {/* <Link to="/profile" className="text-sm font-medium hover:text-primary transition-colors">
               Profile
-            </Link>
-            <Link to="/about" className="text-sm font-medium hover:text-primary transition-colors">
+            </Link> */}
+            <p className="cursor-pointer text-sm font-medium text-gray-400">Profile - Coming Soon</p>
+            {/* <Link to="/about" className="text-sm font-medium hover:text-primary transition-colors">
               About
-            </Link>
+            </Link> */}
           </nav>
 
           {/* Desktop Wallet Button */}

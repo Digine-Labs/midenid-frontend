@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Loader2 } from 'lucide-react'
 import { DomainCard } from './components/domain-card'
+import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
   const [showTooltip, setShowTooltip] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -39,22 +38,6 @@ export default function Home() {
     return () => clearTimeout(timer)
   }, [inputValue])
 
-  // Handle loading state based on inputValue
-  useEffect(() => {
-    if (inputValue.trim()) {
-      setIsLoading(true)
-
-      // Show loading for 1 second, then hide loading
-      const loadingTimer = setTimeout(() => {
-        setIsLoading(false)
-      }, 1000)
-
-      return () => clearTimeout(loadingTimer)
-    } else {
-      setIsLoading(false)
-    }
-  }, [inputValue])
-
   // Hide tooltip after 3 seconds
   useEffect(() => {
     if (showTooltip) {
@@ -66,8 +49,10 @@ export default function Home() {
   }, [showTooltip])
 
   return (
-    <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
-      <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
+    <>
+      <TestnetWarningModal />
+      <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
+        <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
         <div className="space-y-2 mb-6">
           <h1 className="luckiest-guy-regular text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
             Choose your Miden name
@@ -101,20 +86,15 @@ export default function Home() {
             </Tooltip>
           </TooltipProvider>
 
-          {/* Dynamic Card - Fixed height container to prevent layout shift */}
+          {/* Dynamic Card */}
           <div className="min-h-[120px]">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-[120px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              debouncedValue.trim() && (
-                <DomainCard domain={debouncedValue.trim().toLowerCase()} />
-              )
+            {debouncedValue.trim() && (
+              <DomainCard domain={debouncedValue.trim().toLowerCase()} />
             )}
           </div>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   )
 }
