@@ -9,9 +9,12 @@ export default defineConfig({
       '@': '/src'
     }
   },
-    optimizeDeps: {
+  optimizeDeps: {
     exclude: ['@demox-labs/miden-sdk'],
     include: ['buffer'],
   },
   assetsInclude: ['**/*.masm'],
+  worker: {
+    format: 'es'
+  }
 })

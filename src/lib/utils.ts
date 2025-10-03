@@ -20,7 +20,7 @@ export const instantiateClient = async (
   for (const acc of accountsToImport) {
     try {
       await safeAccountImport(client, acc);
-    } catch {}
+    } catch(e) {console.error(e)}
   }
   await client.syncState();
   return client;

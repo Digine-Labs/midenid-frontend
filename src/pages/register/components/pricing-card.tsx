@@ -54,15 +54,15 @@ export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange
       client == null && accountId != null
     ) {
       (async () => {
-        const client = await instantiateClient({
+        const newClient = await instantiateClient({
           accountsToImport: [
             accountId,
           ],
         });
-        setClient(client);
+        setClient(newClient);
       })();
     }
-  }, [accountId]);
+  }, [accountId, client]);
 
 
   const handleSubscriptionChange = (checked: boolean) => {

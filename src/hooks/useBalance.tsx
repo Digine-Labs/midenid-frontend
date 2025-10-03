@@ -12,8 +12,8 @@ const getBalanceFromClient = async (
     accountId: AccountId,
     faucetId: AccountId,
 ) => {
-    let acc = await client.getAccount(accountId);
-    let balance = acc?.vault().getBalance(faucetId);
+    const acc = await client.getAccount(accountId);
+    const balance = acc?.vault().getBalance(faucetId);
     return balance;
 };
 
@@ -25,7 +25,7 @@ export const useBalance = (
         const refreshBalance = async () => {
             if (!accountId || !faucetId || !client) return;
             await client.syncState();
-            let newBalance = await getBalanceFromClient(client, accountId, faucetId);
+            const newBalance = await getBalanceFromClient(client, accountId, faucetId);
             setBalance(BigInt(newBalance ?? 0));
         };
         refreshBalance();
