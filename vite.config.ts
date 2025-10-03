@@ -8,5 +8,10 @@ export default defineConfig({
     alias: {
       '@': '/src'
     }
-  }
+  },
+    optimizeDeps: {
+    exclude: ['@demox-labs/miden-sdk'],
+    include: ['buffer'],
+  },
+  assetsInclude: ['**/*.masm'],
 })
