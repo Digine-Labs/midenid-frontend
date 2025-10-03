@@ -33,15 +33,17 @@ export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [client, setClient] = useState<WebClient | undefined>(undefined);
 
-  const basePricePerYear = 0.05 // 0.05 MIDEN base price
+  const basePricePerYear = 5 // 5 MIDEN base price
 
   const lengthMultiplier = getDomainLengthMultiplier(domain.length)
 
   const pricePerYear = basePricePerYear * lengthMultiplier
 
+  const pricePerYearFixed = (basePricePerYear * lengthMultiplier).toFixed(2)
+
   const numericYears = typeof years === 'string' ? parseInt(years) || 1 : years
 
-  const totalPrice = (pricePerYear * numericYears).toFixed(3)
+  const totalPrice = (pricePerYear * numericYears).toFixed(2)
 
   const accountId = useMemo(() => {
     if (rawAccountId != null) {
@@ -93,7 +95,7 @@ export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange
         </div>
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground">Price per year:</span>
-          <span className="font-medium">{pricePerYear.toFixed(3)} MIDEN</span>
+          <span className="font-medium">{pricePerYearFixed} MIDEN</span>
         </div>
         <div className="flex justify-between items-center text-lg font-semibold">
           <span>Total Price:</span>
