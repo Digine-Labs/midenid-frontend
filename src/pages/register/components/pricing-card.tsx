@@ -12,7 +12,6 @@ import { instantiateClient, bech32ToAccountId, formatBalance } from '@/lib/utils
 interface PricingCardProps {
   domain: string
   years: number | string
-  onSubscriptionChange: (checked: boolean) => void
   onTermsChange: (checked: boolean) => void
 }
 
@@ -27,9 +26,8 @@ const getDomainLengthMultiplier = (length: number): number => {
   }
 }
 
-export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange }: PricingCardProps) {
+export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) {
   const { accountId: rawAccountId } = useWallet()
-  const [subscriptionEnabled, setSubscriptionEnabled] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [client, setClient] = useState<WebClient | undefined>(undefined);
 
@@ -67,11 +65,6 @@ export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange
   }, [accountId, client]);
 
 
-  const handleSubscriptionChange = (checked: boolean) => {
-    setSubscriptionEnabled(checked)
-    onSubscriptionChange(checked)
-  }
-
   const handleTermsChange = (checked: boolean) => {
     setTermsAccepted(checked)
     onTermsChange(checked)
@@ -103,42 +96,6 @@ export function PricingCard({ domain, years, onSubscriptionChange, onTermsChange
         </div>
 
         <div className="border-t pt-4 space-y-4">
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id="subscription"
-              checked={subscriptionEnabled}
-              onCheckedChange={handleSubscriptionChange}
-            />
-            <div className="flex-1 flex items-start justify-between">
-              <label
-                htmlFor="subscription"
-                className="text-sm font-medium leading-none cursor-pointer"
-              >
-                Enable subscription and don't pay gas for your renewal
-              </label>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 w-5 p-0 ml-2"
-                      type="button"
-                    >
-                      <Info className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p>
-                      Enabling a subscription permits Miden ID to renew your domain automatically every year for you!
-                      This approval gives us only the possibility to renew your domain once per year (maximum 0.009 MIDEN/year)
-                      and we'll cover the transaction fee for you!
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
 
           <div className="flex items-start space-x-3">
             <Checkbox

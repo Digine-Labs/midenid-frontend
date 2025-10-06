@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { PricingCard } from './components/pricing-card'
 import { DomainDetailsCard } from './components/domain-details-card'
 import { ConnectWallet } from '@/components/connectWallet'
+import { Faq } from './components/faq'
 
 export default function Register() {
   const [searchParams] = useSearchParams()
@@ -12,7 +13,6 @@ export default function Register() {
   const { connected } = useWallet()
   const [years, setYears] = useState<number | string>(1)
   const [showYearsTooltip, setShowYearsTooltip] = useState(false)
-  const [subscriptionEnabled, setSubscriptionEnabled] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null)
 
@@ -80,8 +80,7 @@ export default function Register() {
   const handlePurchase = () => {
     // Mock purchase functionality
     const numericYears = typeof years === 'string' ? parseInt(years) || 1 : years
-    const subscriptionText = subscriptionEnabled ? ' with auto-renewal enabled' : ''
-    alert(`Mock purchase initiated for ${domain}.miden for ${numericYears} year${numericYears > 1 ? 's' : ''}${subscriptionText}!`)
+    alert(`Mock purchase initiated for ${domain}.miden for ${numericYears} year${numericYears > 1 ? 's' : ''}!`)
   }
 
   return (
@@ -113,7 +112,6 @@ export default function Register() {
               <PricingCard
                 domain={domain}
                 years={years}
-                onSubscriptionChange={setSubscriptionEnabled}
                 onTermsChange={setTermsAccepted}
               />
               <div className="flex justify-center">
@@ -128,6 +126,10 @@ export default function Register() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="mt-12">
+          <Faq />
         </div>
       </div>
     </main>
