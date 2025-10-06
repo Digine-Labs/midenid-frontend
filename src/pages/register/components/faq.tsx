@@ -17,7 +17,7 @@ const faqItems: FaqItem[] = [
   },
   {
     question: "What happens if I don't renew my domain?",
-    answer: "If your domain expires and is not renewed within the grace period, it will become available for others to register. We recommend enabling auto-renewal to ensure you never lose your domain. You'll receive notifications before your domain expires."
+    answer: "If your domain expires and is not renewed within the grace period, it will become available for others to register."
   },
   {
     question: "Can I transfer my domain to another wallet?",
