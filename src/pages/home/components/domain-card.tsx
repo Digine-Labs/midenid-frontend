@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -27,11 +27,11 @@ export function DomainCard({ domain }: DomainCardProps) {
   }, [domain])
 
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     if (!loading && domainAvailable) {
       navigate(`/register?domain=${encodeURIComponent(domain)}`)
     }
-  }
+  }, [loading, domainAvailable, domain, navigate])
 
   return (
     <Card

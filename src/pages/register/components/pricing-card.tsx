@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Info } from 'lucide-react'
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
-import { type WebClient } from '@demox-labs/miden-sdk';
 import { useBalance } from '@/hooks/useBalance'
-import { instantiateClient, bech32ToAccountId, formatBalance } from '@/lib/utils'
+import { useMidenClient } from '@/hooks/useMidenClient'
+import { bech32ToAccountId, formatBalance } from '@/lib/utils'
 
 interface PricingCardProps {
   domain: string
@@ -26,22 +26,13 @@ const getDomainLengthMultiplier = (length: number): number => {
   }
 }
 
+// Constants
+const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
+const BASE_PRICE_PER_YEAR = 5
+
 export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) {
   const { accountId: rawAccountId } = useWallet()
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [client, setClient] = useState<WebClient | undefined>(undefined);
-
-  const basePricePerYear = 5 // 5 MIDEN base price
-
-  const lengthMultiplier = getDomainLengthMultiplier(domain.length)
-
-  const pricePerYear = basePricePerYear * lengthMultiplier
-
-  const pricePerYearFixed = (basePricePerYear * lengthMultiplier).toFixed(2)
-
-  const numericYears = typeof years === 'string' ? parseInt(years) || 1 : years
-
-  const totalPrice = (pricePerYear * numericYears).toFixed(2)
 
   const accountId = useMemo(() => {
     if (rawAccountId != null) {
@@ -49,20 +40,37 @@ export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) 
     } else return undefined;
   }, [rawAccountId]);
 
-  useEffect(() => {
-    if (
-      client == null && accountId != null
-    ) {
-      (async () => {
-        const newClient = await instantiateClient({
-          accountsToImport: [
-            accountId,
-          ],
-        });
-        setClient(newClient);
-      })();
-    }
-  }, [accountId, client]);
+  const client = useMidenClient(accountId);
+
+  const faucetId = useMemo(() =>
+    bech32ToAccountId(MIDEN_FAUCET_ID_BECH32),
+    []
+  );
+
+  const lengthMultiplier = useMemo(() =>
+    getDomainLengthMultiplier(domain.length),
+    [domain.length]
+  );
+
+  const numericYears = useMemo(() =>
+    typeof years === 'string' ? parseInt(years) || 1 : years,
+    [years]
+  );
+
+  const pricePerYear = useMemo(() =>
+    BASE_PRICE_PER_YEAR * lengthMultiplier,
+    [lengthMultiplier]
+  );
+
+  const pricePerYearFixed = useMemo(() =>
+    pricePerYear.toFixed(2),
+    [pricePerYear]
+  );
+
+  const totalPrice = useMemo(() =>
+    (pricePerYear * numericYears).toFixed(2),
+    [pricePerYear, numericYears]
+  );
 
 
   const handleTermsChange = (checked: boolean) => {
@@ -72,7 +80,7 @@ export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) 
 
   const midenBalance = useBalance({
     accountId,
-    faucetId: bech32ToAccountId("mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"), //miden faucetId
+    faucetId,
     client,
   });
 

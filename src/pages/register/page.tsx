@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router'
 import { useWallet } from '@demox-labs/miden-wallet-adapter'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ export default function Register() {
   const [showYearsTooltip, setShowYearsTooltip] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null)
+
 
   const handleYearsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value
@@ -77,11 +78,12 @@ export default function Register() {
     }
   }, [emptyInputTimer])
 
-  const handlePurchase = () => {
+  const handlePurchase = useCallback(() => {
     // Mock purchase functionality
     const numericYears = typeof years === 'string' ? parseInt(years) || 1 : years
     alert(`Mock purchase initiated for ${domain}.miden for ${numericYears} year${numericYears > 1 ? 's' : ''}!`)
-  }
+  }, [domain, years])
+
 
   return (
     <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
@@ -114,7 +116,7 @@ export default function Register() {
                 years={years}
                 onTermsChange={setTermsAccepted}
               />
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-4">
                 <Button
                   onClick={handlePurchase}
                   disabled={!termsAccepted}

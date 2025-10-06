@@ -20,7 +20,7 @@ export const instantiateClient = async (
   for (const acc of accountsToImport) {
     try {
       await safeAccountImport(client, acc);
-    } catch(e) {console.error(e)}
+    } catch (e) { console.error(e) }
   }
   await client.syncState();
   return client;
@@ -29,7 +29,7 @@ export const instantiateClient = async (
 export const safeAccountImport = async (client: WebClient, accountId: AccountId) => {
   if (await client.getAccount(accountId) == null) {
     try {
-      client.importAccountById(accountId);
+      await client.importAccountById(accountId);
     } catch (e) {
       console.warn(e);
     }
