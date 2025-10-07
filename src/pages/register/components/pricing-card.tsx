@@ -32,7 +32,7 @@ const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
 const BASE_PRICE_PER_YEAR = 5
 
 export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) {
-  const { accountId: rawAccountId, requestPrivateNotes } = useWallet()
+  const { accountId: rawAccountId } = useWallet()
   const [termsAccepted, setTermsAccepted] = useState(false)
 
   const accountId = useMemo(() => {
@@ -81,7 +81,6 @@ export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) 
 
   const midenBalance = useBalance({
     accountId,
-    // faucetId: bech32ToAccountId("mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"),
     faucetId,
     client,
   });
