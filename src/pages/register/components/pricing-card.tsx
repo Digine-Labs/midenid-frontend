@@ -6,8 +6,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Info } from 'lucide-react'
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
 import { useBalance } from '@/hooks/useBalance'
-import { useMidenClient } from '@/hooks/useMidenClient'
-import { bech32ToAccountId, formatBalance } from '@/lib/utils'
+import { useMidenClient } from '@/contexts/MidenClientContext'
+import { bech32ToAccountId } from '@/lib/midenClient'
+import { formatBalance } from '@/lib/utils'
 
 interface PricingCardProps {
   domain: string
@@ -31,7 +32,7 @@ const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
 const BASE_PRICE_PER_YEAR = 5
 
 export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) {
-  const { accountId: rawAccountId } = useWallet()
+  const { accountId: rawAccountId, requestPrivateNotes } = useWallet()
   const [termsAccepted, setTermsAccepted] = useState(false)
 
   const accountId = useMemo(() => {
@@ -40,7 +41,7 @@ export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) 
     } else return undefined;
   }, [rawAccountId]);
 
-  const client = useMidenClient(accountId);
+  const { client } = useMidenClient();
 
   const faucetId = useMemo(() =>
     bech32ToAccountId(MIDEN_FAUCET_ID_BECH32),
@@ -80,6 +81,7 @@ export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) 
 
   const midenBalance = useBalance({
     accountId,
+    // faucetId: bech32ToAccountId("mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"),
     faucetId,
     client,
   });

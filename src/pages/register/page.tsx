@@ -10,11 +10,11 @@ import { Faq } from './components/faq'
 export default function Register() {
   const [searchParams] = useSearchParams()
   const domain = searchParams.get('domain') || ''
-  const { connected } = useWallet()
   const [years, setYears] = useState<number | string>(1)
   const [showYearsTooltip, setShowYearsTooltip] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null)
+  const { connected } = useWallet()
 
 
   const handleYearsChange = (e: React.ChangeEvent<HTMLInputElement>) => {

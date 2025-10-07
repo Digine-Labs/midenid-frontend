@@ -24,7 +24,7 @@ export const useBalance = (
     useEffect(() => {
         const refreshBalance = async () => {
             if (!accountId || !faucetId || !client) return;
-            await client.syncState();
+            // await client.syncState();
             const newBalance = await getBalanceFromClient(client, accountId, faucetId);
             setBalance(BigInt(newBalance ?? 0));
         };

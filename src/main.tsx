@@ -8,6 +8,7 @@ import { MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter'
 import { WalletModalProvider } from '@demox-labs/miden-wallet-adapter-reactui'
 import '@demox-labs/miden-wallet-adapter-reactui/dist/styles.css'
 import { createBrowserRouter, RouterProvider } from 'react-router'
+import { MidenClientProvider } from '@/contexts/MidenClientContext'
 
 import Home from '@/pages/home/page'
 // import Profile from '@/pages/profile/page'
@@ -50,9 +51,11 @@ createRoot(document.getElementById('root')!).render(
     //autoConnect={true}
     >
       <WalletModalProvider>
-        <ThemeProvider>
-          <RouterProvider router={router} />
-        </ThemeProvider>
+        <MidenClientProvider>
+          <ThemeProvider>
+            <RouterProvider router={router} />
+          </ThemeProvider>
+        </MidenClientProvider>
       </WalletModalProvider>
     </WalletProvider>
   </StrictMode>,

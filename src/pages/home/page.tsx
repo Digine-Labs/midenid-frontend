@@ -5,7 +5,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Info } from 'lucide-react'
 import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
-
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')

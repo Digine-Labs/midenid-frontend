@@ -50,7 +50,17 @@ export function MobileSidebar() {
                 Home
               </Link>
             </SheetClose>
-            <p className="cursor-pointer text-base font-medium py-2 px-3 rounded-md text-gray-400">Profile - Coming Soon</p>
+            <SheetClose asChild>
+              <a
+                href="https://docs.miden.name/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
+              >
+                Docs
+              </a>
+            </SheetClose>
+            <p className="cursor-pointer text-base font-medium py-2 px-3 rounded-md text-gray-400">Identity - Coming Soon</p>
             {/* <SheetClose asChild>
               <Link
                 to="/profile"
