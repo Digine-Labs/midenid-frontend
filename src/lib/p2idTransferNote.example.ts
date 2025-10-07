@@ -1,5 +1,5 @@
 import {
-    WebClient,
+    // WebClient,
     AccountId,
     NoteType,
     Note,
@@ -18,7 +18,6 @@ const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
 const DESTINATION_ACCOUNT_BECH32 = "mtst1qr8ewt8029zdwypcqzxchjdcgdcqq7sqaxk"
 
 interface TransferNoteParams {
-    client: WebClient
     senderAccountId: AccountId
     amount: bigint
     requestTransaction: (tx: MidenTransaction) => Promise<string>
@@ -35,7 +34,6 @@ interface TransferNoteParams {
  * @throws {Error} If transfer fails
  */
 export async function transferNote({
-    client,
     senderAccountId,
     amount,
     requestTransaction
