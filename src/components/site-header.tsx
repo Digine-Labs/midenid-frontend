@@ -3,7 +3,7 @@ import { Separator } from '@/components/ui/separator'
 //import { ThemeToggle } from '@/components/theme-toggle'
 import { Link } from 'react-router'
 import { MobileSidebar } from './mobile-sidebar'
-import { ConnectWallet } from './connectWallet'
+import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter'
 
 export function SiteHeader() {
   return (
@@ -35,7 +35,7 @@ export function SiteHeader() {
 
             <Separator orientation="vertical" className="h-6 w-[2px]" />
 
-            <ConnectWallet />
+            <WalletMultiButton />
           </div>
 
           {/* Mobile Menu */}

@@ -6,7 +6,6 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { WalletProvider } from '@demox-labs/miden-wallet-adapter-react'
 import { MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter'
 import { WalletModalProvider } from '@demox-labs/miden-wallet-adapter-reactui'
-import '@demox-labs/miden-wallet-adapter-reactui/dist/styles.css'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { MidenClientProvider } from '@/contexts/MidenClientContext'
 

@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { ConnectWallet } from './connectWallet'
+import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter'
 
 export function MobileSidebar() {
   return (
@@ -84,7 +84,7 @@ export function MobileSidebar() {
         <div className="p-6 pt-0 relative">
           <SheetClose asChild>
             <div>
-              <ConnectWallet />
+              <WalletMultiButton />
             </div>
           </SheetClose>
         </div>
