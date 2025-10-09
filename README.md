@@ -27,8 +27,6 @@ The application leverages the Miden Wallet Adapter for seamless wallet integrati
 - Real domain registration via smart contracts
 - Domain transfer functionality
 - Identity profile management
-- Domain resolution
-- ENS-style reverse resolution
 
 ## Architecture
 
