@@ -4,8 +4,8 @@ import { useWallet } from '@demox-labs/miden-wallet-adapter'
 import { Button } from '@/components/ui/button'
 import { PricingCard } from './components/pricing-card'
 import { DomainDetailsCard } from './components/domain-details-card'
-import { ConnectWallet } from '@/components/connectWallet'
 import { Faq } from './components/faq'
+import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter'
 
 export default function Register() {
   const [searchParams] = useSearchParams()
@@ -107,7 +107,7 @@ export default function Register() {
 
           {!connected ? (
             <div className="flex justify-center">
-              <ConnectWallet />
+              <WalletMultiButton />
             </div>
           ) : (
             <div className="space-y-4">
