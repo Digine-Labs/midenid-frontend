@@ -10,11 +10,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import { MidenClientProvider } from '@/contexts/MidenClientContext'
 
 import Home from '@/pages/home/page'
-// import Profile from '@/pages/profile/page'
-// import About from '@/pages/about/page'
 import Register from '@/pages/register/page'
 
-const wallets = [new MidenWalletAdapter({ appName: 'Miden.ID' })]
+const wallets = [new MidenWalletAdapter({ appName: 'Miden.name' })]
 
 const router = createBrowserRouter([
   {
@@ -26,12 +24,8 @@ const router = createBrowserRouter([
         element: <Home />
       },
       // {
-      //   path: "profile",
-      //   element: <Profile />
-      // },
-      // {
-      //   path: "about",
-      //   element: <About />
+      //   path: "identity",
+      //   element: <Identity />
       // },
       {
         path: "register",
@@ -45,9 +39,6 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <WalletProvider
       wallets={wallets}
-    //network={WalletAdapterNetwork.Testnet}
-    //decryptPermission={DecryptPermission.UponRequest}
-    //autoConnect={true}
     >
       <WalletModalProvider>
         <MidenClientProvider>

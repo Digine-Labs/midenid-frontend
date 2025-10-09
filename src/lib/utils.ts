@@ -24,9 +24,9 @@ export const formatBalance = (balance: bigint, decimals: number = 6): string => 
     return wholePart.toString();
   }
 
-  // Format with appropriate decimal places
+  // Format with appropriate decimal places, limit to 3 chars
   const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
-  const trimmedFractional = fractionalStr.replace(/0+$/, '');
+  const trimmedFractional = fractionalStr.replace(/0+$/, '').substring(0, 3);
 
   if (trimmedFractional === '') {
     return wholePart.toString();

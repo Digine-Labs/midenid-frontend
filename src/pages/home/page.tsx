@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Info } from 'lucide-react'
 import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
+
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
@@ -15,12 +16,12 @@ export default function Home() {
     // Check if there are any invalid characters
     const hasInvalidChars = /[^a-zA-Z0-9]/.test(value)
 
-    // Extract only valid characters and limit to 28 characters using regex
-    const match = value.match(/[a-zA-Z0-9]{0,28}/)
+    // Extract only valid characters and limit to 21 characters using regex
+    const match = value.match(/[a-zA-Z0-9]{0,21}/)
     const filteredValue = match ? match[0] : ''
 
     // Check if length was exceeded
-    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > 28
+    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > 21
 
     setInputValue(filteredValue)
 
@@ -53,9 +54,9 @@ export default function Home() {
     <>
       <TestnetWarningModal />
       <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
-        <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
+        <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
           <div className="space-y-2 mb-6">
-            <h1 className="luckiest-guy-regular text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
+            <h1 className="luckiest-guy-regular text-3xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
               Choose your Miden name
             </h1>
             <p className="text-muted-foreground text-base sm:text-lg px-2">

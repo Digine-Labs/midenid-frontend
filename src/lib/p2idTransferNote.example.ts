@@ -15,10 +15,11 @@ import { CustomTransaction, TransactionType, type MidenTransaction } from "@demo
 
 // Constants
 const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
-const DESTINATION_ACCOUNT_BECH32 = "mtst1qr8ewt8029zdwypcqzxchjdcgdcqq7sqaxk"
 
 interface TransferNoteParams {
     senderAccountId: AccountId
+    destinationAccountId: AccountId
+    faucetId?: AccountId
     amount: bigint
     requestTransaction: (tx: MidenTransaction) => Promise<string>
 }
@@ -29,27 +30,29 @@ interface TransferNoteParams {
  *
  * @param client - WebClient instance from useMidenClient hook
  * @param senderAccountId - The connected wallet's account ID (from useWallet hook)
+ * @param destinationAccountId - The recipient's account ID (in AccountId format)
+ * @param faucetId - (Optional) The faucet account ID to source tokens from (defaults to Miden testnet faucet)
  * @param amount - Amount of tokens to transfer (in base units, e.g., BigInt(50))
+ * @param requestTransaction - Function to request transaction signing from the miden-wallet-adapter
  * @returns Transaction ID string that can be used to view on MidenScan
  * @throws {Error} If transfer fails
  */
-export async function transferNote({
+export async function p2IdTransferNote({
     senderAccountId,
+    destinationAccountId,
+    faucetId = bech32ToAccountId(MIDEN_FAUCET_ID_BECH32),
     amount,
     requestTransaction
 }: TransferNoteParams): Promise<string> {
     try {
         console.log("Starting transfer...")
         console.log("Sender:", senderAccountId.toString())
+        console.log("Destination:", destinationAccountId.toString())
         console.log("Amount:", amount.toString())
 
         // Sync state to get latest blockchain data
         // Temporarily disabled due to RPC sync issues
         // await client.syncState()
-
-        // Get faucet and destination account IDs
-        const faucetId = bech32ToAccountId(MIDEN_FAUCET_ID_BECH32)
-        const destinationAccountId = bech32ToAccountId(DESTINATION_ACCOUNT_BECH32)
 
         // Create fungible asset with the specified amount
         const assets = new NoteAssets([
@@ -76,7 +79,13 @@ export async function transferNote({
 
         console.log(transactionRequest)
 
-        const tx = new CustomTransaction(accountIdToBech32(senderAccountId), accountIdToBech32(destinationAccountId), transactionRequest, [], [])
+        const tx = new CustomTransaction(
+            accountIdToBech32(senderAccountId),
+            accountIdToBech32(destinationAccountId),
+            transactionRequest,
+            [],
+            []
+        )
 
         const txId = await requestTransaction({ type: TransactionType.Custom, payload: tx })
 

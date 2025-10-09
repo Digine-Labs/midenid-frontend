@@ -32,9 +32,9 @@ export function MobileSidebar() {
               <SheetClose asChild>
                 <Link
                   to="/"
-                  className="text-lg font-bold tracking-tight luckiest-guy-regular text-2xl hover:text-primary transition-colors"
+                  className="text-lg font-bold md:tracking-tight luckiest-guy-regular text-2xl hover:text-primary transition-colors"
                 >
-                  Miden.ID
+                  Miden.name
                 </Link>
               </SheetClose>
             </SheetTitle>
@@ -61,22 +61,6 @@ export function MobileSidebar() {
               </a>
             </SheetClose>
             <p className="cursor-pointer text-base font-medium py-2 px-3 rounded-md text-gray-400">Identity - Coming Soon</p>
-            {/* <SheetClose asChild>
-              <Link
-                to="/profile"
-                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
-              >
-                Profile
-              </Link>
-            </SheetClose>
-            <SheetClose asChild>
-              <Link
-                to="/about"
-                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
-              >
-                About
-              </Link>
-            </SheetClose> */}
           </nav>
         </div>
 
