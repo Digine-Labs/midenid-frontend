@@ -1,5 +1,6 @@
 import {
     AccountId,
+    AssemblerUtils,
     Felt,
     FeltArray,
     FungibleAsset,
@@ -13,8 +14,8 @@ import {
     NoteType,
     OutputNote,
     OutputNotesArray,
+    TransactionKernel,
     TransactionRequestBuilder,
-    WebClient,
     Word,
 } from '@demox-labs/miden-sdk';
 import {
@@ -23,12 +24,15 @@ import {
     TransactionType,
 } from '@demox-labs/miden-wallet-adapter';
 import { accountIdToBech32 } from './midenClient';
+import REGISTER_NOTE from "./notes/register_name.masm?raw"
+import REGISTER_LIB from "./notes/miden_id/registry.masm?raw"
 
 export interface NoteFromMasmParams {
-    client: WebClient;
     senderAccountId: AccountId;
-    faucedId: AccountId;
-    amount: bigint
+    destinationAccountId: AccountId;
+    faucetId: AccountId;
+    amount: bigint;
+    domain: string;
     requestTransaction: (tx: MidenTransaction) => Promise<string>;
 }
 
@@ -41,17 +45,51 @@ function generateRandomSerialNumber(): Word {
     ]);
 }
 
+/**
+ * Encodes a name string into a Word for storage in the registry.
+ *
+ * Names are packed into a single Word (4 Felts) with the following layout:
+ * - Felt[0]: Name length
+ * - Felt[1-3]: ASCII characters, 7 characters per Felt (56 bits used per Felt)
+ *
+ * @param name - The name string to encode (max 20 characters, ASCII only)
+ * @returns A Word containing the encoded name
+ * @throws {Error} If the name exceeds 20 characters
+ *
+ * Format: Word: `[length, chars_1-7, chars_8-14, chars_15-20]`
+ */
+export function encodeNameToWord(name: string): Word {
+    if (name.length > 20) {
+        throw new Error("Name must not exceed 20 characters");
+    }
 
-// THIS IS AN EXAMPLE FUNCTION TO HOW TO USE A MASM NOTE TO CREATE AND SEND A NOTE.
-// THIS WONT GOING TO WORK AS INTENTED WITHOUT A PROPER NOTE SCRIPT AND THE RIGHT ASSETS.
-// EXAMPLE NOTE SCRIPT IS GETTING INPUT AS ID.SUFFIX AND ID.PREFIX
-// IT IS SENDING TX TO SELF
-// YOU NEED TO ADJUST IT TO YOUR NEEDS
+    const felts: Felt[] = [new Felt(0n), new Felt(0n), new Felt(0n), new Felt(0n)];
+
+    // Felt[0]: Store name length
+    felts[0] = new Felt(BigInt(name.length));
+
+    // Convert string to bytes (ASCII)
+    const bytes = new TextEncoder().encode(name);
+
+    // Felt[1-3]: Pack 7 ASCII characters per felt (56 bits used)
+    for (let i = 0; i < 3; i++) {
+        const start = i * 7;
+        const end = Math.min(start + 7, bytes.length);
+        const chunk = bytes.slice(start, end);
+
+        let value = 0n;
+        for (let j = 0; j < chunk.length; j++) {
+            value |= BigInt(chunk[j]) << BigInt(j * 8);
+        }
+        felts[i + 1] = new Felt(value);
+    }
+
+    return Word.newFromFelts(felts);
+}
 
 /**
  * Example function for note transactions using a MASM script
  *
- * @param client - WebClient instance from useMidenClient hook
  * @param senderAccountId - The connected wallet's account ID (from useWallet hook)
  * @param faucetId - The faucet account ID to source tokens from (defaults to Miden testnet faucet)
  * @param amount - Amount of tokens to transfer (in base units, e.g., BigInt(50))
@@ -59,31 +97,33 @@ function generateRandomSerialNumber(): Word {
  * @returns Transaction ID and Note ID string that can be used to view on MidenScan
  * @throws {Error} If transfer fails
  */
-export async function noteFromMasm({
-    client,
+export async function registerName({
     senderAccountId,
-    faucedId,
+    destinationAccountId,
+    faucetId,
     amount,
+    domain,
     requestTransaction,
 }: NoteFromMasmParams): Promise<{ txId: string; noteId: string }> {
     try {
-        console.log("Creating note from MASM...");
+        let assembler = TransactionKernel.assembler()
+
+        let registerComponentLib = AssemblerUtils.createAccountComponentLibrary(assembler, "miden_id::registry", REGISTER_LIB);
+
+        let script = assembler.withLibrary(registerComponentLib).compileNoteScript(REGISTER_NOTE)
 
         // Sync state to get latest blockchain data
-        await client.syncState();
+        // await client.syncState();
 
         // Create a new serial number for the note
         const serialNumber = generateRandomSerialNumber();
 
-        // Compile note script
-        const script = client.compileNoteScript(`insert_note_script`);
         const noteType = NoteType.Public
+        const domainWord = encodeNameToWord(domain);
 
-
-        // assets will be miden name that our contracts created or will be created
-        const assets = new FungibleAsset(faucedId, amount);
+        const assets = new FungibleAsset(faucetId, amount);
         const noteAssets = new NoteAssets([assets]);
-        const noteTag = NoteTag.fromAccountId(faucedId);
+        const noteTag = NoteTag.fromAccountId(faucetId);
 
         const noteMetadata = new NoteMetadata(
             senderAccountId,
@@ -93,15 +133,13 @@ export async function noteFromMasm({
             new Felt(BigInt(0))
         )
 
-        // Set a deadline for the note to be valid until (optional)
-        // const deadline = Date.now() + 120_000 // 2 minutes from now
-
-        // Create note Inputs
         const noteInputs = new NoteInputs(
             new FeltArray([
-                senderAccountId.prefix(), //felt
-                senderAccountId.suffix()  //felt
-            ])
+                domainWord.toFelts()[3],
+                domainWord.toFelts()[2],
+                domainWord.toFelts()[1],
+                domainWord.toFelts()[0],
+            ]),
         )
 
         const note = new Note(
@@ -118,13 +156,15 @@ export async function noteFromMasm({
 
         const tx = new CustomTransaction(
             accountIdToBech32(senderAccountId), // from
-            accountIdToBech32(senderAccountId), // to
+            accountIdToBech32(destinationAccountId), // to
             transactionRequest,
             [],
             [],
         );
 
         const txId = await requestTransaction({ type: TransactionType.Custom, payload: tx });
+
+        console.log("Transaction submitted. ID:", txId);
 
         return { txId, noteId };
     } catch (error) {

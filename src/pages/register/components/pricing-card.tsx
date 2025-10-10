@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,7 @@ import { formatBalance } from '@/lib/utils'
 interface PricingCardProps {
   domain: string
   years: number | string
+  termsAccepted: boolean
   onTermsChange: (checked: boolean) => void
 }
 
@@ -31,9 +32,8 @@ const getDomainLengthMultiplier = (length: number): number => {
 const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
 const BASE_PRICE_PER_YEAR = 5
 
-export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) {
+export function PricingCard({ domain, years, termsAccepted, onTermsChange }: PricingCardProps) {
   const { accountId: rawAccountId } = useWallet()
-  const [termsAccepted, setTermsAccepted] = useState(false)
 
   const accountId = useMemo(() => {
     if (rawAccountId != null) {
@@ -75,7 +75,6 @@ export function PricingCard({ domain, years, onTermsChange }: PricingCardProps) 
 
 
   const handleTermsChange = (checked: boolean) => {
-    setTermsAccepted(checked)
     onTermsChange(checked)
   }
 

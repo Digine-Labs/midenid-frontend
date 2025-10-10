@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { useWallet } from '@demox-labs/miden-wallet-adapter'
 import { Button } from '@/components/ui/button'
@@ -6,6 +6,12 @@ import { PricingCard } from './components/pricing-card'
 import { DomainDetailsCard } from './components/domain-details-card'
 import { Faq } from './components/faq'
 import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter'
+import { registerName } from '@/lib/registerName'
+import { bech32ToAccountId } from '@/lib/midenClient'
+import { AccountId } from '@demox-labs/miden-sdk'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Wallet, AlertTriangle } from 'lucide-react'
+
 
 export default function Register() {
   const [searchParams] = useSearchParams()
@@ -14,8 +20,25 @@ export default function Register() {
   const [showYearsTooltip, setShowYearsTooltip] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null)
-  const { connected } = useWallet()
+  const [transactionSubmitted, setTransactionSubmitted] = useState(false)
+  const [transactionFailed, setTransactionFailed] = useState(false)
+  const { connected, requestTransaction, accountId: rawAccountId } = useWallet()
 
+  const faucetId = useMemo(() =>
+    AccountId.fromHex("0x83592005c13d47203ec1e3124c654d"),
+    []
+  );
+
+  const destinationAccountId = useMemo(() =>
+    AccountId.fromHex("0x3973b471f2101b005c5327803da9aa"),
+    []
+  );
+
+  const accountId = useMemo(() => {
+    if (rawAccountId != null) {
+      return bech32ToAccountId(rawAccountId);
+    } else return undefined;
+  }, [rawAccountId]);
 
   const handleYearsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value
@@ -78,11 +101,30 @@ export default function Register() {
     }
   }, [emptyInputTimer])
 
-  const handlePurchase = useCallback(() => {
-    // Mock purchase functionality
-    const numericYears = typeof years === 'string' ? parseInt(years) || 1 : years
-    alert(`Mock purchase initiated for ${domain}.miden for ${numericYears} year${numericYears > 1 ? 's' : ''}!`)
-  }, [domain, years])
+  const handlePurchase = async () => {
+    if (connected && accountId && requestTransaction) {
+      // Reset previous states
+      setTransactionSubmitted(false)
+      setTransactionFailed(false)
+
+      try {
+        await registerName({
+          senderAccountId: accountId,
+          destinationAccountId: destinationAccountId,
+          faucetId: faucetId,
+          amount: BigInt(1000000), //pricing-card.tsx den total price çek
+          domain: domain,
+          requestTransaction: requestTransaction
+        })
+        // Reset terms and show wallet prompt
+        setTermsAccepted(false)
+        setTransactionSubmitted(true)
+      } catch (error) {
+        console.error("Registration failed:", error)
+        setTransactionFailed(true)
+      }
+    }
+  }
 
 
   return (
@@ -111,9 +153,28 @@ export default function Register() {
             </div>
           ) : (
             <div className="space-y-4">
+              {transactionSubmitted && (
+                <Alert className="border-[#FF9A00] bg-[#FF9A00]/10">
+                  <Wallet className="h-5 w-5 text-[#FF9A00]" />
+                  <AlertTitle className="text-[#FF9A00] font-semibold">Transaction Submitted</AlertTitle>
+                  <AlertDescription className="text-foreground">
+                    Please open your Miden wallet to consume the transaction and complete your domain registration.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {transactionFailed && (
+                <Alert className="border-destructive bg-destructive/10">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  <AlertTitle className="text-destructive font-semibold">Transaction Failed</AlertTitle>
+                  <AlertDescription className="text-foreground">
+                    Transaction could not be created. Please contact the project owners for assistance.
+                  </AlertDescription>
+                </Alert>
+              )}
               <PricingCard
                 domain={domain}
                 years={years}
+                termsAccepted={termsAccepted}
                 onTermsChange={setTermsAccepted}
               />
               <div className="flex justify-center gap-4">
