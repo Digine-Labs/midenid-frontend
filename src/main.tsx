@@ -11,6 +11,7 @@ import { MidenClientProvider } from '@/contexts/MidenClientContext'
 
 import Home from '@/pages/home/page'
 import Register from '@/pages/register/page'
+import Identity from './pages/identity/page.tsx'
 
 const wallets = [new MidenWalletAdapter({ appName: 'Miden.name' })]
 
@@ -23,10 +24,10 @@ const router = createBrowserRouter([
         index: true,
         element: <Home />
       },
-      // {
-      //   path: "identity",
-      //   element: <Identity />
-      // },
+      {
+        path: "identity",
+        element: <Identity />
+      },
       {
         path: "register",
         element: <Register />
