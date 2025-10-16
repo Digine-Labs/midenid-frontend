@@ -53,10 +53,12 @@ export default function Home() {
   return (
     <>
       <TestnetWarningModal />
-      <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
-        <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
+      <main className="relative flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat" style={{ minHeight: 'calc(100vh)', backgroundImage: 'url(/images/backgrounds/bg5.jpg)' }}>
+
+
+        <div className="relative z-10 w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
           <div className="space-y-2 mb-6">
-            <h1 className="luckiest-guy-regular text-3xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
+            <h1 className="text-3xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
               Choose your Miden name
             </h1>
             <p className="text-muted-foreground text-base sm:text-lg px-2">
@@ -64,11 +66,11 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="w-full space-y-4">
-            <Card className="bg-yellow-100 border-yellow-500">
+          <div className="w-full space-y-4 ">
+            <Card className="bg-yellow-100 border-green-500 rounded-md">
               <CardContent className="flex items-start gap-3 p-4">
-                <Info className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-yellow-900 text-left">
+                <Info className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-green-900 text-left">
                   <strong>Testing Mode:</strong> For mocking purposes, even-length domain names are shown as available, while odd-length domain names are shown as unavailable.
                 </p>
               </CardContent>
@@ -83,10 +85,10 @@ export default function Home() {
                       placeholder="Your Miden name"
                       value={inputValue}
                       onChange={handleInputChange}
-                      className="w-full h-16 sm:h-20 rounded-xl pl-4 sm:pl-6 pr-24 sm:pr-36 text-base sm:text-lg bg-gray-50"
+                      className="w-full h-16 sm:h-18 rounded-md pl-4 sm:pl-6 pr-24 sm:pr-36 text-base sm:text-lg bg-gray-50"
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-2 pr-3 sm:pr-4">
-                      <span className="h-6 sm:h-8 w-px bg-input mr-2 sm:mr-3" />
+                      <span className="h-5 sm:h-6 w-px bg-input mr-2 sm:mr-3" />
                       <span className="text-sm sm:text-base font-medium text-muted-foreground">.miden</span>
                     </div>
                   </div>

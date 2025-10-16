@@ -4,11 +4,11 @@ import { Home } from "lucide-react"
 
 export default function NotFound() {
   return (
-    <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
+    <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat" style={{ minHeight: 'calc(100vh)', backgroundImage: 'url(/images/backgrounds/bg5.jpg)' }}>
       <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
         <div className="space-y-6">
           <div className="space-y-2">
-            <h1 className="luckiest-guy-regular text-6xl sm:text-7xl md:text-8xl font-bold text-muted-foreground">
+            <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold text-muted-foreground">
               404
             </h1>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
@@ -19,7 +19,7 @@ export default function NotFound() {
             </p>
           </div>
 
-          <Button asChild size="lg" className="gap-2">
+          <Button asChild size="lg" className="gap-2 bg-white text-secondary hover:text-white hover:bg-secondary hover:border">
             <Link to="/">
               <Home className="h-5 w-5" />
               Back to Home

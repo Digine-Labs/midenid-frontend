@@ -94,7 +94,7 @@ export default function Identity() {
     <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
       <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl">
         <div className="space-y-2 mb-6 text-center">
-          <h1 className="luckiest-guy-regular text-2xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
             Your Miden Identity
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg px-2">
@@ -119,7 +119,8 @@ export default function Identity() {
                             <img
                               src={imagePreview}
                               alt="Preview"
-                              className="w-32 h-32 rounded-lg object-cover border-2 border-border"
+                              loading="lazy"
+                              className="w-32 h-32 rounded-md object-cover border-2 border-border"
                             />
                             <Button
                               type="button"
@@ -137,7 +138,7 @@ export default function Identity() {
                             )}
                           </div>
                         ) : (
-                          <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                          <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-border rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
                             <Upload className="h-8 w-8 text-muted-foreground mb-2" />
                             <span className="text-xs text-muted-foreground">Upload Image</span>
                             <input
@@ -223,11 +224,11 @@ export default function Identity() {
               <div className="space-y-2 pt-4 border-t">
                 <h3 className="text-sm font-medium">Domain Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                  <div className="bg-background rounded-lg p-3">
+                  <div className="bg-background rounded-md p-3">
                     <p className="text-muted-foreground text-xs mb-1">Purchase Date</p>
                     <p className="font-medium">{domainPurchaseDate.toLocaleDateString('en-US')}</p>
                   </div>
-                  <div className="bg-background rounded-lg p-3">
+                  <div className="bg-background rounded-md p-3">
                     <p className="text-muted-foreground text-xs mb-1">Last Modified</p>
                     <p className="font-medium">{lastModifiedDate.toLocaleDateString('en-US')}</p>
                   </div>

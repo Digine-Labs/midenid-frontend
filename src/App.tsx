@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
       <SiteHeader />
-      <div className="pt-14">
+      <div>
         <Outlet />
       </div>
     </div>

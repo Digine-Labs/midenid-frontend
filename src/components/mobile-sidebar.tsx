@@ -1,15 +1,14 @@
 import { Link } from 'react-router'
-import { Menu } from 'lucide-react'
+import { Menu, Github, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter'
+import { Separator } from '@/components/ui/separator'
 
 export function MobileSidebar() {
   return (
@@ -21,25 +20,12 @@ export function MobileSidebar() {
           className="md:hidden"
           aria-label="Toggle menu"
         >
-          <Menu size={20} />
+          <Menu size={30} color='white' />
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-80 md:hidden flex flex-col h-full p-0">
-        <div className="p-6 pb-0">
-          <SheetHeader className="text-left">
-            <SheetTitle asChild>
-              <SheetClose asChild>
-                <Link
-                  to="/"
-                  className="text-lg font-bold md:tracking-tight luckiest-guy-regular text-2xl hover:text-primary transition-colors"
-                >
-                  Miden.name
-                </Link>
-              </SheetClose>
-            </SheetTitle>
-          </SheetHeader>
-
+      <SheetContent side="right" className="w-80 md:hidden flex flex-col h-full pt-10 justify-between">
+        <div>
           {/* Navigation */}
           <nav className="flex flex-col mt-8 space-y-4">
             <SheetClose asChild>
@@ -62,15 +48,59 @@ export function MobileSidebar() {
             </SheetClose>
             <p className="cursor-pointer text-base font-medium py-2 px-3 rounded-md text-gray-400">Identity - Coming Soon</p>
           </nav>
+
+          {/* Wallet button */}
+          <div className="py-2 px-3 relative mt-6">
+            <SheetClose asChild>
+              <div>
+                <WalletMultiButton />
+              </div>
+            </SheetClose>
+          </div>
         </div>
 
-        {/* Wallet button */}
-        <div className="p-6 pt-0 relative">
-          <SheetClose asChild>
-            <div>
-              <WalletMultiButton />
-            </div>
-          </SheetClose>
+        {/* Social Media Icons */}
+        <div className="pb-6 px-3">
+          <Separator className="mb-4" />
+          <p className="text-sm font-medium text-muted-foreground mb-3">Follow Us</p>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://github.com/Digine-Labs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 hover:bg-accent rounded-md transition-colors"
+              aria-label="GitHub"
+            >
+              <Github className="h-5 w-5" />
+            </a>
+            <a
+              href="https://t.me/diginelabs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 hover:bg-accent rounded-md transition-colors"
+              aria-label="Telegram"
+            >
+              <Send className="h-5 w-5" />
+            </a>
+            <a
+              href="https://twitter.com/diginelabs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 hover:bg-accent rounded-md transition-colors"
+              aria-label="Twitter"
+            >
+              <img src="/icons/twitter.png" alt="Twitter" className="h-5 w-5" />
+            </a>
+            <a
+              href="https://discord.gg/diginelabs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 hover:bg-accent rounded-md transition-colors"
+              aria-label="Discord"
+            >
+              <img src="/icons/discord.png" alt="Discord" className="h-5 w-5" />
+            </a>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

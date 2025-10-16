@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Accordion,
   AccordionContent,
@@ -35,18 +36,22 @@ const faqItems: FaqItem[] = [
 
 export function Faq() {
   return (
-    <div className="w-full">
-      <h2 className="text-2xl font-semibold mb-4">Frequently Asked Questions</h2>
-      <Accordion type="single" collapsible className="w-full">
-        {faqItems.map((item, index) => (
-          <AccordionItem key={index} value={`item-${index}`}>
-            <AccordionTrigger>{item.question}</AccordionTrigger>
-            <AccordionContent className="text-muted-foreground">
-              {item.answer}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </div>
+    <Card className="bg-gray-50">
+      <CardHeader>
+        <CardTitle className="text-xl font-semibold">Frequently Asked Questions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Accordion type="single" collapsible className="w-full">
+          {faqItems.map((item, index) => (
+            <AccordionItem key={index} value={`item-${index}`}>
+              <AccordionTrigger>{item.question}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground">
+                {item.answer}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </CardContent>
+    </Card>
   )
 }
