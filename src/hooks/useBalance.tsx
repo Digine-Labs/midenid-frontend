@@ -1,10 +1,10 @@
 import { type AccountId, WebClient } from '@demox-labs/miden-sdk';
 import { useEffect, useState } from 'react';
+import { safeAccountImport } from '@/lib/midenClient';
 
 interface BalanceParams {
     readonly accountId?: AccountId;
     readonly faucetId?: AccountId;
-    client?: WebClient;
 }
 
 const getBalanceFromClient = async (
@@ -12,35 +12,51 @@ const getBalanceFromClient = async (
     accountId: AccountId,
     faucetId: AccountId,
 ) => {
-    const acc = await client.getAccount(accountId);
+    const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
     const balance = acc?.vault().getBalance(faucetId);
     return balance;
 };
 
 export const useBalance = (
-    { accountId, faucetId, client }: BalanceParams,
+    { accountId, faucetId }: BalanceParams,
 ) => {
     const [balance, setBalance] = useState<bigint | null>(null);
-    const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
-        const refreshBalance = async () => {
-            if (!accountId || !faucetId || !client || isRefreshing) return;
+        let clear: number;
+        let isActive = true;
 
-            setIsRefreshing(true);
-            try {
-                // await client.syncState();
-                const newBalance = await getBalanceFromClient(client, accountId, faucetId);
-                setBalance(BigInt(newBalance ?? 0));
-            } finally {
-                setIsRefreshing(false);
-            }
+        const initAndRefresh = async () => {
+            if (!accountId || !faucetId) return;
+
+            const nodeEndpoint = "https://rpc.testnet.miden.io";
+            const client = await WebClient.createClient(nodeEndpoint);
+            console.log("Current block number: ", (await client.syncState()).blockNum());
+
+            const refreshBalance = async () => {
+                if (!isActive) return;
+
+                try {
+                    await client.syncState();
+                    const newBalance = await getBalanceFromClient(client, accountId, faucetId);
+                    if (isActive) {
+                        setBalance(BigInt(newBalance ?? 0));
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch balance:', error);
+                }
+            };
+
+            await refreshBalance();
+            clear = setInterval(refreshBalance, 10000);
         };
 
-        refreshBalance();
-        const clear = setInterval(refreshBalance, 10000);
-        return () => clearInterval(clear);
-    }, [client, faucetId, accountId, isRefreshing]);
+        initAndRefresh();
+        return () => {
+            isActive = false;
+            clearInterval(clear);
+        };
+    }, [faucetId, accountId]);
 
     return balance;
 };

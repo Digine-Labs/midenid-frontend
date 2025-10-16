@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Info } from 'lucide-react'
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
 import { useBalance } from '@/hooks/useBalance'
-import { useMidenClient } from '@/contexts/MidenClientContext'
 import { bech32ToAccountId } from '@/lib/midenClient'
 import { formatBalance } from '@/lib/utils'
 
@@ -40,8 +39,6 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
       return bech32ToAccountId(rawAccountId);
     } else return undefined;
   }, [rawAccountId]);
-
-  const { client } = useMidenClient();
 
   const faucetId = useMemo(() =>
     bech32ToAccountId(MIDEN_FAUCET_ID_BECH32),
@@ -81,7 +78,6 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
   const midenBalance = useBalance({
     accountId,
     faucetId,
-    client,
   });
 
   return (

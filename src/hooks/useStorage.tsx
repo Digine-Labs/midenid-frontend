@@ -1,27 +1,27 @@
 import { type AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
 import { useEffect, useState } from 'react';
+import { safeAccountImport } from '@/lib/midenClient';
 
 interface StorageParams {
     readonly accountId: AccountId;
     readonly index: number;
     readonly key?: Word;
-    client: WebClient;
 }
 
 const getStorageItemFromClient = async (client: WebClient, accountId: AccountId, index: number) => {
-    const acc = await client.getAccount(accountId)
+    const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
     const item = acc?.storage().getItem(index)
     return item
 }
 
 const getStorageMapItemFromClient = async (client: WebClient, accountId: AccountId, index: number, key: Word) => {
-    const acc = await client.getAccount(accountId)
+    const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
     const item = acc?.storage().getMapItem(index, key)
     return item
 }
 
 export const useStorage = (
-    { accountId, index, client, key }: StorageParams,
+    { accountId, index, key }: StorageParams,
 ) => {
     const [storageItem, setStorageItem] = useState<Word | undefined>(undefined);
     const [storageHex, setStorageHex] = useState<string | undefined>(undefined);
@@ -29,43 +29,52 @@ export const useStorage = (
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        if (!client || !accountId) return;
+        const initAndFetch = async () => {
+            const nodeEndpoint = "https://rpc.testnet.miden.io";
+            const client = await WebClient.createClient(nodeEndpoint);
+            console.log("Current block number: ", (await client.syncState()).blockNum());
 
-        const fetchStorage = async () => {
-            setIsLoading(true);
-            // await client.syncState();
-            try {
-                let item;
-                if (key !== undefined) {
-                    // If key is provided, get map item
-                    item = await getStorageMapItemFromClient(client, accountId, index, key);
-                } else {
-                    // If key is not provided, get regular storage item
-                    item = await getStorageItemFromClient(client, accountId, index);
-                }
+            if (!client || !accountId) return;
 
-                setStorageItem(item);
+            const fetchStorage = async () => {
+                setIsLoading(true);
+                await client.syncState();
+                try {
+                    let item;
+                    if (key !== undefined) {
+                        // If key is provided, get map item
+                        item = await getStorageMapItemFromClient(client, accountId, index, key);
+                    } else {
+                        // If key is not provided, get regular storage item
+                        item = await getStorageItemFromClient(client, accountId, index);
+                    }
 
-                // Convert Word to JavaScript types
-                if (item) {
-                    setStorageHex(item.toHex());
-                    setStorageU64s(item.toU64s());
-                } else {
+                    setStorageItem(item);
+
+                    // Convert Word to JavaScript types
+                    if (item) {
+                        setStorageHex(item.toHex());
+                        setStorageU64s(item.toU64s());
+                    } else {
+                        setStorageHex(undefined);
+                        setStorageU64s(undefined);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch storage:', error);
+                    setStorageItem(undefined);
                     setStorageHex(undefined);
                     setStorageU64s(undefined);
+                } finally {
+                    setIsLoading(false);
                 }
-            } catch (error) {
-                console.error('Failed to fetch storage:', error);
-                setStorageItem(undefined);
-                setStorageHex(undefined);
-                setStorageU64s(undefined);
-            } finally {
-                setIsLoading(false);
-            }
+            };
+
+            // Fetch immediately on mount
+            await fetchStorage();
         };
 
-        fetchStorage();
-    }, [client, accountId, index, key]);
+        initAndFetch();
+    }, [accountId, index, key]);
 
     return {
         storageItem,      // Raw Word object

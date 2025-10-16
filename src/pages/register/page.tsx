@@ -12,7 +12,6 @@ import { AccountId } from '@demox-labs/miden-sdk'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Wallet, AlertTriangle } from 'lucide-react'
 
-
 export default function Register() {
   const [searchParams] = useSearchParams()
   const domain = searchParams.get('domain') || ''
@@ -25,12 +24,12 @@ export default function Register() {
   const { connected, requestTransaction, accountId: rawAccountId } = useWallet()
 
   const faucetId = useMemo(() =>
-    AccountId.fromHex("0x83592005c13d47203ec1e3124c654d"),
+    AccountId.fromHex("0x300d81593c4e7e2054c497c114b9e5"),
     []
   );
 
   const destinationAccountId = useMemo(() =>
-    AccountId.fromHex("0x3973b471f2101b005c5327803da9aa"),
+    AccountId.fromHex("0x1db18ab7c49dfa006b6bcfdaa8cdad"),
     []
   );
 
@@ -112,9 +111,9 @@ export default function Register() {
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           faucetId: faucetId,
-          amount: BigInt(1000000), //pricing-card.tsx den total price çek
+          amount: BigInt(10000000), //pricing-card.tsx den total price çek
           domain: domain,
-          requestTransaction: requestTransaction
+          requestTransaction: requestTransaction,
         })
         // Reset terms and show wallet prompt
         setTermsAccepted(false)

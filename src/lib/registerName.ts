@@ -17,6 +17,7 @@ import {
     TransactionKernel,
     TransactionRequestBuilder,
     Word,
+    WebClient
 } from '@demox-labs/miden-sdk';
 import {
     CustomTransaction,
@@ -106,14 +107,19 @@ export async function registerName({
     requestTransaction,
 }: NoteFromMasmParams): Promise<{ txId: string; noteId: string }> {
     try {
-        let assembler = TransactionKernel.assembler()
+        const nodeEndpoint = "https://rpc.testnet.miden.io";
+        const client = await WebClient.createClient(nodeEndpoint);
+        console.log("Current block number: ", (await client.syncState()).blockNum());
+
+
+        let assembler = TransactionKernel.assembler().withDebugMode(true);
 
         let registerComponentLib = AssemblerUtils.createAccountComponentLibrary(assembler, "miden_id::registry", REGISTER_LIB);
 
         let script = assembler.withLibrary(registerComponentLib).compileNoteScript(REGISTER_NOTE)
 
         // Sync state to get latest blockchain data
-        // await client.syncState();
+        await client.syncState();
 
         // Create a new serial number for the note
         const serialNumber = generateRandomSerialNumber();
@@ -148,11 +154,19 @@ export async function registerName({
             new NoteRecipient(serialNumber, script, noteInputs)
         )
 
+        console.log(note.recipient().inputs().values().map(f => f.toString()))
+
         const noteId = note.id().toString()
 
         let transactionRequest = new TransactionRequestBuilder()
             .withOwnOutputNotes(new OutputNotesArray([OutputNote.full(note)]))
             .build();
+
+        await client.syncState();
+
+        // let txResult = await client.newTransaction(senderAccountId, transactionRequest)
+
+        // await client.submitTransaction(txResult)
 
         const tx = new CustomTransaction(
             accountIdToBech32(senderAccountId), // from
