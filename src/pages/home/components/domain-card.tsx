@@ -35,7 +35,7 @@ export function DomainCard({ domain }: DomainCardProps) {
 
   return (
     <Card
-      className="cursor-pointer hover:shadow transition-all duration-200 border hover:border-primary/50 bg-gray-50"
+      className="cursor-pointer hover:shadow transition-all duration-200 border hover:border-primary/50 bg-card"
       onClick={handleCardClick}
     >
       <CardHeader>
@@ -46,11 +46,11 @@ export function DomainCard({ domain }: DomainCardProps) {
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : domainAvailable ? (
-            <Badge variant="secondary" className="bg-green-200 text-green-800">
+            <Badge variant="secondary" className="bg-green-200 text-green-800 hover:text-white">
               Available
             </Badge>
           ) : (
-            <Badge variant="secondary" className="bg-red-200 text-red-800">
+            <Badge variant="secondary" className="bg-red-200 text-red-800 hover:text-white hover:bg-red-500">
               Unavailable
             </Badge>
           )}

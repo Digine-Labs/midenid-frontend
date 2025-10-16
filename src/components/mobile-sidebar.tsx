@@ -9,9 +9,13 @@ import {
 } from '@/components/ui/sheet'
 import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter'
 import { Separator } from '@/components/ui/separator'
+import { useTheme } from './theme-provider'
+import ThemeToggle from './theme-toggle'
 
 export function MobileSidebar() {
-  return (
+  const { resolvedTheme } = useTheme()
+  return (<div>
+    <ThemeToggle />
     <Sheet>
       <SheetTrigger asChild>
         <Button
@@ -20,8 +24,9 @@ export function MobileSidebar() {
           className="md:hidden"
           aria-label="Toggle menu"
         >
-          <Menu size={30} color='white' />
+          <Menu size={30} />
         </Button>
+
       </SheetTrigger>
 
       <SheetContent side="right" className="w-80 md:hidden flex flex-col h-full pt-10 justify-between">
@@ -59,19 +64,30 @@ export function MobileSidebar() {
           </div>
         </div>
 
+
+
         {/* Social Media Icons */}
         <div className="pb-6 px-3">
           <Separator className="mb-4" />
           <p className="text-sm font-medium text-muted-foreground mb-3">Follow Us</p>
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com/Digine-Labs"
+              href="https://twitter.com/diginelabs"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 hover:bg-accent rounded-md transition-colors"
-              aria-label="GitHub"
+              aria-label="Twitter"
             >
-              <Github className="h-5 w-5" />
+              <img src="/icons/twitter.png" alt="Twitter" className="h-5 w-5" style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }} />
+            </a>
+            <a
+              href="https://discord.gg/diginelabs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 hover:bg-accent rounded-md transition-colors"
+              aria-label="Discord"
+            >
+              <img src="/icons/discord.png" alt="Discord" className="h-5 w-5" style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }} />
             </a>
             <a
               href="https://t.me/diginelabs"
@@ -83,26 +99,18 @@ export function MobileSidebar() {
               <Send className="h-5 w-5" />
             </a>
             <a
-              href="https://twitter.com/diginelabs"
+              href="https://github.com/Digine-Labs"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 hover:bg-accent rounded-md transition-colors"
-              aria-label="Twitter"
+              aria-label="GitHub"
             >
-              <img src="/icons/twitter.png" alt="Twitter" className="h-5 w-5" />
-            </a>
-            <a
-              href="https://discord.gg/diginelabs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 hover:bg-accent rounded-md transition-colors"
-              aria-label="Discord"
-            >
-              <img src="/icons/discord.png" alt="Discord" className="h-5 w-5" />
+              <Github className="h-5 w-5" />
             </a>
           </div>
         </div>
       </SheetContent>
     </Sheet>
+  </div>
   )
 }

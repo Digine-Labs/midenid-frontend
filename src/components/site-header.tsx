@@ -10,35 +10,62 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Github, Send } from 'lucide-react'
+import { ThemeToggle } from './theme-toggle'
+import { useTheme } from './theme-provider'
 
 export function SiteHeader() {
+  const { resolvedTheme } = useTheme()
+  const logoSrc = resolvedTheme === 'dark' ? '/images/alternate/8.png' : '/images/alternate/7.png'
+
   return (
-    <header className="fixed top-0 left-0 w-full z-50" style={{ background: 'linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%)' }}>
+    <header className="fixed top-0 left-0 w-full z-50 bg-background border-b">
       <Menubar className="h-14 w-full border-0 px-4 md:px-6">
         <div className="flex w-full items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="text-lg font-bold md:tracking-tight text-xl md:text-2xl text-white hover:text-primary transition-colors">
-            Miden.name
+          <Link to="/" className="flex items-center">
+            <img
+              src={logoSrc}
+              alt="Miden.name"
+              className="h-6 md:h-8"
+            />
           </Link>
+
+
 
           {/* Desktop Navigation & Wallet */}
           <div className="hidden md:flex items-center gap-4">
             <nav className="flex items-center gap-6">
-              <Link to="/" className="text-sm font-medium text-white hover:text-primary transition-colors">
+              <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
                 Home
               </Link>
-              <a href="https://docs.miden.name/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white hover:text-primary transition-colors">
+              <a href="https://docs.miden.name/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-primary transition-colors">
                 Docs
               </a>
               <DropdownMenu>
-                <DropdownMenuTrigger className="text-sm font-medium text-white hover:text-primary transition-colors focus:outline-none">
+                <DropdownMenuTrigger className="text-sm font-medium hover:text-primary transition-colors focus:outline-none">
                   Socials
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
-                    <a href="https://github.com/Digine-Labs" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
-                      <Github className="h-4 w-4" />
-                      <span>GitHub</span>
+                    <a href="https://x.com/midenname" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                      <img
+                        src="/icons/twitter.png"
+                        alt="Twitter"
+                        className="h-4 w-4"
+                        style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }}
+                      />
+                      <span>X / Twitter</span>
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="https://discord.gg/CfWvRh9xCe" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                      <img
+                        src="/icons/discord.png"
+                        alt="Discord"
+                        className="h-4 w-4"
+                        style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }}
+                      />
+                      <span>Discord</span>
                     </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -48,15 +75,9 @@ export function SiteHeader() {
                     </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <a href="https://x.com/midenname" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
-                      <img src="/icons/twitter.png" alt="Twitter" className="h-4 w-4" />
-                      <span>X / Twitter</span>
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href="https://discord.gg/CfWvRh9xCe" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
-                      <img src="/icons/discord.png" alt="Discord" className="h-4 w-4" />
-                      <span>Discord</span>
+                    <a href="https://github.com/Digine-Labs" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                      <Github className="h-4 w-4" />
+                      <span>GitHub</span>
                     </a>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -66,6 +87,8 @@ export function SiteHeader() {
 
             <Separator orientation="vertical" className="h-6 w-[2px]" />
 
+            <ThemeToggle />
+
             <WalletMultiButton />
           </div>
 
@@ -73,7 +96,7 @@ export function SiteHeader() {
           <MobileSidebar />
         </div>
       </Menubar>
-    </header>
+    </header >
   )
 }
 

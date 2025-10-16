@@ -36,7 +36,7 @@ const faqItems: FaqItem[] = [
 
 export function Faq() {
   return (
-    <Card className="bg-gray-50">
+    <Card className="bg-card border-primary">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">Frequently Asked Questions</CardTitle>
       </CardHeader>

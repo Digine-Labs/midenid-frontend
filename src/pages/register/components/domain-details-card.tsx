@@ -11,7 +11,7 @@ interface DomainDetailsCardProps {
 
 export function DomainDetailsCard({ domain, years, showYearsTooltip, onYearsChange }: DomainDetailsCardProps) {
   return (
-    <Card className="bg-gray-50">
+    <Card className="bg-card border-primary">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">Domain Details</CardTitle>
       </CardHeader>

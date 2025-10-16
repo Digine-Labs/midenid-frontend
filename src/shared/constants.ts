@@ -1,5 +1,6 @@
 export const MIDEN_ID_CONTRACT_ADDRESS = "0x9ef506ced7037d001f713b800f51c6";
 export const MIDEN_FAUCET_CONTRACT_ADDRESS = "0x673624d33eeac22025b6c256cf42a0";
+export const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
 
 export const MIDEN_ID_CONTRACT_CODE = `
 use.miden::account

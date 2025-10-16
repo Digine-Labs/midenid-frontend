@@ -134,17 +134,17 @@ export default function Register() {
   };
 
   return (
-    <div className="pt-14 bg-cover bg-center bg-no-repeat" style={{ minHeight: '100vh', backgroundImage: 'url(/images/backgrounds/bg1.png)' }} >
+    <div className="pt-14 bg-background min-h-screen">
       <main
         className="flex items-center justify-center sm:px-6 lg:px-8"
         style={{ minHeight: "calc(100vh - 3.5rem)" }}
       >
         <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center py-5">
           <div className="space-y-2 mb-6 ">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl text-white font-bold md:tracking-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
               Register {domain}.miden
             </h1>
-            <p className="text-white text-base sm:text-lg px-2">
+            <p className="text-base sm:text-lg px-2 text-muted-foreground">
               Complete your Miden identity registration to claim this domain.
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function Register() {
             ) : (
               <div className="space-y-4">
                 {transactionSubmitted && (
-                  <Alert className="border-primary bg-green-400">
+                  <Alert className="border-green-600 bg-green-400">
                     <Wallet className="h-5 w-5" color="green" />
                     <AlertTitle className="text-green-900 font-bold">
                       Transaction Submitted
@@ -197,7 +197,7 @@ export default function Register() {
                   <Button
                     onClick={handlePurchase}
                     disabled={!termsAccepted}
-                    className="px-8 py-2 text-lg font-semibold bg-white text-secondary hover:text-white hover:bg-secondary hover:border"
+                    className="px-8 py-2 text-lg font-semibold text-secondary text-white hover:text-white hover:bg-secondary hover:border"
                     size="lg"
                   >
                     Purchase

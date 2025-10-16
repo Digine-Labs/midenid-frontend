@@ -1,13 +1,12 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
 import { useBalance } from '@/hooks/useBalance'
 import { bech32ToAccountId } from '@/lib/midenClient'
 import { formatBalance } from '@/lib/utils'
+import { MIDEN_FAUCET_ID_BECH32 } from '@/shared/constants'
+import { TermsModal } from './terms-modal'
 
 interface PricingCardProps {
   domain: string
@@ -28,10 +27,10 @@ const getDomainLengthMultiplier = (length: number): number => {
 }
 
 // Constants
-const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
 const BASE_PRICE_PER_YEAR = 5
 
 export function PricingCard({ domain, years, termsAccepted, onTermsChange }: PricingCardProps) {
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const { accountId: rawAccountId } = useWallet()
 
   const accountId = useMemo(() => {
@@ -72,6 +71,9 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
 
 
   const handleTermsChange = (checked: boolean) => {
+    if (checked) {
+      setIsTermsModalOpen(true)
+    }
     onTermsChange(checked)
   }
 
@@ -81,7 +83,7 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
   });
 
   return (
-    <Card className="bg-gray-50">
+    <Card className="bg-card border-primary">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">Pricing Details</CardTitle>
       </CardHeader>
@@ -100,44 +102,23 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
         </div>
 
         <div className="border-t pt-4 space-y-4">
-
           <div className="flex items-start space-x-3">
             <Checkbox
               id="terms"
               checked={termsAccepted}
               onCheckedChange={handleTermsChange}
             />
-            <div className="flex-1 flex items-start justify-between">
-              <label
-                htmlFor="terms"
-                className="text-sm font-medium leading-none cursor-pointer"
-              >
-                I have read and accept the Terms and Conditions
-              </label>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 w-5 p-0 ml-2"
-                      type="button"
-                    >
-                      <Info className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p>
-                      By checking this box, you agree to our terms of service and privacy policy.
-                      You acknowledge that you understand the domain registration process and associated costs.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            <label
+              htmlFor="terms"
+              className="text-sm font-medium leading-none cursor-pointer"
+            >
+              I have read and accept the Terms and Conditions
+            </label>
           </div>
         </div>
       </CardContent>
+
+      <TermsModal open={isTermsModalOpen} onOpenChange={setIsTermsModalOpen} />
     </Card>
   )
 }

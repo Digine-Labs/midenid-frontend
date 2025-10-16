@@ -20,23 +20,46 @@ function applyDocumentClass(mode: "light" | "dark") {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Force light mode regardless of stored or requested theme
-  const [theme, setThemeState] = useState<Theme>(() => "light")
-
-  const resolvedTheme = useMemo(() => "light" as const, [])
-
-  const setTheme = useCallback((_next: Theme) => {
-    setThemeState("light")
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof localStorage === "undefined") return "light"
     try {
-      localStorage.setItem(STORAGE_KEY, "light")
+      const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
+      if (stored === "light" || stored === "dark" || stored === "system") return stored
+    } catch {}
+    return "light"
+  })
+
+  const systemTheme = useMemo(() => {
+    if (typeof window === "undefined") return "light"
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  }, [])
+
+  const resolvedTheme = useMemo<"light" | "dark">(() => {
+    if (theme === "system") return systemTheme
+    return theme
+  }, [theme, systemTheme])
+
+  const setTheme = useCallback((next: Theme) => {
+    setThemeState(next)
+    try {
+      localStorage.setItem(STORAGE_KEY, next)
     } catch {}
   }, [])
 
   useEffect(() => {
-    applyDocumentClass("light")
-  }, [])
+    applyDocumentClass(resolvedTheme)
+  }, [resolvedTheme])
 
-  // No system listener because dark mode is disabled
+  useEffect(() => {
+    if (theme !== "system") return
+    const media = window.matchMedia("(prefers-color-scheme: dark)")
+    const listener = () => {
+      const newSystemTheme = media.matches ? "dark" : "light"
+      applyDocumentClass(newSystemTheme)
+    }
+    media.addEventListener("change", listener)
+    return () => media.removeEventListener("change", listener)
+  }, [theme])
 
   const value = useMemo<ThemeContextValue>(
     () => ({ theme, resolvedTheme, setTheme }),

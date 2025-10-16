@@ -7,12 +7,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Miden Name</title>
   <script>
-    // Force light mode: never apply dark class
+    // Initialize theme from localStorage or default to light
     (function () {
       try {
-        localStorage.setItem('vite-ui-theme', 'light')
+        const theme = localStorage.getItem('vite-ui-theme') || 'light'
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
       } catch (e) { }
-      document.documentElement.classList.remove('dark')
     })()
   </script>
 </head>

@@ -91,7 +91,7 @@ export default function Identity() {
   }
 
   return (
-    <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
+    <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 bg-[#F2F2F2] min-h-screen">
       <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl">
         <div className="space-y-2 mb-6 text-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">

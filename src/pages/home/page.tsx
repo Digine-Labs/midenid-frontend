@@ -53,9 +53,7 @@ export default function Home() {
   return (
     <>
       <TestnetWarningModal />
-      <main className="relative flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat" style={{ minHeight: 'calc(100vh)', backgroundImage: 'url(/images/backgrounds/bg5.jpg)' }}>
-
-
+      <main className="relative flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
         <div className="relative z-10 w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
           <div className="space-y-2 mb-6">
             <h1 className="text-3xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
@@ -85,10 +83,10 @@ export default function Home() {
                       placeholder="Your Miden name"
                       value={inputValue}
                       onChange={handleInputChange}
-                      className="w-full h-16 sm:h-18 rounded-md pl-4 sm:pl-6 pr-24 sm:pr-36 text-base sm:text-lg bg-gray-50"
+                      className="w-full h-16 sm:h-18 rounded-md pl-4 sm:pl-6 pr-24 sm:pr-36 text-base sm:text-lg bg-card"
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-2 pr-3 sm:pr-4">
-                      <span className="h-5 sm:h-6 w-px bg-input mr-2 sm:mr-3" />
+                      <span className="h-5 sm:h-6 w-px bg-muted-foreground mr-2 sm:mr-3" />
                       <span className="text-sm sm:text-base font-medium text-muted-foreground">.miden</span>
                     </div>
                   </div>

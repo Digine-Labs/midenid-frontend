@@ -53,12 +53,12 @@
 
   .dark {
     /* Dark theme — Miden brand palette inverted */
-    /* Background: #000000, Foreground: #FFFFFF */
-    --background: 0 0% 0%;
+    /* Background: #392E2E, Card: #3D3D3D */
+    --background: 0 0% 17%;
     --foreground: 0 0% 100%;
-    --card: 0 0% 0%;
+    --card: 0 0% 24%;
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 0%;
+    --popover: 0 0% 24%;
     --popover-foreground: 0 0% 100%;
     /* Primary (brand green): #0FE046 */
     --primary: 141 89% 47%;
@@ -120,7 +120,7 @@
 }
 
 .wallet-adapter-button:not([disabled]):hover {
-  background-color: #11B83D;
+  background-color: #107D2D;
 }
 
 .wallet-adapter-button[disabled] {
