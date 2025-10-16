@@ -36,8 +36,13 @@ export function TestnetWarningModal() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Testnet Warning</AlertDialogTitle>
-          <AlertDialogDescription>
-            This project is currently running on the testnet. Any transactions or data created here are for testing purposes only and do not represent real value.
+          <AlertDialogDescription className="space-y-2">
+            <p>
+              This project is currently running on the Miden testnet. Any transactions or data created here are for testing purposes only and do not represent real value.
+            </p>
+            <p className="font-semibold">
+              Important: Names registered on the testnet may be wiped out during maintenance or new deployments. Registration on testnet does not guarantee name availability or ownership on mainnet.
+            </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
