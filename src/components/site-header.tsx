@@ -22,15 +22,17 @@ export function SiteHeader() {
       <Menubar className="h-14 w-full border-0 px-4 md:px-6">
         <div className="flex w-full items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img
-              src={logoSrc}
-              alt="Miden.name"
-              className="h-6 md:h-8"
-            />
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center">
+              <img
+                src={logoSrc}
+                alt="Miden.name"
+                className="h-5 md:h-6"
+              />
+            </Link>
 
-
+            <ThemeToggle />
+          </div>
 
           {/* Desktop Navigation & Wallet */}
           <div className="hidden md:flex items-center gap-4">
@@ -85,9 +87,11 @@ export function SiteHeader() {
               <p className="cursor-pointer text-sm font-medium text-gray-300">Identity - Coming Soon</p>
             </nav>
 
-            <Separator orientation="vertical" className="h-6 w-[2px]" />
+            {/* burada olunca cüzdan bağlama ile nav butonları arasında oluyor */}
 
-            <ThemeToggle />
+            {/* <Separator orientation="vertical" className="h-6 w-[2px]" />
+
+            <ThemeToggle /> */}
 
             <WalletMultiButton />
           </div>

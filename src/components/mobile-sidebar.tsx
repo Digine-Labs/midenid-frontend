@@ -14,8 +14,8 @@ import ThemeToggle from './theme-toggle'
 
 export function MobileSidebar() {
   const { resolvedTheme } = useTheme()
-  return (<div>
-    <ThemeToggle />
+  return (
+
     <Sheet>
       <SheetTrigger asChild>
         <Button
@@ -61,6 +61,14 @@ export function MobileSidebar() {
                 <WalletMultiButton />
               </div>
             </SheetClose>
+          </div>
+
+          {/* Theme Toggle */}
+          <div className="py-2 px-3 mt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Theme</span>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
 
@@ -111,6 +119,5 @@ export function MobileSidebar() {
         </div>
       </SheetContent>
     </Sheet>
-  </div>
   )
 }
