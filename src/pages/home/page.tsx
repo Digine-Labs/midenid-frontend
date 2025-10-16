@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Card, CardContent } from '@/components/ui/card'
-import { Info } from 'lucide-react'
 import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
@@ -14,8 +12,6 @@ export default function Home() {
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
 
-  // Get the primary color based on theme - #0FE046 for both themes
-  const primaryColor = '#0FE046'
   // Use darker green for identity highlight only in dark mode
   const identityColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046'
 
