@@ -71,9 +71,7 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
 
 
   const handleTermsChange = (checked: boolean) => {
-    if (checked) {
-      setIsTermsModalOpen(true)
-    }
+
     onTermsChange(checked)
   }
 
@@ -108,12 +106,20 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
               checked={termsAccepted}
               onCheckedChange={handleTermsChange}
             />
-            <label
-              htmlFor="terms"
-              className="text-sm font-medium leading-none cursor-pointer"
-            >
-              I have read and accept the Terms and Conditions
-            </label>
+            <div className="text-sm font-medium leading-none">
+              <span
+                className="cursor-pointer"
+                onClick={() => handleTermsChange(!termsAccepted)}
+              >
+                I have read and accept the{' '}
+              </span>
+              <span
+                className="underline cursor-pointer hover:text-primary"
+                onClick={() => setIsTermsModalOpen(true)}
+              >
+                Terms and Conditions
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>

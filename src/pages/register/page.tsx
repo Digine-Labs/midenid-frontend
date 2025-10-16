@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PricingCard } from "./components/pricing-card";
 import { DomainDetailsCard } from "./components/domain-details-card";
 import { Faq } from "./components/faq";
+import { Breadcrumb } from "./components/breadcrumb";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { registerName } from "@/lib/registerName";
 import { bech32ToAccountId } from "@/lib/midenClient";
@@ -40,6 +41,29 @@ export default function Register() {
     () => titleOptions[Math.floor(Math.random() * titleOptions.length)],
     [titleOptions]
   );
+
+  // Calculate dynamic font size based on domain length
+  // Subtext is text-base sm:text-lg (16px base, 18px sm+)
+  // We ensure title never goes below these sizes
+  const titleFontSize = useMemo(() => {
+    const baseSize = 32; // md:text-4xl equivalent (32px for md+)
+    const minSize = 18; // text-lg equivalent (subtext size)
+
+    // Calculate reduction based on domain length
+    // Max domain length is 21, start reducing after 10 characters
+    if (domain.length <= 10) {
+      return baseSize;
+    }
+
+    // Reduce font size progressively for longer domains
+    const reduction = Math.min((domain.length - 10) * 1.5, baseSize - minSize);
+    return Math.max(baseSize - reduction, minSize);
+  }, [domain]);
+
+  const titleClassName = useMemo(() => {
+    // Use inline style for precise font size control
+    return "font-bold md:tracking-tight";
+  }, []);
   const {
     connected,
     requestTransaction,
@@ -155,14 +179,20 @@ export default function Register() {
         style={{ minHeight: "calc(100vh - 3.5rem)" }}
       >
         <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center py-5">
+          <Breadcrumb currentStep="checkout" />
           <div className="space-y-2 mb-6 ">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
+            <h1
+              className={titleClassName}
+              style={{ fontSize: `${titleFontSize}px` }}
+            >
               {randomTitle}
             </h1>
             <p className="text-base sm:text-lg px-2 text-muted-foreground">
               This name is calling your name. Literally. Let's make it official!
             </p>
           </div>
+
+          
 
           <div className="w-full space-y-4 ">
             <DomainDetailsCard
@@ -212,7 +242,7 @@ export default function Register() {
                   <Button
                     onClick={handlePurchase}
                     disabled={!termsAccepted}
-                    className="px-8 py-2 text-lg font-semibold text-secondary text-white hover:text-white hover:bg-secondary hover:border"
+                    className="px-8 py-2 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
                     size="lg"
                   >
                     Purchase

@@ -36,16 +36,16 @@ const faqItems: FaqItem[] = [
 
 export function Faq() {
   return (
-    <Card className="bg-card border-primary">
+    <Card className="bg-transparent border-0 shadow-none">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">Frequently Asked Questions</CardTitle>
+        <CardTitle className="text-xl font-normal">Frequently Asked Questions</CardTitle>
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full">
           {faqItems.map((item, index) => (
             <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger>{item.question}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+              <AccordionTrigger className="font-normal">{item.question}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground/70 text-sm">
                 {item.answer}
               </AccordionContent>
             </AccordionItem>
