@@ -23,10 +23,14 @@ import {
     CustomTransaction,
     type MidenTransaction,
     TransactionType,
-} from '@demox-labs/miden-wallet-adapter';
-import { accountIdToBech32 } from './midenClient';
-import REGISTER_NOTE from "./notes/register_name.masm?raw"
-import REGISTER_LIB from "./notes/miden_id/registry.masm?raw"
+} from "@demox-labs/miden-wallet-adapter";
+import { accountIdToBech32 } from "./midenClient";
+import REGISTER_NOTE from "./notes/register_name.masm?raw";
+import REGISTER_LIB from "./notes/miden_id/registry.masm?raw";
+import {
+    MIDEN_ID_CONTRACT_CODE,
+    REGISTER_NOTE_SCRIPT,
+} from "@/shared/constants";
 
 export interface NoteFromMasmParams {
     senderAccountId: AccountId;
@@ -64,7 +68,12 @@ export function encodeNameToWord(name: string): Word {
         throw new Error("Name must not exceed 20 characters");
     }
 
-    const felts: Felt[] = [new Felt(0n), new Felt(0n), new Felt(0n), new Felt(0n)];
+    const felts: Felt[] = [
+        new Felt(0n),
+        new Felt(0n),
+        new Felt(0n),
+        new Felt(0n),
+    ];
 
     // Felt[0]: Store name length
     felts[0] = new Felt(BigInt(name.length));
@@ -112,11 +121,17 @@ export async function registerName({
         console.log("Current block number: ", (await client.syncState()).blockNum());
 
 
-        let assembler = TransactionKernel.assembler().withDebugMode(true);
+        let assembler = TransactionKernel.assembler().withDebugMode(true);;
 
-        let registerComponentLib = AssemblerUtils.createAccountComponentLibrary(assembler, "miden_id::registry", REGISTER_LIB);
+        let registerComponentLib = AssemblerUtils.createAccountComponentLibrary(
+            assembler,
+            "miden_id::registry",
+            MIDEN_ID_CONTRACT_CODE
+        );
 
-        let script = assembler.withLibrary(registerComponentLib).compileNoteScript(REGISTER_NOTE)
+        let script = assembler
+            .withLibrary(registerComponentLib)
+            .compileNoteScript(REGISTER_NOTE_SCRIPT);
 
         // Sync state to get latest blockchain data
         await client.syncState();
@@ -124,7 +139,7 @@ export async function registerName({
         // Create a new serial number for the note
         const serialNumber = generateRandomSerialNumber();
 
-        const noteType = NoteType.Public
+        const noteType = NoteType.Public;
         const domainWord = encodeNameToWord(domain);
 
         const assets = new FungibleAsset(faucetId, amount);
@@ -137,7 +152,7 @@ export async function registerName({
             noteTag,
             NoteExecutionHint.always(),
             new Felt(BigInt(0))
-        )
+        );
 
         const noteInputs = new NoteInputs(
             new FeltArray([
@@ -145,18 +160,16 @@ export async function registerName({
                 domainWord.toFelts()[2],
                 domainWord.toFelts()[1],
                 domainWord.toFelts()[0],
-            ]),
-        )
+            ])
+        );
 
         const note = new Note(
             noteAssets,
             noteMetadata,
             new NoteRecipient(serialNumber, script, noteInputs)
-        )
+        );
 
-        console.log(note.recipient().inputs().values().map(f => f.toString()))
-
-        const noteId = note.id().toString()
+        const noteId = note.id().toString();
 
         let transactionRequest = new TransactionRequestBuilder()
             .withOwnOutputNotes(new OutputNotesArray([OutputNote.full(note)]))
@@ -176,9 +189,12 @@ export async function registerName({
             [],
         );
 
-        const txId = await requestTransaction({ type: TransactionType.Custom, payload: tx });
+        const txId = await requestTransaction({
+            type: TransactionType.Custom,
+            payload: tx,
+        });
 
-        console.log("Transaction submitted. ID:", txId);
+        console.log("Transaction submitted. ID:", txId, "Note ID:", noteId);
 
         return { txId, noteId };
     } catch (error) {
