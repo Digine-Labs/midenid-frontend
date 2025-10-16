@@ -25,6 +25,21 @@ export default function Register() {
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null);
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
+
+  // Array of fun pub-themed titles
+  const titleOptions = useMemo(() => [
+    `Hear ye, hear ye! ${domain}.miden awaits!`,
+    `Step right up for ${domain}.miden!`,
+    `Gather round! ${domain}.miden needs an owner!`,
+    `Calling all patrons! Claim ${domain}.miden!`,
+    `Last call for ${domain}.miden!`,
+  ], [domain]);
+
+  // Randomly select a title on component mount
+  const randomTitle = useMemo(
+    () => titleOptions[Math.floor(Math.random() * titleOptions.length)],
+    [titleOptions]
+  );
   const {
     connected,
     requestTransaction,
@@ -142,10 +157,10 @@ export default function Register() {
         <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center py-5">
           <div className="space-y-2 mb-6 ">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
-              Register {domain}.miden
+              {randomTitle}
             </h1>
             <p className="text-base sm:text-lg px-2 text-muted-foreground">
-              Complete your Miden identity registration to claim this domain.
+              This name is calling your name. Literally. Let's make it official!
             </p>
           </div>
 
