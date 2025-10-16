@@ -22,7 +22,7 @@ export function SiteHeader() {
       <Menubar className="h-14 w-full border-0 px-4 md:px-6">
         <div className="flex w-full items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center">
               <img
                 src={logoSrc}
@@ -30,8 +30,6 @@ export function SiteHeader() {
                 className="h-5 md:h-6"
               />
             </Link>
-
-            <ThemeToggle />
           </div>
 
           {/* Desktop Navigation & Wallet */}
@@ -40,6 +38,12 @@ export function SiteHeader() {
               <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
                 Home
               </Link>
+              <div className="relative cursor-pointer text-sm font-medium text-gray-300">
+                Identity
+                <span className="absolute -top-2 -right-4 text-[8px] font-semibold text-primary">
+                  SOON
+                </span>
+              </div>
               <a href="https://docs.miden.name/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-primary transition-colors">
                 Docs
               </a>
@@ -84,16 +88,17 @@ export function SiteHeader() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <p className="cursor-pointer text-sm font-medium text-gray-300">Identity - Coming Soon</p>
+             
             </nav>
 
-            {/* burada olunca cüzdan bağlama ile nav butonları arasında oluyor */}
+            
 
-            {/* <Separator orientation="vertical" className="h-6 w-[2px]" />
-
-            <ThemeToggle /> */}
-
+            <Separator orientation="vertical" className="h-6" />
             <WalletMultiButton />
+            
+            <div className="flex items-center">
+              <ThemeToggle />
+            </div>
           </div>
 
           {/* Mobile Menu */}
