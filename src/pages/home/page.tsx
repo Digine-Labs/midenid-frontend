@@ -64,7 +64,7 @@ export default function Home() {
               Choose your m<span className="text-primary">id</span>en name
             </h1>
             <p className="text-muted-foreground text-base sm:text-lg px-2">
-              One <RoughNotation type="highlight" color={identityColor} strokeWidth={2} iterations={2} show={true} padding={[2, 4]}>name</RoughNotation> to rule them all. Your digital identity across the Miden universe.
+              One <RoughNotation type="highlight" color={identityColor} strokeWidth={2} iterations={2} show={true} padding={[2, 4]}>name</RoughNotation> to rule them all! Your digital identity across the Miden universe.
             </p>
           </div>
 
