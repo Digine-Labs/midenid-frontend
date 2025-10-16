@@ -22,7 +22,7 @@ export function DomainDetailsCard({ domain, years, showYearsTooltip, onYearsChan
         </div>
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground">Status:</span>
-          <span className="text-green-600 font-medium">Available</span>
+          <span className="text-green-500 font-medium">Available</span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground">Years to register:</span>
@@ -38,7 +38,7 @@ export function DomainDetailsCard({ domain, years, showYearsTooltip, onYearsChan
                   className="w-20 text-center"
                 />
               </TooltipTrigger>
-              <TooltipContent side="top" className="bg-red-600 text-white">
+              <TooltipContent side="top" className="bg-red-500 text-white">
                 <p>Maximum 10 years of register available</p>
               </TooltipContent>
             </Tooltip>
