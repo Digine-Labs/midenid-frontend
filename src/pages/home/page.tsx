@@ -5,11 +5,19 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Info } from 'lucide-react'
 import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
+import { RoughNotation } from 'react-rough-notation'
+import { useTheme } from '@/components/theme-provider'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
   const [showTooltip, setShowTooltip] = useState(false)
+  const { resolvedTheme } = useTheme()
+
+  // Get the primary color based on theme - #0FE046 for both themes
+  const primaryColor = '#0FE046'
+  // Use darker green for identity highlight only in dark mode
+  const identityColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046'
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -56,11 +64,11 @@ export default function Home() {
       <main className="relative flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
         <div className="relative z-10 w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
           <div className="space-y-2 mb-6">
-            <h1 className="text-3xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
-              Choose your Miden name
+            <h1 className="text-3xl sm:text-3xl md:text-4xl font-bold tracking-wide">
+              Choose your m<span className="text-primary">id</span>en name
             </h1>
             <p className="text-muted-foreground text-base sm:text-lg px-2">
-              Your profile, seamlessly connecting you to the entire Miden ecosystem.
+              One <RoughNotation type="highlight" color={identityColor} strokeWidth={2} iterations={2} show={true} padding={[2, 4]}>name</RoughNotation> to rule them all. Your digital identity across the Miden universe.
             </p>
           </div>
 
@@ -80,7 +88,7 @@ export default function Home() {
                   <div className="relative">
                     <Input
                       type="text"
-                      placeholder="Your Miden name"
+                      placeholder="e.g. joe"
                       value={inputValue}
                       onChange={handleInputChange}
                       className="w-full h-16 sm:h-18 rounded-md pl-4 sm:pl-6 pr-24 sm:pr-36 text-base sm:text-lg bg-card"
