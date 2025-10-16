@@ -38,7 +38,7 @@ export function SiteHeader() {
               <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
                 Home
               </Link>
-              <div className="relative cursor-pointer text-sm font-medium text-gray-300">
+              <div className="relative cursor-pointer text-sm font-medium text-gray-300 dark:text-gray-500">
                 Identity
                 <span className="absolute -top-2 -right-4 text-[8px] font-semibold text-primary">
                   SOON
@@ -88,14 +88,14 @@ export function SiteHeader() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-             
+
             </nav>
 
-            
+
 
             <Separator orientation="vertical" className="h-6" />
             <WalletMultiButton />
-            
+
             <div className="flex items-center">
               <ThemeToggle />
             </div>
