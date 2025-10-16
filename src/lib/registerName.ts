@@ -118,7 +118,7 @@ export async function registerName({
     try {
         const nodeEndpoint = "https://rpc.testnet.miden.io";
         const client = await WebClient.createClient(nodeEndpoint);
-        console.log("Current block number: ", (await client.syncState()).blockNum());
+        console.log("registerName Current block number: ", (await client.syncState()).blockNum());
 
 
         let assembler = TransactionKernel.assembler().withDebugMode(true);;
