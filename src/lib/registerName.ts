@@ -25,8 +25,6 @@ import {
     TransactionType,
 } from "@demox-labs/miden-wallet-adapter";
 import { accountIdToBech32 } from "./midenClient";
-import REGISTER_NOTE from "./notes/register_name.masm?raw";
-import REGISTER_LIB from "./notes/miden_id/registry.masm?raw";
 import {
     MIDEN_ID_CONTRACT_CODE,
     REGISTER_NOTE_SCRIPT,

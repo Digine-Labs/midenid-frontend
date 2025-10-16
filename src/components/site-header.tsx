@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Github, Send, X, MessageCircle } from 'lucide-react'
+import { Github, Send } from 'lucide-react'
 
 export function SiteHeader() {
   return (
