@@ -12,6 +12,8 @@ import { bech32ToAccountId } from "@/lib/midenClient";
 import { AccountId } from "@demox-labs/miden-sdk";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Wallet, AlertTriangle } from "lucide-react";
+import { RoughNotation } from "react-rough-notation";
+import { useTheme } from "@/components/theme-provider";
 import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
@@ -26,6 +28,10 @@ export default function Register() {
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null);
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
+  const { resolvedTheme } = useTheme();
+
+  // Get the highlight color based on theme
+  const highlightColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046';
 
   // Array of fun pub-themed titles
   const titleOptions = useMemo(() => [
@@ -64,6 +70,36 @@ export default function Register() {
     // Use inline style for precise font size control
     return "font-bold md:tracking-tight";
   }, []);
+
+  // Function to render title with highlighted domain
+  const renderTitle = () => {
+    // Find the domain.miden pattern in the title
+    const domainPattern = `${domain}.miden`;
+    const parts = randomTitle.split(domainPattern);
+
+    if (parts.length === 1) {
+      // Domain not found in title, return as is
+      return randomTitle;
+    }
+
+    // Split into before, domain, and after
+    return (
+      <>
+        {parts[0]}
+        <RoughNotation
+          type="highlight"
+          color={highlightColor}
+          strokeWidth={2}
+          iterations={2}
+          show={true}
+          padding={[2, 4]}
+        >
+          {domainPattern}
+        </RoughNotation>
+        {parts[1]}
+      </>
+    );
+  };
   const {
     connected,
     requestTransaction,
@@ -185,7 +221,7 @@ export default function Register() {
               className={titleClassName}
               style={{ fontSize: `${titleFontSize}px` }}
             >
-              {randomTitle}
+              {renderTitle()}
             </h1>
             <p className="text-base sm:text-lg px-2 text-muted-foreground">
               This name is calling your name. Literally. Let's make it official!
