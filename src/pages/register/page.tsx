@@ -213,7 +213,7 @@ export default function Register() {
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           faucetId: faucetId,
-          amount: BigInt(10000000), //pricing-card.tsx den total price çek
+          amount: BigInt(1000000), //pricing-card.tsx den total price çek
           domain: domain,
           requestTransaction: requestTransaction,
         });
