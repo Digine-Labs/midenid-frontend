@@ -26,6 +26,7 @@ export default function Register() {
   const [years, setYears] = useState<number | string>(1);
   const [showYearsTooltip, setShowYearsTooltip] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [amount, setAmount] = useState(1);
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null);
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
@@ -209,11 +210,14 @@ export default function Register() {
       setIsPurchasing(true);
 
       try {
+        // Convert amount (MIDEN) to micro-units (assumes 1 MIDEN = 1_000_000 micro-units)
+        const buyAmount = BigInt(1000000) * BigInt(amount);
+
         await registerName({
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           faucetId: faucetId,
-          amount: BigInt(1000000), //pricing-card.tsx den total price çek
+          amount: buyAmount, // pricing-card.tsx provides MIDEN amount
           domain: domain,
           requestTransaction: requestTransaction,
         });
@@ -276,6 +280,7 @@ export default function Register() {
                   years={years}
                   termsAccepted={termsAccepted}
                   onTermsChange={setTermsAccepted}
+                  onAmountChange={setAmount}
                 />
                 <div className="flex justify-center gap-4">
                   <Button

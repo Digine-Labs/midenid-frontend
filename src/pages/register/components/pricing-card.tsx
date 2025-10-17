@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
@@ -13,23 +13,25 @@ interface PricingCardProps {
   years: number | string
   termsAccepted: boolean
   onTermsChange: (checked: boolean) => void
+  // callback called whenever the computed total price changes
+  onAmountChange?: (amount: number) => void
 }
 
 // Calculate price per year based on domain length
 const getDomainLengthMultiplier = (length: number): number => {
   switch (length) {
-    case 1: return 5
-    case 2: return 4
-    case 3: return 3
-    case 4: return 2
+    case 1: return 1
+    case 2: return 1
+    case 3: return 1
+    case 4: return 1
     default: return 1 // 5 characters and more
   }
 }
 
 // Constants
-const BASE_PRICE_PER_YEAR = 5
+const BASE_PRICE_PER_YEAR = 1
 
-export function PricingCard({ domain, years, termsAccepted, onTermsChange }: PricingCardProps) {
+export function PricingCard({ domain, years, termsAccepted, onTermsChange, onAmountChange }: PricingCardProps) {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const { accountId: rawAccountId } = useWallet()
 
@@ -64,10 +66,23 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
     [pricePerYear]
   );
 
-  const totalPrice = useMemo(() =>
-    (pricePerYear * numericYears).toFixed(2),
+  // numeric total (unformatted) so parent gets a number
+  const totalPriceNumber = useMemo(() =>
+    pricePerYear * numericYears,
     [pricePerYear, numericYears]
   );
+
+  const totalPrice = useMemo(() =>
+    totalPriceNumber.toFixed(2),
+    [totalPriceNumber]
+  );
+
+  // inform parent when the numeric total changes
+  useEffect(() => {
+    if (onAmountChange) onAmountChange(totalPriceNumber)
+  }, [totalPriceNumber, onAmountChange])
+
+
 
 
   const handleTermsChange = (checked: boolean) => {
