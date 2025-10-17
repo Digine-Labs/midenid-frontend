@@ -17,14 +17,13 @@ import {
     TransactionKernel,
     TransactionRequestBuilder,
     Word,
-    WebClient
 } from '@demox-labs/miden-sdk';
 import {
     CustomTransaction,
     type MidenTransaction,
     TransactionType,
 } from "@demox-labs/miden-wallet-adapter";
-import { accountIdToBech32 } from "./midenClient";
+import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
 import {
     MIDEN_ID_CONTRACT_CODE,
     REGISTER_NOTE_SCRIPT,
@@ -39,14 +38,6 @@ export interface NoteFromMasmParams {
     requestTransaction: (tx: MidenTransaction) => Promise<string>;
 }
 
-function generateRandomSerialNumber(): Word {
-    return Word.newFromFelts([
-        new Felt(BigInt(Math.floor(Math.random() * 0x1_0000_0000))),
-        new Felt(BigInt(Math.floor(Math.random() * 0x1_0000_0000))),
-        new Felt(BigInt(Math.floor(Math.random() * 0x1_0000_0000))),
-        new Felt(BigInt(Math.floor(Math.random() * 0x1_0000_0000))),
-    ]);
-}
 
 /**
  * Encodes a name string into a Word for storage in the registry.
@@ -113,13 +104,17 @@ export async function registerName({
     domain,
     requestTransaction,
 }: NoteFromMasmParams): Promise<{ txId: string; noteId: string }> {
+    if (typeof window === "undefined") {
+        console.warn("webClient() can only run in the browser");
+        return { txId: "N/A", noteId: "N/A" };
+    }
+
     try {
-        const nodeEndpoint = "https://rpc.testnet.miden.io";
-        const client = await WebClient.createClient(nodeEndpoint);
+        const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
         console.log("registerName Current block number: ", (await client.syncState()).blockNum());
 
 
-        let assembler = TransactionKernel.assembler().withDebugMode(true);;
+        let assembler = TransactionKernel.assembler();
 
         let registerComponentLib = AssemblerUtils.createAccountComponentLibrary(
             assembler,
@@ -127,7 +122,7 @@ export async function registerName({
             MIDEN_ID_CONTRACT_CODE
         );
 
-        let script = assembler
+        let script = assembler.withDebugMode(true)
             .withLibrary(registerComponentLib)
             .compileNoteScript(REGISTER_NOTE_SCRIPT);
 
@@ -142,7 +137,7 @@ export async function registerName({
 
         const assets = new FungibleAsset(faucetId, amount);
         const noteAssets = new NoteAssets([assets]);
-        const noteTag = NoteTag.fromAccountId(faucetId);
+        const noteTag = NoteTag.fromAccountId(destinationAccountId);
 
         const noteMetadata = new NoteMetadata(
             senderAccountId,

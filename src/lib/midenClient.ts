@@ -3,6 +3,8 @@ import {
   Address,
   NetworkId,
   WebClient,
+  Word,
+  Felt
 } from '@demox-labs/miden-sdk';
 
 export const instantiateClient = async (
@@ -44,3 +46,12 @@ export const accountIdToBech32 = (
 export const bech32ToAccountId = (bech32str: string) => {
   return Address.fromBech32(bech32str).accountId();
 };
+
+export function generateRandomSerialNumber(): Word {
+  return Word.newFromFelts([
+    new Felt(BigInt(Math.floor(Math.random() * 0x1_0000_0000))),
+    new Felt(BigInt(Math.floor(Math.random() * 0x1_0000_0000))),
+    new Felt(BigInt(Math.floor(Math.random() * 0x1_0000_0000))),
+    new Felt(BigInt(Math.floor(Math.random() * 0x1_0000_0000))),
+  ]);
+}
