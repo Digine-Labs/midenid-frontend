@@ -46,7 +46,7 @@ export function DomainCard({ domain }: DomainCardProps) {
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : domainAvailable ? (
-            <Badge variant="secondary" className="bg-green-200 text-green-800 hover:text-white">
+            <Badge variant="secondary" className="bg-primary text-green-800 hover:text-white hover:bg-secondary">
               Available
             </Badge>
           ) : (

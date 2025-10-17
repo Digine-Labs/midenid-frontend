@@ -37,10 +37,10 @@ export function DomainDetailsCard({ domain, years, showYearsTooltip, onYearsChan
           <span className="text-muted-foreground">Domain:</span>
           <span className="font-medium">{domain}.miden</span>
         </div>
-        <div className="flex justify-between items-center min-h-9">
+        {/* <div className="flex justify-between items-center min-h-9">
           <span className="text-muted-foreground">Status:</span>
           <span className="text-green-500 font-medium">Available</span>
-        </div>
+        </div> */}
         <div className="flex justify-between items-center min-h-9">
           <span className="text-muted-foreground">Years to register:</span>
           <TooltipProvider>
