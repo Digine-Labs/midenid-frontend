@@ -86,15 +86,15 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange }: Pri
         <CardTitle className="text-xl font-semibold">Pricing Details</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center min-h-9">
           <span className="text-muted-foreground">Your Miden Balance:</span>
           <span className="font-medium">{formatBalance(midenBalance || BigInt(0))} MIDEN</span>
         </div>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center min-h-9">
           <span className="text-muted-foreground">Price per year:</span>
           <span className="font-medium">{pricePerYearFixed} MIDEN</span>
         </div>
-        <div className="flex justify-between items-center text-lg font-semibold">
+        <div className="flex justify-between items-center text-lg font-semibold min-h-9">
           <span>Total Price:</span>
           <span>{totalPrice} MIDEN</span>
         </div>

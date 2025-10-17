@@ -228,7 +228,7 @@ export default function Register() {
             </p>
           </div>
 
-          
+
 
           <div className="w-full space-y-4 ">
             <DomainDetailsCard
@@ -278,7 +278,7 @@ export default function Register() {
                   <Button
                     onClick={handlePurchase}
                     disabled={!termsAccepted}
-                    className="px-8 py-2 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="px-4 py-2 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
                     size="lg"
                   >
                     Purchase

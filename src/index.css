@@ -74,9 +74,9 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-    /* Border (dark gray): #3D3D3D */
-    --border: 0 0% 24%;
-    --input: 0 0% 24%;
+    /* Border (lighter gray for visibility): #525252 */
+    --border: 0 0% 50%;
+    --input: 0 0% 50%;
     --ring: 141 89% 47%;
   }
 }
