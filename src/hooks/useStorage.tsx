@@ -9,15 +9,25 @@ interface StorageParams {
 }
 
 const getStorageItemFromClient = async (client: WebClient, accountId: AccountId, index: number) => {
-    const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
-    const item = acc?.storage().getItem(index)
-    return item
+    try {
+        const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
+        const item = acc?.storage().getItem(index)
+        return item
+    } catch (e) {
+        console.warn("Error from getting storage item", e)
+    }
+
 }
 
 const getStorageMapItemFromClient = async (client: WebClient, accountId: AccountId, index: number, key: Word) => {
-    const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
-    const item = acc?.storage().getMapItem(index, key)
-    return item
+    try {
+        const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
+        const item = acc?.storage().getMapItem(index, key)
+        return item
+    } catch (e) {
+        console.warn("Error from getting map item", e)
+    }
+
 }
 
 export const useStorage = (

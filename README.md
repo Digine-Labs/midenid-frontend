@@ -14,19 +14,20 @@ The application leverages the Miden Wallet Adapter for seamless wallet integrati
 - Domain search with real-time availability checking
 - Wallet connection and integration with Miden Wallet
 - Domain registration flow with pricing calculations
-- Mock purchase functionality
+- Smart contract integration with MASM-based transactions
 - Balance tracking with auto-refresh
 - Responsive design for mobile and desktop
 - Testnet warning modal
+- Dark/light theme toggle
 
 ### 🚧 In Progress
-- **Smart Contract Integration**: Awaiting smart contract deployment to enable actual domain registration on-chain
 - **Identity Page**: Under construction - will provide comprehensive identity management features
+- **Domain Availability**: Currently using mock logic (will integrate with smart contract storage)
 
 ### 📋 Planned Features
-- Real domain registration via smart contracts
+- Real-time domain availability checking from contract storage
 - Domain transfer functionality
-- Identity profile management
+- Advanced identity profile management
 
 ## Architecture
 
@@ -44,19 +45,23 @@ The application leverages the Miden Wallet Adapter for seamless wallet integrati
 src/
 ├── components/          # Shared components
 │   ├── ui/             # Reusable UI primitives (Button, Card, Input, etc.)
-│   ├── site-header.tsx # Main navigation header
+│   ├── site-header.tsx # Main navigation header with wallet & theme toggle
+│   ├── theme-provider.tsx
 │   └── ...
-├── contexts/           # React contexts
-│   └── MidenClientContext.tsx  # Miden SDK client provider
 ├── hooks/              # Custom React hooks
 │   ├── useBalance.tsx  # Balance tracking with auto-refresh
 │   └── useStorage.tsx  # Account storage access
 ├── lib/                # Utilities and helpers
-│   ├── midenClient.ts  # Miden SDK utilities
+│   ├── midenClient.ts  # Miden SDK utilities (client instantiation, conversions)
+│   ├── registerName.ts # Domain registration transaction logic
 │   └── utils.ts        # General utilities
 ├── pages/              # Route pages
 │   ├── home/           # Domain search page
-│   └── register/       # Domain registration page
+│   ├── register/       # Domain registration page
+│   ├── identity/       # User identity page (in progress)
+│   └── not-found/      # 404 page
+├── shared/             # Shared constants and configs
+│   └── constants.ts    # Smart contract code and addresses
 └── main.tsx            # App entry point with providers
 ```
 
@@ -66,9 +71,8 @@ src/
 ```
 WalletProvider (Wallet connection)
   └─ WalletModalProvider (Wallet UI)
-      └─ MidenClientProvider (Miden SDK)
-          └─ ThemeProvider (Theming)
-              └─ App Routes
+      └─ ThemeProvider (Theming)
+          └─ App Routes
 ```
 
 **Mock Domain Pricing**:
@@ -82,8 +86,14 @@ WalletProvider (Wallet connection)
 
 **Domain Validation**:
 - Alphanumeric characters only
-- Maximum 21 characters
+- Maximum 21 characters (frontend), 20 characters (contract)
 - Real-time validation with debouncing (500ms)
+
+**Smart Contract**:
+- Registry Contract: `0x9ef506ced7037d001f713b800f51c6`
+- Faucet Contract: `0x673624d33eeac22025b6c256cf42a0`
+- Domain names encoded into Words (4 Felts) for storage
+- Transactions use MASM note scripts compiled on-the-fly
 
 ## Getting Started
 

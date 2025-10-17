@@ -16,7 +16,6 @@ import {
     OutputNotesArray,
     TransactionKernel,
     TransactionRequestBuilder,
-    Word,
 } from '@demox-labs/miden-sdk';
 import {
     CustomTransaction,
@@ -28,6 +27,7 @@ import {
     MIDEN_ID_CONTRACT_CODE,
     REGISTER_NOTE_SCRIPT,
 } from "@/shared/constants";
+import { encodeNameToWord } from './utils';
 
 export interface NoteFromMasmParams {
     senderAccountId: AccountId;
@@ -38,53 +38,6 @@ export interface NoteFromMasmParams {
     requestTransaction: (tx: MidenTransaction) => Promise<string>;
 }
 
-
-/**
- * Encodes a name string into a Word for storage in the registry.
- *
- * Names are packed into a single Word (4 Felts) with the following layout:
- * - Felt[0]: Name length
- * - Felt[1-3]: ASCII characters, 7 characters per Felt (56 bits used per Felt)
- *
- * @param name - The name string to encode (max 20 characters, ASCII only)
- * @returns A Word containing the encoded name
- * @throws {Error} If the name exceeds 20 characters
- *
- * Format: Word: `[length, chars_1-7, chars_8-14, chars_15-20]`
- */
-export function encodeNameToWord(name: string): Word {
-    if (name.length > 20) {
-        throw new Error("Name must not exceed 20 characters");
-    }
-
-    const felts: Felt[] = [
-        new Felt(0n),
-        new Felt(0n),
-        new Felt(0n),
-        new Felt(0n),
-    ];
-
-    // Felt[0]: Store name length
-    felts[0] = new Felt(BigInt(name.length));
-
-    // Convert string to bytes (ASCII)
-    const bytes = new TextEncoder().encode(name);
-
-    // Felt[1-3]: Pack 7 ASCII characters per felt (56 bits used)
-    for (let i = 0; i < 3; i++) {
-        const start = i * 7;
-        const end = Math.min(start + 7, bytes.length);
-        const chunk = bytes.slice(start, end);
-
-        let value = 0n;
-        for (let j = 0; j < chunk.length; j++) {
-            value |= BigInt(chunk[j]) << BigInt(j * 8);
-        }
-        felts[i + 1] = new Felt(value);
-    }
-
-    return Word.newFromFelts(felts);
-}
 
 /**
  * Example function for note transactions using a MASM script
@@ -133,7 +86,7 @@ export async function registerName({
         const serialNumber = generateRandomSerialNumber();
 
         const noteType = NoteType.Public;
-        const domainWord = encodeNameToWord(domain);
+        const domainWord = encodeNameToWord(domain, true);
 
         const assets = new FungibleAsset(faucetId, amount);
         const noteAssets = new NoteAssets([assets]);
@@ -149,10 +102,10 @@ export async function registerName({
 
         const noteInputs = new NoteInputs(
             new FeltArray([
-                domainWord.toFelts()[3],
-                domainWord.toFelts()[2],
-                domainWord.toFelts()[1],
                 domainWord.toFelts()[0],
+                domainWord.toFelts()[1],
+                domainWord.toFelts()[2],
+                domainWord.toFelts()[3],
             ])
         );
 

@@ -17,8 +17,10 @@ import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
+import { useWalletAccount } from "@/contexts/WalletAccountContext";
 
 export default function Register() {
+  const { hasRegisteredDomain: walletHasDomain } = useWalletAccount();
   const [searchParams] = useSearchParams();
   const domain = searchParams.get("domain") || "";
   const [years, setYears] = useState<number | string>(1);
@@ -27,6 +29,7 @@ export default function Register() {
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null);
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const { resolvedTheme } = useTheme();
 
   // Get the highlight color based on theme
@@ -203,6 +206,7 @@ export default function Register() {
       // Reset previous states
       setTransactionSubmitted(false);
       setTransactionFailed(false);
+      setIsPurchasing(true);
 
       try {
         await registerName({
@@ -219,6 +223,8 @@ export default function Register() {
       } catch (error) {
         console.error("Registration failed:", error);
         setTransactionFailed(true);
+      } finally {
+        setIsPurchasing(false);
       }
     }
   };
@@ -274,11 +280,11 @@ export default function Register() {
                 <div className="flex justify-center gap-4">
                   <Button
                     onClick={handlePurchase}
-                    disabled={!termsAccepted}
+                    disabled={!termsAccepted || isPurchasing || walletHasDomain}
                     className="px-8 py-2 text-lg bg-primary text-primary-foreground hover:bg-primary/90"
                     size="lg"
                   >
-                    Purchase
+                    {isPurchasing ? "Processing..." : walletHasDomain ? "Wallet Already Has Domain" : "Purchase"}
                   </Button>
                 </div>
               </div>

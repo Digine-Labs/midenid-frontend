@@ -41,6 +41,7 @@ export default function Home() {
       setDebouncedValue(inputValue)
     }, 500) // 500ms delay
 
+
     return () => clearTimeout(timer)
   }, [inputValue])
 

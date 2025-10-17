@@ -1,4 +1,5 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { AlertTriangle, Wallet } from "lucide-react";
 
 interface TransactionStatusAlertsProps {
@@ -10,32 +11,43 @@ export function TransactionStatusAlerts({
   transactionSubmitted,
   transactionFailed,
 }: TransactionStatusAlertsProps) {
-  return (
-    <>
-      {transactionSubmitted && (
-        <Alert className="border-green-600 bg-green-400">
-          <Wallet className="h-5 w-5" color="green" />
-          <AlertTitle className="text-green-900 font-bold">
-            Transaction Submitted
-          </AlertTitle>
-          <AlertDescription className="text-green-800 font-semibold">
-            Please open your Miden wallet to create the transaction and
-            complete your domain registration.
-          </AlertDescription>
-        </Alert>
-      )}
-      {transactionFailed && (
-        <Alert className="border-red-600 bg-red-300">
-          <AlertTriangle className="h-5 w-5" color="red" />
-          <AlertTitle className="text-red-900 font-bold">
-            Transaction Failed
-          </AlertTitle>
-          <AlertDescription className="text-red-800 font-semibold">
-            Transaction could not be created. Please contact the project
-            owners for assistance.
-          </AlertDescription>
-        </Alert>
-      )}
-    </>
-  );
+  useEffect(() => {
+    if (transactionSubmitted) {
+      toast.success("Transaction Submitted", {
+        description: "Please open your Miden wallet to create the transaction and complete your domain registration.",
+        icon: <Wallet className="h-5 w-5" />,
+        duration: 5000,
+        style: {
+          background: "hsl(var(--success-bg))",
+          borderColor: "hsl(var(--success-border))",
+          color: "hsl(var(--success-text))",
+        },
+        classNames: {
+          title: "font-bold",
+          description: "font-semibold",
+        },
+      });
+    }
+  }, [transactionSubmitted]);
+
+  useEffect(() => {
+    if (transactionFailed) {
+      toast.error("Transaction Failed", {
+        description: "Transaction could not be created. Please contact the project owners for assistance.",
+        icon: <AlertTriangle className="h-5 w-5" />,
+        duration: 5000,
+        style: {
+          background: "hsl(var(--destructive-bg))",
+          borderColor: "hsl(var(--destructive-border))",
+          color: "hsl(var(--destructive-text))",
+        },
+        classNames: {
+          title: "font-bold",
+          description: "font-semibold",
+        },
+      });
+    }
+  }, [transactionFailed]);
+
+  return null;
 }

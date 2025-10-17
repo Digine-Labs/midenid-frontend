@@ -1,8 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
+import { encodeNameToWord, isDomainRegistered } from '@/lib/utils'
+import { AccountId } from '@demox-labs/miden-sdk'
+import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
+import { useStorage } from '@/hooks/useStorage'
 
 interface DomainCardProps {
   domain: string
@@ -13,18 +17,51 @@ export function DomainCard({ domain }: DomainCardProps) {
   const [loading, setLoading] = useState(true)
   const [domainAvailable, setDomainAvailable] = useState(false)
 
-  // Simulate domain availability check
-  useEffect(() => {
-    setLoading(true)
-    const checkDomainAvailability = async () => {
-      // Simulate an API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      // For demonstration, let's assume domains with even length are available
-      setDomainAvailable(domain.length % 2 === 0)
-      setLoading(false)
+  const contractId = useMemo(
+    () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
+    []
+  );
+
+  // Encode domain name for storage lookup
+  const storageKey = useMemo(() => {
+    if (!domain) return undefined;
+    try {
+      return encodeNameToWord(domain);
+    } catch (error) {
+      console.error("Failed to encode domain:", error);
+      return undefined;
     }
-    checkDomainAvailability()
-  }, [domain])
+  }, [domain]);
+
+  // Check if domain is registered by querying storage slot 3 (Name -> ID mapping)
+  const { storageItem, isLoading: isCheckingStorage } = useStorage({
+    accountId: contractId,
+    index: 3,
+    key: storageKey
+  });
+
+  // Check registration status
+  const isRegistered = useMemo(() => isDomainRegistered(storageItem), [storageItem]);
+
+
+  // Update domain availability based on storage check
+  useEffect(() => {
+    if (!domain || !storageKey) {
+      setDomainAvailable(false);
+      setLoading(false);
+      return;
+    }
+
+    // Show loading while storage is being fetched
+    if (isCheckingStorage) {
+      setLoading(true);
+      return;
+    }
+
+    // Storage fetch completed, update availability
+    setDomainAvailable(!isRegistered);
+    setLoading(false);
+  }, [domain, storageKey, isCheckingStorage, isRegistered])
 
 
   const handleCardClick = useCallback(() => {
