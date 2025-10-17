@@ -113,6 +113,10 @@
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
+.wallet-adapter-button svg path {
+  fill: hsl(var(--border));
+}
+
 .wallet-adapter-button-trigger {
   background-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
