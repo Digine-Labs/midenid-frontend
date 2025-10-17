@@ -164,6 +164,22 @@ export default function Register() {
     }
   };
 
+  const handleYearsIncrement = () => {
+    const currentYears = typeof years === 'string' ? parseInt(years) || 1 : years;
+    if (currentYears < 10) {
+      setYears(currentYears + 1);
+      setShowYearsTooltip(false);
+    }
+  };
+
+  const handleYearsDecrement = () => {
+    const currentYears = typeof years === 'string' ? parseInt(years) || 1 : years;
+    if (currentYears > 1) {
+      setYears(currentYears - 1);
+      setShowYearsTooltip(false);
+    }
+  };
+
   // Hide tooltip after 3 seconds
   useEffect(() => {
     if (showYearsTooltip) {
@@ -209,7 +225,7 @@ export default function Register() {
   };
 
   return (
-    <div className="pt-14 bg-background min-h-screen">
+    <div className="pt-14 bg-background min-h-screen px-4">
       <main
         className="flex items-center justify-center sm:px-6 lg:px-8"
         style={{ minHeight: "calc(100vh - 3.5rem)" }}
@@ -236,6 +252,8 @@ export default function Register() {
               years={years}
               showYearsTooltip={showYearsTooltip}
               onYearsChange={handleYearsChange}
+              onYearsIncrement={handleYearsIncrement}
+              onYearsDecrement={handleYearsDecrement}
             />
 
             {!connected ? (
@@ -278,7 +296,7 @@ export default function Register() {
                   <Button
                     onClick={handlePurchase}
                     disabled={!termsAccepted}
-                    className="px-4 py-2 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="px-8 py-2 text-lg bg-primary text-primary-foreground hover:bg-primary/90"
                     size="lg"
                   >
                     Purchase
