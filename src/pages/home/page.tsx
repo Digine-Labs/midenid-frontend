@@ -5,12 +5,15 @@ import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/theme-provider'
+import { useNavigate } from 'react-router'
+import { Button } from '@/components/ui/button'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
+  const navigate = useNavigate()
 
   // Use darker green for identity highlight only in dark mode
   const identityColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046'
@@ -55,6 +58,16 @@ export default function Home() {
     }
   }, [showTooltip])
 
+  const handleGoToReceipt = () => {
+    navigate('/register/receipt', {
+      state: {
+        domain: "asd",
+        years: 1,
+        price: 20.00,
+      }
+    })
+  }
+
   return (
     <>
       <TestnetWarningModal />
@@ -68,6 +81,8 @@ export default function Home() {
               One <RoughNotation type="highlight" color={identityColor} strokeWidth={2} iterations={2} show={true} padding={[2, 4]}>name</RoughNotation> to rule them all! Your digital identity across the Miden universe.
             </p>
           </div>
+
+          <Button onClick={handleGoToReceipt}>mock go to receipt</Button>
 
           <div className="w-full space-y-4 ">
             {/*<Card className="bg-yellow-100 border-green-500 rounded-md">

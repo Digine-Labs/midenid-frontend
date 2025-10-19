@@ -11,6 +11,7 @@ import { WalletAccountProvider } from '@/contexts/WalletAccountContext'
 
 const Home = lazy(() => import('@/pages/home/page'))
 const Register = lazy(() => import('@/pages/register/page'))
+const Receipt = lazy(() => import('@/pages/receipt/page'))
 const Identity = lazy(() => import('./pages/identity/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
@@ -52,6 +53,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Register />
+          </Suspense>
+        )
+      },
+      {
+        path: "register/receipt",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Receipt />
           </Suspense>
         )
       },

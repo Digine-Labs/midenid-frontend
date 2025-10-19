@@ -18,6 +18,7 @@ import {
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
 import { useWalletAccount } from "@/contexts/WalletAccountContext";
+import { useNavigate } from "react-router";
 
 export default function Register() {
   const { hasRegisteredDomain: walletHasDomain } = useWalletAccount();
@@ -32,6 +33,7 @@ export default function Register() {
   const [transactionFailed, setTransactionFailed] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const { resolvedTheme } = useTheme();
+  const navigate = useNavigate()
 
   // Get the highlight color based on theme
   const highlightColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046';
@@ -210,10 +212,9 @@ export default function Register() {
       setIsPurchasing(true);
 
       try {
-        // Convert amount (MIDEN) to micro-units (assumes 1 MIDEN = 1_000_000 micro-units)
         const buyAmount = BigInt(1000000) * BigInt(amount);
 
-        await registerName({
+        const result = await registerName({
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           faucetId: faucetId,
@@ -224,6 +225,17 @@ export default function Register() {
         // Reset terms and show wallet prompt
         setTermsAccepted(false);
         setTransactionSubmitted(true);
+
+        if (result.txId) {
+          navigate('/register/receipt', {
+            state: {
+              domain,
+              years: typeof years === 'string' ? parseInt(years) || 1 : years,
+              price: buyAmount
+            }
+          })
+        }
+
       } catch (error) {
         console.error("Registration failed:", error);
         setTransactionFailed(true);
