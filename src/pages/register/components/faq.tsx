@@ -14,7 +14,7 @@ interface FaqItem {
 const faqItems: FaqItem[] = [
   {
     question: "How long does domain registration take?",
-    answer: "Domain registration on Miden.ID is processed instantly once your transaction is confirmed on the blockchain. After payment confirmation, your .miden domain will be immediately available in your wallet and ready to use."
+    answer: "Domain registration on Miden.name is processed instantly once your transaction is confirmed on the blockchain. After payment confirmation, your .miden domain will be immediately available in your wallet and ready to use."
   },
   {
     question: "What happens if I don't renew my domain?",

@@ -1,3 +1,4 @@
+export const MIDEN_ID_CONTRACT_CODE = `
 use.miden::account
 use.miden::note
 use.std::sys
@@ -538,3 +539,4 @@ proc._validate_payment_old
         assert.err=WRONG_AMOUNT_PAID
     end
 end
+`;

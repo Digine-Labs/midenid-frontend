@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { Breadcrumb } from "../register/components/breadcrumb"
+import { formatBalance } from '@/utils'
 
 interface LocationState {
     domain: string
     years: number
     price: string
+    noteId: string
 }
 
 export default function Receipt() {
@@ -27,7 +29,7 @@ export default function Receipt() {
         return null
     }
 
-    const { domain, years, price } = state
+    const { domain, years, price, noteId } = state
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 py-8">
@@ -62,11 +64,24 @@ export default function Receipt() {
 
                                 <div className="flex justify-between items-center min-h-9">
                                     <span className="text-muted-foreground">Total Paid:</span>
-                                    <span className="font-semibold text-lg text-primary">{price} MIDEN</span>
+                                    <span className="font-semibold text-lg text-primary">{formatBalance(BigInt(price))} MIDEN</span>
                                 </div>
                             </div>
 
                             <div className="flex gap-3 mt-8">
+                                <Button
+                                    className="flex-1"
+                                    variant={"outline"}
+                                    asChild
+                                >
+                                    <a
+                                        href={`https://testnet.midenscan.com/note/${noteId}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Check Note in Midenscan
+                                    </a>
+                                </Button>
 
                                 <Button
                                     className="flex-1"
