@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router'
+import { useNavigate, useLocation, Link } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2 } from 'lucide-react'
@@ -10,6 +10,7 @@ interface LocationState {
     domain: string
     years: number
     price: string
+    noteId: string
 }
 
 export default function Receipt() {
@@ -28,7 +29,7 @@ export default function Receipt() {
         return null
     }
 
-    const { domain, years, price } = state
+    const { domain, years, price, noteId } = state
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 py-8">
@@ -68,6 +69,19 @@ export default function Receipt() {
                             </div>
 
                             <div className="flex gap-3 mt-8">
+                                <Button
+                                    className="flex-1"
+                                    variant={"outline"}
+                                    asChild
+                                >
+                                    <a
+                                        href={`https://testnet.midenscan.com/note/${noteId}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Check Note in Midenscan
+                                    </a>
+                                </Button>
 
                                 <Button
                                     className="flex-1"

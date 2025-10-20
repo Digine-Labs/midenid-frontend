@@ -226,12 +226,13 @@ export default function Register() {
         setTermsAccepted(false);
         setTransactionSubmitted(true);
 
-        if (result.txId) {
+        if (result.txId && result.noteId) {
           navigate('/register/receipt', {
             state: {
               domain,
               years: typeof years === 'string' ? parseInt(years) || 1 : years,
-              price: buyAmount
+              price: buyAmount,
+              noteId: result.noteId
             }
           })
         }

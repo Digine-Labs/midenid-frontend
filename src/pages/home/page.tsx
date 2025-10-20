@@ -64,6 +64,7 @@ export default function Home() {
         domain: "asd",
         years: 1,
         price: BigInt(1000000),
+        noteId: "0xc1c6d5f344ad15d062d1fd17372137fbfcde7848374d4c876627271c552d5687"
       }
     })
   }

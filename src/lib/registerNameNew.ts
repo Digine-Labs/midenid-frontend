@@ -1,8 +1,10 @@
 import {
     AccountId,
+    AccountStorageRequirements,
     AssemblerUtils,
     Felt,
     FeltArray,
+    ForeignAccount,
     FungibleAsset,
     Note,
     NoteAssets,
@@ -24,7 +26,7 @@ import {
 } from "@demox-labs/miden-wallet-adapter";
 import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
 import { encodeDomain } from '@/utils';
-import { MIDEN_NAMING_CONTRACT_CODE, REGISTER_NAME_NOTE } from '@/shared';
+import { MIDEN_NAMING_CONTRACT_CODE, REGISTER_NAME_NOTE, PRICING_ACCOUNT_ADDRESS } from '@/shared';
 
 export interface NoteFromMasmParams {
     senderAccountId: AccountId;
@@ -63,6 +65,12 @@ export async function registerNameNew({
         const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
         console.log("registerName Current block number: ", (await client.syncState()).blockNum());
 
+        // this constant(PRICING_ACCOUNT_ADDRESS) needs to be changed when pricing contract is deployed
+        let pricingAccountId = AccountId.fromHex(PRICING_ACCOUNT_ADDRESS)
+
+        let storageRequirements = new AccountStorageRequirements()
+
+        let foreignAccount = ForeignAccount.public(pricingAccountId, storageRequirements)
 
         let assembler = TransactionKernel.assembler();
 
@@ -119,7 +127,7 @@ export async function registerNameNew({
         const noteId = note.id().toString();
 
         let transactionRequest = new TransactionRequestBuilder()
-            .withOwnOutputNotes(new OutputNotesArray([OutputNote.full(note)]))
+            .withOwnOutputNotes(new OutputNotesArray([OutputNote.full(note)])).withForeignAccounts([foreignAccount])
             .build();
 
         await client.syncState();
