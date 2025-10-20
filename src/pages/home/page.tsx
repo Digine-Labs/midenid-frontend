@@ -63,7 +63,7 @@ export default function Home() {
       state: {
         domain: "asd",
         years: 1,
-        price: 20.00,
+        price: BigInt(1000000),
       }
     })
   }

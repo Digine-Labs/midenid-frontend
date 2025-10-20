@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { Breadcrumb } from "../register/components/breadcrumb"
+import { formatBalance } from '@/utils'
 
 interface LocationState {
     domain: string
@@ -62,7 +63,7 @@ export default function Receipt() {
 
                                 <div className="flex justify-between items-center min-h-9">
                                     <span className="text-muted-foreground">Total Paid:</span>
-                                    <span className="font-semibold text-lg text-primary">{price} MIDEN</span>
+                                    <span className="font-semibold text-lg text-primary">{formatBalance(BigInt(price))} MIDEN</span>
                                 </div>
                             </div>
 

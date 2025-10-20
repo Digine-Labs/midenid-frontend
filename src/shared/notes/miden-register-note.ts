@@ -1,3 +1,4 @@
+export const REGISTER_NOTE_SCRIPT = `
 use.miden_id::registry
 use.miden::note
 use.std::sys
@@ -17,3 +18,4 @@ begin
     call.registry::register_name
     exec.sys::truncate_stack
 end
+`;
