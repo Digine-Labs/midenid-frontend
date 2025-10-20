@@ -5,15 +5,12 @@ import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/theme-provider'
-import { useNavigate } from 'react-router'
-import { Button } from '@/components/ui/button'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
-  const navigate = useNavigate()
 
   // Use darker green for identity highlight only in dark mode
   const identityColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046'
@@ -23,12 +20,12 @@ export default function Home() {
     // Check if there are any invalid characters
     const hasInvalidChars = /[^a-zA-Z0-9]/.test(value)
 
-    // Extract only valid characters and limit to 21 characters using regex
-    const match = value.match(/[a-zA-Z0-9]{0,21}/)
+    // Extract only valid characters and limit to 20 characters using regex
+    const match = value.match(/[a-zA-Z0-9]{0,20}/)
     const filteredValue = match ? match[0] : ''
 
     // Check if length was exceeded
-    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > 21
+    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > 20
 
     setInputValue(filteredValue)
 
@@ -44,7 +41,6 @@ export default function Home() {
       setDebouncedValue(inputValue)
     }, 500) // 500ms delay
 
-
     return () => clearTimeout(timer)
   }, [inputValue])
 
@@ -58,16 +54,16 @@ export default function Home() {
     }
   }, [showTooltip])
 
-  const handleGoToReceipt = () => {
-    navigate('/register/receipt', {
-      state: {
-        domain: "asd",
-        years: 1,
-        price: BigInt(1000000),
-        noteId: "0xc1c6d5f344ad15d062d1fd17372137fbfcde7848374d4c876627271c552d5687"
-      }
-    })
-  }
+  // const handleMockGoToReceipt = () => {
+  //   navigate('/register/receipt', {
+  //     state: {
+  //       domain: "asd",
+  //       years: 1,
+  //       price: BigInt(1000000),
+  //       noteId: "0xc1c6d5f344ad15d062d1fd17372137fbfcde7848374d4c876627271c552d5687"
+  //     }
+  //   })
+  // }
 
   return (
     <>
@@ -82,8 +78,6 @@ export default function Home() {
               One <RoughNotation type="highlight" color={identityColor} strokeWidth={2} iterations={2} show={true} padding={[2, 4]}>name</RoughNotation> to rule them all! Your digital identity across the Miden universe.
             </p>
           </div>
-
-          <Button onClick={handleGoToReceipt}>mock go to receipt</Button>
 
           <div className="w-full space-y-4 ">
             {/*<Card className="bg-yellow-100 border-green-500 rounded-md">

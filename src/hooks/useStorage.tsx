@@ -1,6 +1,6 @@
 import { type AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
-import { useEffect, useState } from 'react';
-import { safeAccountImport } from '@/lib/midenClient';
+import { useEffect, useState, useMemo } from 'react';
+import { instantiateClient } from '@/lib/midenClient';
 
 interface StorageParams {
     readonly accountId: AccountId;
@@ -10,22 +10,42 @@ interface StorageParams {
 
 const getStorageItemFromClient = async (client: WebClient, accountId: AccountId, index: number) => {
     try {
-        const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
-        const item = acc?.storage().getItem(index)
+        const acc = await client.getAccount(accountId)
+        if (!acc) {
+            console.warn("Account not found after import");
+            return undefined;
+        }
+        const storage = acc.storage();
+        if (!storage) {
+            console.warn("Account storage is not available");
+            return undefined;
+        }
+        const item = storage.getItem(index)
         return item
     } catch (e) {
         console.warn("Error from getting storage item", e)
+        return undefined;
     }
 
 }
 
 const getStorageMapItemFromClient = async (client: WebClient, accountId: AccountId, index: number, key: Word) => {
     try {
-        const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
-        const item = acc?.storage().getMapItem(index, key)
+        const acc = await client.getAccount(accountId)
+        if (!acc) {
+            console.warn("Account not found after import");
+            return undefined;
+        }
+        const storage = acc.storage();
+        if (!storage) {
+            console.warn("Account storage is not available");
+            return undefined;
+        }
+        const item = storage.getMapItem(index, key)
         return item
     } catch (e) {
         console.warn("Error from getting map item", e)
+        return undefined;
     }
 
 }
@@ -38,53 +58,88 @@ export const useStorage = (
     const [storageU64s, setStorageU64s] = useState<BigUint64Array | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Safely serialize key to hex for stable dependency comparison
+    const keyHex = useMemo(() => {
+        if (!key) return undefined;
+        try {
+            return key.toHex();
+        } catch (e) {
+            console.warn("Failed to serialize key:", e);
+            return undefined;
+        }
+    }, [key]);
+
     useEffect(() => {
+        let isCancelled = false;
+
         const initAndFetch = async () => {
-            const nodeEndpoint = "https://rpc.testnet.miden.io";
-            const client = await WebClient.createClient(nodeEndpoint);
-            console.log("Current block number: ", (await client.syncState()).blockNum());
+            setIsLoading(true);
 
-            if (!client || !accountId) return;
+            // If key was provided but serialization failed, skip fetch
+            if (key !== undefined && keyHex === undefined) {
+                console.warn("Key provided but serialization failed, skipping storage fetch");
+                if (!isCancelled) {
+                    setIsLoading(false);
+                    setStorageItem(undefined);
+                    setStorageHex(undefined);
+                    setStorageU64s(undefined);
+                }
+                return;
+            }
 
-            const fetchStorage = async () => {
-                setIsLoading(true);
+            let client: WebClient | null = null;
+
+            try {
+                client = await instantiateClient({ accountsToImport: [accountId] });
+
+                if (!client || !accountId || isCancelled) return;
+
                 await client.syncState();
-                try {
-                    let item;
-                    if (key !== undefined) {
-                        // If key is provided, get map item
-                        item = await getStorageMapItemFromClient(client, accountId, index, key);
-                    } else {
-                        // If key is not provided, get regular storage item
-                        item = await getStorageItemFromClient(client, accountId, index);
-                    }
 
-                    setStorageItem(item);
+                let item;
+                if (key !== undefined) {
+                    // If key is provided, get map item
+                    item = await getStorageMapItemFromClient(client, accountId, index, key);
+                } else {
+                    // If key is not provided, get regular storage item
+                    item = await getStorageItemFromClient(client, accountId, index);
+                }
 
-                    // Convert Word to JavaScript types
-                    if (item) {
-                        setStorageHex(item.toHex());
-                        setStorageU64s(item.toU64s());
-                    } else {
-                        setStorageHex(undefined);
-                        setStorageU64s(undefined);
-                    }
-                } catch (error) {
+                if (isCancelled) return;
+
+                setStorageItem(item);
+
+                // Convert Word to JavaScript types
+                if (item) {
+                    setStorageHex(item.toHex());
+                    setStorageU64s(item.toU64s());
+                } else {
+                    setStorageHex(undefined);
+                    setStorageU64s(undefined);
+                }
+            } catch (error) {
+                if (!isCancelled) {
                     console.error('Failed to fetch storage:', error);
                     setStorageItem(undefined);
                     setStorageHex(undefined);
                     setStorageU64s(undefined);
-                } finally {
+                }
+            } finally {
+                if (!isCancelled) {
                     setIsLoading(false);
                 }
-            };
-
-            // Fetch immediately on mount
-            await fetchStorage();
+                if (client) {
+                    client.terminate();
+                }
+            }
         };
 
         initAndFetch();
-    }, [accountId, index, key]);
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [accountId, index, keyHex]); // Include keyHex so effect reruns when key changes
 
     return {
         storageItem,      // Raw Word object
