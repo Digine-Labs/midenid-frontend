@@ -24,8 +24,7 @@ import {
 } from "@demox-labs/miden-wallet-adapter";
 import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
 import { encodeNameToWord } from '@/utils';
-import { MIDEN_ID_CONTRACT_CODE } from '@/shared/contracts/miden-contract';
-import { REGISTER_NOTE_SCRIPT } from '@/shared/notes/miden-register-note';
+import { MIDEN_ID_CONTRACT_CODE, REGISTER_NOTE_SCRIPT } from '@/shared';
 
 export interface NoteFromMasmParams {
     senderAccountId: AccountId;
