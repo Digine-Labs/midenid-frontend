@@ -29,7 +29,7 @@ export default function Receipt() {
         return null
     }
 
-    const { domain, years, price, noteId } = state
+    const { domain, years, price } = state
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 py-8">
