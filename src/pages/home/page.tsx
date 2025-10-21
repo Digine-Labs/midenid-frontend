@@ -20,12 +20,12 @@ export default function Home() {
     // Check if there are any invalid characters
     const hasInvalidChars = /[^a-zA-Z0-9]/.test(value)
 
-    // Extract only valid characters and limit to 21 characters using regex
-    const match = value.match(/[a-zA-Z0-9]{0,21}/)
+    // Extract only valid characters and limit to 20 characters using regex
+    const match = value.match(/[a-zA-Z0-9]{0,20}/)
     const filteredValue = match ? match[0] : ''
 
     // Check if length was exceeded
-    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > 21
+    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > 20
 
     setInputValue(filteredValue)
 
@@ -41,7 +41,6 @@ export default function Home() {
       setDebouncedValue(inputValue)
     }, 500) // 500ms delay
 
-
     return () => clearTimeout(timer)
   }, [inputValue])
 
@@ -54,6 +53,17 @@ export default function Home() {
       return () => clearTimeout(timer)
     }
   }, [showTooltip])
+
+  // const handleMockGoToReceipt = () => {
+  //   navigate('/register/receipt', {
+  //     state: {
+  //       domain: "asd",
+  //       years: 1,
+  //       price: BigInt(1000000),
+  //       noteId: "0xc1c6d5f344ad15d062d1fd17372137fbfcde7848374d4c876627271c552d5687"
+  //     }
+  //   })
+  // }
 
   return (
     <>

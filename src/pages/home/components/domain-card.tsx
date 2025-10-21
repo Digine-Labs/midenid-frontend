@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
-import { encodeNameToWord, isDomainRegistered } from '@/lib/utils'
+import { encodeNameToWord, isDomainRegistered } from '@/utils'
 import { AccountId } from '@demox-labs/miden-sdk'
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
 import { useStorage } from '@/hooks/useStorage'
@@ -83,11 +83,11 @@ export function DomainCard({ domain }: DomainCardProps) {
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : domainAvailable ? (
-            <Badge variant="secondary" className="bg-primary text-green-800 hover:text-white hover:bg-secondary">
+            <Badge variant="secondary" className="bg-primary text-green-800">
               Available
             </Badge>
           ) : (
-            <Badge variant="secondary" className="bg-red-200 text-red-800 hover:text-white hover:bg-red-500">
+            <Badge variant="secondary" className="bg-red-200 text-red-800">
               Unavailable
             </Badge>
           )}

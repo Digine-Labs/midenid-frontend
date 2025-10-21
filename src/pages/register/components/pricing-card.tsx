@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
 import { useBalance } from '@/hooks/useBalance'
 import { bech32ToAccountId } from '@/lib/midenClient'
-import { formatBalance } from '@/lib/utils'
+import { formatBalance } from '@/utils'
 import { MIDEN_FAUCET_ID_BECH32 } from '@/shared/constants'
 import { TermsModal } from './terms-modal'
 

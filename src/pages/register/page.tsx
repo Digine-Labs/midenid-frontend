@@ -8,7 +8,7 @@ import { Faq } from "./components/faq";
 import { Breadcrumb } from "./components/breadcrumb";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { registerName } from "@/lib/registerName";
-import { bech32ToAccountId } from "@/lib/midenClient";
+import { bech32ToAccountId, hasRegisteredDomain } from "@/lib/midenClient";
 import { AccountId } from "@demox-labs/miden-sdk";
 import { TransactionStatusAlerts } from "./components/transaction-status-alerts";
 import { RoughNotation } from "react-rough-notation";
@@ -18,6 +18,7 @@ import {
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
 import { useWalletAccount } from "@/contexts/WalletAccountContext";
+import { useNavigate } from "react-router";
 
 export default function Register() {
   const { hasRegisteredDomain: walletHasDomain } = useWalletAccount();
@@ -32,6 +33,7 @@ export default function Register() {
   const [transactionFailed, setTransactionFailed] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const { resolvedTheme } = useTheme();
+  const navigate = useNavigate()
 
   // Get the highlight color based on theme
   const highlightColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046';
@@ -210,10 +212,9 @@ export default function Register() {
       setIsPurchasing(true);
 
       try {
-        // Convert amount (MIDEN) to micro-units (assumes 1 MIDEN = 1_000_000 micro-units)
         const buyAmount = BigInt(1000000) * BigInt(amount);
 
-        await registerName({
+        const result = await registerName({
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           faucetId: faucetId,
@@ -224,6 +225,18 @@ export default function Register() {
         // Reset terms and show wallet prompt
         setTermsAccepted(false);
         setTransactionSubmitted(true);
+
+        if (result.txId && result.noteId && await hasRegisteredDomain(accountId)) {
+          navigate('/register/receipt', {
+            state: {
+              domain,
+              years: typeof years === 'string' ? parseInt(years) || 1 : years,
+              price: buyAmount,
+              noteId: result.noteId
+            }
+          })
+        }
+
       } catch (error) {
         console.error("Registration failed:", error);
         setTransactionFailed(true);
@@ -289,14 +302,14 @@ export default function Register() {
                     className="px-8 py-2 text-lg bg-primary text-primary-foreground hover:bg-primary/90"
                     size="lg"
                   >
-                    {isPurchasing ? "Processing..." : walletHasDomain ? "Wallet Already Has Domain" : "Purchase"}
+                    {isPurchasing ? "Processing..." : walletHasDomain ? "Wallet Already Has a Domain" : "Purchase"}
                   </Button>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="my-12">
+          <div className="my-12 min-h-[400px]">
             <Faq />
           </div>
         </div>

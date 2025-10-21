@@ -1,8 +1,10 @@
 import {
     AccountId,
+    AccountStorageRequirements,
     AssemblerUtils,
     Felt,
     FeltArray,
+    ForeignAccount,
     FungibleAsset,
     Note,
     NoteAssets,
@@ -23,8 +25,8 @@ import {
     TransactionType,
 } from "@demox-labs/miden-wallet-adapter";
 import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
-import { encodeNameToWord } from '@/utils';
-import { MIDEN_ID_CONTRACT_CODE, REGISTER_NOTE_SCRIPT } from '@/shared';
+import { encodeDomain } from '@/utils';
+import { MIDEN_NAMING_CONTRACT_CODE, REGISTER_NAME_NOTE, PRICING_ACCOUNT_ADDRESS } from '@/shared';
 
 export interface NoteFromMasmParams {
     senderAccountId: AccountId;
@@ -46,7 +48,7 @@ export interface NoteFromMasmParams {
  * @returns Transaction ID and Note ID string that can be used to view on MidenScan
  * @throws {Error} If transfer fails
  */
-export async function registerName({
+export async function registerNameNew({
     senderAccountId,
     destinationAccountId,
     faucetId,
@@ -56,25 +58,31 @@ export async function registerName({
 }: NoteFromMasmParams): Promise<{ txId: string; noteId: string }> {
     if (typeof window === "undefined") {
         console.warn("webClient() can only run in the browser");
-        return { txId: "N/A", noteId: "N/A" };
+        return { txId: "", noteId: "" };
     }
 
     try {
         const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
         console.log("registerName Current block number: ", (await client.syncState()).blockNum());
 
+        // this constant(PRICING_ACCOUNT_ADDRESS) needs to be changed when pricing contract is deployed
+        let pricingAccountId = AccountId.fromHex(PRICING_ACCOUNT_ADDRESS)
+
+        let storageRequirements = new AccountStorageRequirements()
+
+        let foreignAccount = ForeignAccount.public(pricingAccountId, storageRequirements)
 
         let assembler = TransactionKernel.assembler();
 
         let registerComponentLib = AssemblerUtils.createAccountComponentLibrary(
             assembler,
-            "miden_id::registry",
-            MIDEN_ID_CONTRACT_CODE
+            "miden_name::naming",
+            MIDEN_NAMING_CONTRACT_CODE
         );
 
         let script = assembler.withDebugMode(true)
             .withLibrary(registerComponentLib)
-            .compileNoteScript(REGISTER_NOTE_SCRIPT);
+            .compileNoteScript(REGISTER_NAME_NOTE);
 
         // Sync state to get latest blockchain data
         await client.syncState();
@@ -83,11 +91,11 @@ export async function registerName({
         const serialNumber = generateRandomSerialNumber();
 
         const noteType = NoteType.Public;
-        const domainWord = encodeNameToWord(domain, true);
+        const domainWord = encodeDomain(domain);
 
         const assets = new FungibleAsset(faucetId, amount);
         const noteAssets = new NoteAssets([assets]);
-        const noteTag = NoteTag.fromAccountId(destinationAccountId);
+        const noteTag = NoteTag.fromAccountId(senderAccountId);
 
         const noteMetadata = new NoteMetadata(
             senderAccountId,
@@ -99,6 +107,10 @@ export async function registerName({
 
         const noteInputs = new NoteInputs(
             new FeltArray([
+                faucetId.suffix(),
+                faucetId.prefix(),
+                new Felt(BigInt(0)),
+                new Felt(BigInt(0)),
                 domainWord.toFelts()[0],
                 domainWord.toFelts()[1],
                 domainWord.toFelts()[2],
@@ -115,7 +127,7 @@ export async function registerName({
         const noteId = note.id().toString();
 
         let transactionRequest = new TransactionRequestBuilder()
-            .withOwnOutputNotes(new OutputNotesArray([OutputNote.full(note)]))
+            .withOwnOutputNotes(new OutputNotesArray([OutputNote.full(note)])).withForeignAccounts([foreignAccount])
             .build();
 
         await client.syncState();
