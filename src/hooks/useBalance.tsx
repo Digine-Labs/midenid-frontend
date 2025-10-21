@@ -31,7 +31,6 @@ export const useBalance = (
 
             const nodeEndpoint = "https://rpc.testnet.miden.io";
             const client = await WebClient.createClient(nodeEndpoint);
-            console.log("Current block number: ", (await client.syncState()).blockNum());
 
             const refreshBalance = async () => {
                 if (!isActive) return;

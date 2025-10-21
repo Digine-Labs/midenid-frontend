@@ -95,7 +95,6 @@ export async function isNoteCommitted(accountId: AccountId, noteId: string): Pro
 export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean> {
   const maxAttempts = 30 // 30 attempts * 2 seconds = 60 seconds
   let attempts = 0
-  console.log("started")
 
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
 
@@ -122,15 +121,12 @@ export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean
     const hasDomain = checkHasRegisteredDomain(domainWord);
 
     if (hasDomain) {
-      console.log(`✅ Domain registered to ${accountId}`)
       return true
     }
 
-    console.log(`Domain for ${accountId} not found. Waiting...`)
     await new Promise(resolve => setTimeout(resolve, 2000))
     attempts++
   }
 
-  console.log(`❌ Domain for ${accountId} not found after 60 seconds`)
   return false
 }

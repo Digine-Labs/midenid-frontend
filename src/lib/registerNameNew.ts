@@ -63,7 +63,6 @@ export async function registerNameNew({
 
     try {
         const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
-        console.log("registerName Current block number: ", (await client.syncState()).blockNum());
 
         // this constant(PRICING_ACCOUNT_ADDRESS) needs to be changed when pricing contract is deployed
         let pricingAccountId = AccountId.fromHex(PRICING_ACCOUNT_ADDRESS)

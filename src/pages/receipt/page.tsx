@@ -69,7 +69,7 @@ export default function Receipt() {
                             </div>
 
                             <div className="flex gap-3 mt-8">
-                                <Button
+                                {/* <Button
                                     className="flex-1"
                                     variant={"outline"}
                                     asChild
@@ -81,7 +81,7 @@ export default function Receipt() {
                                     >
                                         Check Note in Midenscan
                                     </a>
-                                </Button>
+                                </Button> */}
 
                                 <Button
                                     className="flex-1"

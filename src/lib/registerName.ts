@@ -61,8 +61,6 @@ export async function registerName({
 
     try {
         const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
-        console.log("registerName Current block number: ", (await client.syncState()).blockNum());
-
 
         let assembler = TransactionKernel.assembler();
 
@@ -120,10 +118,6 @@ export async function registerName({
 
         await client.syncState();
 
-        // let txResult = await client.newTransaction(senderAccountId, transactionRequest)
-
-        // await client.submitTransaction(txResult)
-
         const tx = new CustomTransaction(
             accountIdToBech32(senderAccountId), // from
             accountIdToBech32(destinationAccountId), // to
@@ -136,8 +130,6 @@ export async function registerName({
             type: TransactionType.Custom,
             payload: tx,
         });
-
-        console.log("Transaction submitted. ID:", txId, "Note ID:", noteId);
 
         return { txId, noteId };
     } catch (error) {
