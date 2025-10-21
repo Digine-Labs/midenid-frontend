@@ -18,9 +18,9 @@ export function TransactionStatusAlerts({
         icon: <Wallet className="h-5 w-5" />,
         duration: 5000,
         style: {
-          background: "hsl(var(--success-bg))",
-          borderColor: "hsl(var(--success-border))",
-          color: "hsl(var(--success-text))",
+          background: "var(--success-bg)",
+          borderColor: "var(--success-border)",
+          color: "var(--success-text)",
         },
         classNames: {
           title: "font-bold",

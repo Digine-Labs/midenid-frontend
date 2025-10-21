@@ -8,7 +8,7 @@ import { Faq } from "./components/faq";
 import { Breadcrumb } from "./components/breadcrumb";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { registerName } from "@/lib/registerName";
-import { bech32ToAccountId } from "@/lib/midenClient";
+import { bech32ToAccountId, hasRegisteredDomain } from "@/lib/midenClient";
 import { AccountId } from "@demox-labs/miden-sdk";
 import { TransactionStatusAlerts } from "./components/transaction-status-alerts";
 import { RoughNotation } from "react-rough-notation";
@@ -226,7 +226,7 @@ export default function Register() {
         setTermsAccepted(false);
         setTransactionSubmitted(true);
 
-        if (result.txId && result.noteId) {
+        if (result.txId && result.noteId && await hasRegisteredDomain(accountId)) {
           navigate('/register/receipt', {
             state: {
               domain,
@@ -302,14 +302,14 @@ export default function Register() {
                     className="px-8 py-2 text-lg bg-primary text-primary-foreground hover:bg-primary/90"
                     size="lg"
                   >
-                    {isPurchasing ? "Processing..." : walletHasDomain ? "Wallet Already Has Domain" : "Purchase"}
+                    {isPurchasing ? "Processing..." : walletHasDomain ? "Wallet Already Has a Domain" : "Purchase"}
                   </Button>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="my-12">
+          <div className="my-12 min-h-[400px]">
             <Faq />
           </div>
         </div>

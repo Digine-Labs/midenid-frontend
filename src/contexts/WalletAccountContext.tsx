@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react';
 import { AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
 import { bech32ToAccountId, safeAccountImport } from '@/lib/midenClient';
-import { encodeAccountIdToWord, hasRegisteredDomain as checkHasRegisteredDomain } from '@/utils';
+import { encodeAccountIdToWord, hasRegisteredDomain as checkHasRegisteredDomain, decodeDomainFromWordOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS, MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
 
 interface WalletAccountContextValue {
@@ -100,7 +100,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
         // Decode domain name if exists
         if (hasDomain && domainWord) {
           try {
-            const domain = decodeDomainFromWord(domainWord);
+            const domain = decodeDomainFromWordOld(domainWord);
             setRegisteredDomain(domain);
           } catch (error) {
             console.error('Failed to decode domain:', error);
@@ -167,38 +167,3 @@ export function useWalletAccount() {
   return context;
 }
 
-/**
- * Decodes a domain name from a Word stored in slot 4 (ID -> Name mapping).
- *
- * Format: Word[length, chars_1-7, chars_8-14, chars_15-20]
- */
-function decodeDomainFromWord(word: Word): string {
-  const felts = word.toFelts();
-
-  // Length is in the last felt (reversed storage)
-  const length = Number(felts[3].asInt());
-
-  if (length === 0) {
-    return '';
-  }
-
-  const bytes: number[] = [];
-
-  // Decode 3 character chunks (7 chars each)
-  for (let i = 0; i < 3; i++) {
-    const feltValue = felts[2 - i].asInt();
-
-    for (let j = 0; j < 7; j++) {
-      if (bytes.length >= length) break;
-
-      const byte = Number((feltValue >> BigInt(j * 8)) & 0xFFn);
-      if (byte !== 0) {
-        bytes.push(byte);
-      }
-    }
-
-    if (bytes.length >= length) break;
-  }
-
-  return new TextDecoder().decode(new Uint8Array(bytes));
-}
