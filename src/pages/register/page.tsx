@@ -309,7 +309,7 @@ export default function Register() {
             )}
           </div>
 
-          <div className="my-12 min-h-[400px]">
+          <div className="my-12 min-h-[500px]">
             <Faq />
           </div>
         </div>
