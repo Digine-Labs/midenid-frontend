@@ -91,8 +91,8 @@ export default function Identity() {
   }
 
   return (
-    <main className="flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 bg-[#F2F2F2] min-h-screen">
-      <div className="w-full max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl">
+    <main className="relative flex items-center justify-center pt-20 px-4 sm:px-6 lg:px-8 bg-background min-h-screen " style={{ minHeight: "calc(100vh - 3.5rem)" }}>
+      <div className="w-full md:max-w-3xl">
         <div className="space-y-2 mb-6 text-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold md:tracking-tight">
             Your Miden Identity
@@ -102,7 +102,7 @@ export default function Identity() {
           </p>
         </div>
 
-        <Card className="p-4 sm:p-6 bg-gray-50">
+        <Card className="p-4 sm:p-6 bg-card">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Image Upload */}

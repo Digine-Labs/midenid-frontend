@@ -42,6 +42,14 @@ export function MobileSidebar() {
               </Link>
             </SheetClose>
             <SheetClose asChild>
+              <Link
+                to="/my-domains"
+                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
+              >
+                My Domains
+              </Link>
+            </SheetClose>
+            <SheetClose asChild>
               <a
                 href="https://docs.miden.name/"
                 target="_blank"

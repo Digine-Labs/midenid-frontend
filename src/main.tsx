@@ -13,6 +13,7 @@ const Home = lazy(() => import('@/pages/home/page'))
 const Register = lazy(() => import('@/pages/register/page'))
 const Receipt = lazy(() => import('@/pages/receipt/page'))
 const Identity = lazy(() => import('./pages/identity/page.tsx'))
+const MyDomains = lazy(() => import('./pages/myDomains/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
 const PageLoader = () => (
@@ -61,6 +62,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Receipt />
+          </Suspense>
+        )
+      },
+      {
+        path: "my-domains",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <MyDomains />
           </Suspense>
         )
       },

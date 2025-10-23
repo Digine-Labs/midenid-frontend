@@ -38,6 +38,9 @@ export function SiteHeader() {
               <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
                 Home
               </Link>
+              <Link to="/my-domains" className="text-sm font-medium hover:text-primary transition-colors">
+                My Domains
+              </Link>
               <div className="relative cursor-pointer text-sm font-medium text-gray-300 dark:text-gray-500">
                 Identity
                 <span className="absolute -top-2 -right-4 text-[8px] font-semibold text-primary">
