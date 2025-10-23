@@ -110,7 +110,7 @@ export default function MyDomains() {
                                     <span className="text-2xl">
                                         {registeredDomain}<span className="text-primary">.miden</span>
                                     </span>
-                                    <Badge variant="default" className="bg-green-600 hover:bg-green-600">
+                                    <Badge variant="secondary" className="bg-primary text-green-800">
                                         Active
                                     </Badge>
                                 </CardTitle>
