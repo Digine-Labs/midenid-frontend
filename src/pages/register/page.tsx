@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { useWallet } from "@demox-labs/miden-wallet-adapter";
 import { Button } from "@/components/ui/button";
-import { PricingCard } from "./components/pricing-card";
+//import { PricingCard } from "./components/pricing-card";
 import { DomainDetailsCard } from "./components/domain-details-card";
 import { Faq } from "./components/faq";
 import { Breadcrumb } from "./components/breadcrumb";
@@ -27,7 +27,7 @@ export default function Register() {
   const [years, setYears] = useState<number | string>(1);
   const [showYearsTooltip, setShowYearsTooltip] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [amount, setAmount] = useState(1);
+  const [amount] = useState(1);
   const [emptyInputTimer, setEmptyInputTimer] = useState<number | null>(null);
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);

@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Button } from '@/components/ui/button'
-import { Minus, Plus } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+//import { Input } from '@/components/ui/input'
+//import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+//import { Button } from '@/components/ui/button'
+//import { Minus, Plus } from 'lucide-react'
 import { GradientText } from '@/components/ui/shadcn-io/gradient-text'
 import { useEffect, useState } from 'react'
-import { HighlightText } from "@/components/ui/shadcn-io/highlight-text"
+//import { HighlightText } from "@/components/ui/shadcn-io/highlight-text"
 import { SlidingNumber } from '@/components/ui/shadcn-io/sliding-number'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TermsModal } from './terms-modal'
@@ -25,7 +25,7 @@ interface DomainDetailsCardProps {
   termsAccepted: boolean
 }
 
-export function DomainDetailsCard({ domain, years, showYearsTooltip, onYearsChange, onYearsIncrement, onYearsDecrement, tokenAmount = 100, tokenName = 'MIDEN', onTokenChange, onTermsChange, termsAccepted }: DomainDetailsCardProps) {
+export function DomainDetailsCard({ domain, tokenAmount = 100, tokenName = 'MIDEN', onTokenChange, onTermsChange, termsAccepted }: DomainDetailsCardProps) {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   
   const [isDark, setIsDark] = useState(false)
@@ -89,19 +89,19 @@ export function DomainDetailsCard({ domain, years, showYearsTooltip, onYearsChan
   // Light mode: primary (#0FE046) to darker greens
   const gradientLight = "linear-gradient(90deg, #0FE046 0%, #11B83D 25%, #08CB00 50%, #11B83D 75%, #0FE046 100%)"
 
-  const handleIncrement = () => {
-    const currentYears = typeof years === 'string' ? parseInt(years) || 1 : years
-    if (currentYears < 10) {
-      onYearsIncrement?.()
-    }
-  }
-
-  const handleDecrement = () => {
-    const currentYears = typeof years === 'string' ? parseInt(years) || 1 : years
-    if (currentYears > 1) {
-      onYearsDecrement?.()
-    }
-  }
+  //const handleIncrement = () => {
+  //  const currentYears = typeof years === 'string' ? parseInt(years) || 1 : years
+  //  if (currentYears < 10) {
+  //    onYearsIncrement?.()
+  //  }
+  //}
+//
+  //const handleDecrement = () => {
+  //  const currentYears = typeof years === 'string' ? parseInt(years) || 1 : years
+  //  if (currentYears > 1) {
+  //    onYearsDecrement?.()
+  //  }
+  //}
 
   const domainElement = (
     <>
