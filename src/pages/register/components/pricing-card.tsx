@@ -96,7 +96,7 @@ export function PricingCard({ domain, years, termsAccepted, onTermsChange, onAmo
   });
 
   return (
-    <Card className="bg-card border-primary">
+    <Card className="bg-card border-none">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">Pricing Details</CardTitle>
       </CardHeader>

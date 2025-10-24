@@ -261,9 +261,9 @@ export default function Register() {
             >
               {renderTitle()}
             </h1>
-            <p className="text-base sm:text-lg px-2 text-muted-foreground">
+            {/*<p className="text-base sm:text-lg px-2 text-muted-foreground">
               This name is calling your name. Literally. Let's make it official!
-            </p>
+            </p>*/}
           </div>
 
 
@@ -276,6 +276,8 @@ export default function Register() {
               onYearsChange={handleYearsChange}
               onYearsIncrement={handleYearsIncrement}
               onYearsDecrement={handleYearsDecrement}
+              onTermsChange={setTermsAccepted}
+              termsAccepted={termsAccepted}
             />
 
             {!connected ? (
@@ -288,13 +290,13 @@ export default function Register() {
                   transactionSubmitted={transactionSubmitted}
                   transactionFailed={transactionFailed}
                 />
-                <PricingCard
+                {/*<PricingCard
                   domain={domain}
                   years={years}
                   termsAccepted={termsAccepted}
                   onTermsChange={setTermsAccepted}
                   onAmountChange={setAmount}
-                />
+                />*/}
                 <div className="flex justify-center gap-4">
                   <Button
                     onClick={handlePurchase}
