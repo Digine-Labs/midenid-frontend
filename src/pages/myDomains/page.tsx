@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
 
+// TODO: Bu sayfada neden ayni element birden fazla var. bunu tek hale indir
 export default function MyDomains() {
     const { connected } = useWallet()
     const { hasRegisteredDomain, registeredDomain, isLoading } = useWalletAccount()
@@ -20,7 +21,7 @@ export default function MyDomains() {
                     <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
                         <div className="space-y-6">
                             <h1 className="text-3xl sm:text-4xl font-bold tracking-wide">
-                                My M<span className="text-primary">id</span>en Domains
+                                My Domains
                             </h1>
                             <p className="text-muted-foreground text-base sm:text-lg px-2">
                                 Connect your wallet to view your registered domains
@@ -47,7 +48,7 @@ export default function MyDomains() {
                     <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
                         <div className="space-y-6">
                             <h1 className="text-3xl sm:text-4xl font-bold tracking-wide">
-                                My M<span className="text-primary">id</span>en Domains
+                                My Domains
                             </h1>
                             <div className="flex justify-center items-center gap-2 text-muted-foreground">
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -72,7 +73,7 @@ export default function MyDomains() {
                     <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
                         <div className="space-y-6">
                             <h1 className="text-3xl sm:text-4xl font-bold tracking-wide">
-                                My M<span className="text-primary">id</span>en Domains
+                                My Domains
                             </h1>
                             <Card className="bg-card">
                                 <CardContent className="pt-6">
@@ -102,19 +103,23 @@ export default function MyDomains() {
                 <div className="w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl">
                     <div className="space-y-6">
                         <h1 className="text-3xl sm:text-4xl font-bold tracking-wide text-center">
-                            My M<span className="text-primary">id</span>en Domains
+                            My Domains
                         </h1>
                         <Card className="bg-card">
                             <CardHeader>
                                 <CardTitle className="flex items-center justify-between">
                                     <span className="text-2xl">
-                                        {registeredDomain}<span className="text-primary">.miden</span>
+                                        {registeredDomain}.m<span className="text-primary">id</span>en
                                     </span>
                                     <Badge variant="secondary" className="bg-primary text-green-800">
                                         Active
                                     </Badge>
                                 </CardTitle>
                             </CardHeader>
+                            {/* 2 buton ekle
+                                https://www.shadcn.io/button/animated-modal
+                                Transfer ve set default
+                            */}
                             <CardContent className='p-4 pt-0'>
                                 <div className="space-y-2 text-sm text-muted-foreground">
                                     <p>Your registered Miden identity domain</p>
