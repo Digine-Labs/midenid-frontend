@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
@@ -7,13 +6,13 @@ import { encodeNameToWord, isDomainRegistered } from '@/utils'
 import { AccountId } from '@demox-labs/miden-sdk'
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
 import { useStorage } from '@/hooks/useStorage'
+import { RegisterModal } from '@/components/register-modal'
 
 interface DomainCardProps {
   domain: string
 }
 
 export function DomainCard({ domain }: DomainCardProps) {
-  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [domainAvailable, setDomainAvailable] = useState(false)
 
@@ -63,17 +62,9 @@ export function DomainCard({ domain }: DomainCardProps) {
     setLoading(false);
   }, [domain, storageKey, isCheckingStorage, isRegistered])
 
-
-  const handleCardClick = useCallback(() => {
-    if (!loading && domainAvailable) {
-      navigate(`/register?domain=${encodeURIComponent(domain)}`)
-    }
-  }, [loading, domainAvailable, domain, navigate])
-
-  return (
+  const cardContent = (
     <Card
       className="cursor-pointer hover:shadow transition-all duration-200 border hover:border-primary/50 bg-card"
-      onClick={handleCardClick}
     >
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -94,5 +85,13 @@ export function DomainCard({ domain }: DomainCardProps) {
         </div>
       </CardHeader>
     </Card>
-  )
+  );
+
+  // If domain is available and not loading, wrap in RegisterModal
+  if (!loading && domainAvailable) {
+    return <RegisterModal domain={domain} trigger={cardContent} />;
+  }
+
+  // Otherwise, just show the card (unavailable or loading)
+  return cardContent;
 }
