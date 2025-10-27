@@ -6,7 +6,7 @@ import {
   ModalContent,
   useModal,
 } from "@/components/ui/shadcn-io/animated-modal";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { cloneElement, isValidElement, useMemo } from "react";
 import { GradientText } from "@/components/ui/shadcn-io/gradient-text";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CircleHelp } from "lucide-react";
+import {
+  MIDEN_FAUCET_CONTRACT_ADDRESS,
+  MIDEN_ID_CONTRACT_ADDRESS,
+} from "@/shared/constants";
+import { AccountId } from "@demox-labs/miden-sdk";
+import { useNavigate } from "react-router";
+import { bech32ToAccountId, hasRegisteredDomain } from "@/lib/midenClient";
+import { registerName } from "@/lib/registerName";
+import { TransactionStatusAlerts } from "@/pages/register/components/transaction-status-alerts";
+
 
 interface RegisterModalProps {
   domain: string;
@@ -41,8 +51,28 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
 
 export function RegisterModal({ domain, trigger }: RegisterModalProps) {
   const { resolvedTheme } = useTheme();
-  const { connected } = useWallet();
+  const { connected, accountId: rawAccountId, requestTransaction } = useWallet();
   const { hasRegisteredDomain: walletHasDomain } = useWalletAccount();
+  const [transactionSubmitted, setTransactionSubmitted] = useState(false);
+  const [transactionFailed, setTransactionFailed] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const navigate = useNavigate()
+
+  const faucetId = useMemo(
+    () => AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string),
+    []
+  );
+
+  const destinationAccountId = useMemo(
+    () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
+    []
+  );
+
+  const accountId = useMemo(() => {
+    if (rawAccountId != null) {
+      return bech32ToAccountId(rawAccountId);
+    } else return undefined;
+  }, [rawAccountId]);
 
   // Fun title options
   const funTitles = useMemo(
@@ -72,13 +102,49 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
   const gradientLight =
     "linear-gradient(90deg, #0FE046 0%, #11B83D 25%, #08CB00 50%, #11B83D 75%, #0FE046 100%)";
 
-  const handlePurchase = () => {
-    // TODO: Implement purchase logic
-    console.log("Purchase clicked for domain:", domain);
+  const handlePurchase = async () => {
+    if (connected && accountId && requestTransaction) {
+      // Reset previous states
+      setTransactionSubmitted(false);
+      setTransactionFailed(false);
+      setIsPurchasing(true);
+
+      try {
+        const buyAmount = BigInt(1000000);
+
+        const result = await registerName({
+          senderAccountId: accountId,
+          destinationAccountId: destinationAccountId,
+          faucetId: faucetId,
+          amount: buyAmount, // pricing-card.tsx provides MIDEN amount
+          domain: domain,
+          requestTransaction: requestTransaction,
+        });
+        // Reset terms and show wallet prompt
+        setTransactionSubmitted(true);
+
+        if (result.txId && result.noteId && await hasRegisteredDomain(accountId)) {
+          navigate('/register/receipt', {
+            state: {
+              domain,
+              years: 1,
+              price: buyAmount,
+              noteId: result.noteId
+            }
+          })
+        }
+
+      } catch (error) {
+        console.error("Registration failed:", error);
+        setTransactionFailed(true);
+      } finally {
+        setIsPurchasing(false);
+      }
+    }
   };
 
   // Price in MIDEN tokens
-  const price = 100;
+  const price = 1;
 
   return (
     <Modal>
@@ -117,11 +183,11 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
                 <>
                   <Button
                     onClick={handlePurchase}
-                    disabled={walletHasDomain}
+                    disabled={isPurchasing || walletHasDomain}
                     className="w-full max-w-xs px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
                     size="lg"
                   >
-                    {walletHasDomain ? (
+                    {isPurchasing ? "Processing..." : walletHasDomain ? (
                       "Wallet Already Has a Domain"
                     ) : (
                       <>
@@ -157,6 +223,10 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
           </div>
         </ModalContent>
       </ModalBody>
+      <TransactionStatusAlerts
+        transactionSubmitted={transactionSubmitted}
+        transactionFailed={transactionFailed}
+      />
     </Modal>
   );
 }
