@@ -8,7 +8,7 @@ import { Faq } from "./components/faq";
 import { Breadcrumb } from "./components/breadcrumb";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { registerName } from "@/lib/registerName";
-import { bech32ToAccountId, hasRegisteredDomain } from "@/lib/midenClient";
+import { bech32ToAccountId } from "@/lib/midenClient";
 import { AccountId } from "@demox-labs/miden-sdk";
 import { TransactionStatusAlerts } from "./components/transaction-status-alerts";
 import { RoughNotation } from "react-rough-notation";
@@ -226,13 +226,14 @@ export default function Register() {
         setTermsAccepted(false);
         setTransactionSubmitted(true);
 
-        if (result.txId && result.noteId && await hasRegisteredDomain(accountId)) {
+        if (result.txId && result.noteId) {
           navigate('/register/receipt', {
             state: {
               domain,
               years: typeof years === 'string' ? parseInt(years) || 1 : years,
               price: buyAmount,
-              noteId: result.noteId
+              noteId: result.noteId,
+              accountId: accountId
             }
           })
         }

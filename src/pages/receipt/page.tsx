@@ -2,30 +2,55 @@ import { useNavigate, useLocation } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Breadcrumb } from "../register/components/breadcrumb"
 import { formatBalance } from '@/utils'
+import type { AccountId } from '@demox-labs/miden-sdk'
+import { hasRegisteredDomain } from '@/lib/midenClient'
 
 interface LocationState {
     domain: string
     years: number
     price: string
     noteId: string
+    accountId: AccountId
 }
 
 export default function Receipt() {
     const navigate = useNavigate()
     const location = useLocation()
     const state = location.state as LocationState | null
+    const [registered, setRegistered] = useState(false)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         // Redirect to home if required state is missing
-        if (!state || !state.domain || !state.years || !state.price) {
+        if (!state || !state.domain || !state.years || !state.price || !state.accountId) {
             navigate('/', { replace: true })
         }
     }, [state, navigate])
 
-    if (!state || !state.domain || !state.years || !state.price) {
+    useEffect(() => {
+        if (!state?.accountId) return
+
+        // It is checking if connected accountId has a registered domain. It is not checking if entered domain is registered to connected account.
+        const checkRegistration = async () => {
+            setLoading(true)
+            try {
+                const result = await hasRegisteredDomain(state.accountId)
+                setRegistered(result)
+            } catch (error) {
+                console.error('Error checking registration:', error)
+                setRegistered(false)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        checkRegistration()
+    }, [state?.accountId])
+
+    if (!state || !state.domain || !state.years || !state.price || !state.accountId) {
         return null
     }
 
@@ -43,18 +68,27 @@ export default function Receipt() {
                                 <CheckCircle2 className="h-16 w-16 text-green-500" />
                             </div>
                             <CardTitle className="text-2xl font-bold text-green-500">
-                                Registration Successful!
+                                Registration Sent!
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="text-center text-muted-foreground mb-6">
-                                Your domain has been successfully registered on the Miden network.
+                                Your domain has been getting registered on the Miden network.
                             </div>
 
                             <div className="space-y-4 bg-muted/50 rounded-lg p-6">
                                 <div className="flex justify-between items-center min-h-9 border-b border-border pb-3">
                                     <span className="text-muted-foreground">Domain:</span>
                                     <span className="font-semibold text-lg">{domain}.miden</span>
+                                </div>
+
+
+                                {/* TODO: add a spinner or skeleton */}
+                                <div className="flex justify-between items-center min-h-9 border-b border-border pb-3">
+                                    <span className="text-muted-foreground">Registered:</span>
+                                    <span className="font-semibold text-lg">
+                                        {loading ? 'Checking...' : registered ? 'Yes' : 'No'}
+                                    </span>
                                 </div>
 
                                 <div className="flex justify-between items-center min-h-9 border-b border-border pb-3">

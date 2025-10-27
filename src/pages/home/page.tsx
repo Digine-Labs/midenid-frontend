@@ -1,16 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/theme-provider'
+import { useNavigate } from 'react-router'
+import { bech32ToAccountId } from '@/lib/midenClient'
+import { useWallet } from '@demox-labs/miden-wallet-adapter'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
+  const navigate = useNavigate()
+  const { accountId: rawAccountId } = useWallet()
+
+  const accountId = useMemo(() => {
+    if (rawAccountId != null) {
+      return bech32ToAccountId(rawAccountId);
+    } else return undefined;
+  }, [rawAccountId]);
 
   // Use darker green for identity highlight only in dark mode
   const identityColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046'
@@ -54,16 +65,17 @@ export default function Home() {
     }
   }, [showTooltip])
 
-  // const handleMockGoToReceipt = () => {
-  //   navigate('/register/receipt', {
-  //     state: {
-  //       domain: "asd",
-  //       years: 1,
-  //       price: BigInt(1000000),
-  //       noteId: "0xc1c6d5f344ad15d062d1fd17372137fbfcde7848374d4c876627271c552d5687"
-  //     }
-  //   })
-  // }
+  const handleMockGoToReceipt = () => {
+    navigate('/register/receipt', {
+      state: {
+        domain: "asd",
+        years: 1,
+        price: BigInt(1000000),
+        noteId: "0xc1c6d5f344ad15d062d1fd17372137fbfcde7848374d4c876627271c552d5687",
+        accountId: accountId
+      }
+    })
+  }
 
   return (
     <>
@@ -78,6 +90,7 @@ export default function Home() {
               One <RoughNotation type="highlight" color={identityColor} strokeWidth={2} iterations={2} show={true} padding={[2, 4]}>name</RoughNotation> to rule them all! Your digital identity across the Miden universe.
             </p>
           </div>
+          <button onClick={handleMockGoToReceipt}>aaaaaaaaaaaaaaaaaaaaaaaa</button>
 
           <div className="w-full space-y-4 ">
             {/*<Card className="bg-yellow-100 border-green-500 rounded-md">

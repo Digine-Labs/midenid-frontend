@@ -26,7 +26,7 @@ import {
 } from "@/shared/constants";
 import { AccountId } from "@demox-labs/miden-sdk";
 import { useNavigate } from "react-router";
-import { bech32ToAccountId, hasRegisteredDomain } from "@/lib/midenClient";
+import { bech32ToAccountId } from "@/lib/midenClient";
 import { registerName } from "@/lib/registerName";
 import { TransactionStatusAlerts } from "@/pages/register/components/transaction-status-alerts";
 
@@ -123,7 +123,7 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
         // Reset terms and show wallet prompt
         setTransactionSubmitted(true);
 
-        if (result.txId && result.noteId && await hasRegisteredDomain(accountId)) {
+        if (result.txId && result.noteId) {
           navigate('/register/receipt', {
             state: {
               domain,
