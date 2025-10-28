@@ -29,6 +29,7 @@ import { useNavigate } from "react-router";
 import { bech32ToAccountId } from "@/lib/midenClient";
 import { registerName } from "@/lib/registerName";
 import { TransactionStatusAlerts } from "@/pages/register/components/transaction-status-alerts";
+import { TermsModal } from "@/pages/register/components/terms-modal";
 
 
 interface RegisterModalProps {
@@ -56,6 +57,7 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const navigate = useNavigate()
 
   const faucetId = useMemo(
@@ -129,7 +131,8 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
               domain,
               years: 1,
               price: buyAmount,
-              noteId: result.noteId
+              noteId: result.noteId,
+              accountId: accountId
             }
           })
         }
@@ -202,7 +205,7 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
                       <TooltipTrigger asChild>
                         <CircleHelp className="h-5 w-5 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
+                      <TooltipContent side="top" className="max-w-xs border border-white">
                         <p className="text-sm">
                           This registration is for <strong>testnet only</strong>. Your domain will be available during the testing phase.
                         </p>
@@ -216,7 +219,10 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
             {/* Terms and Conditions Text */}
             <p className="text-xs text-center text-muted-foreground px-4">
               By purchasing, you accept our{" "}
-              <span className="underline cursor-pointer hover:text-primary">
+              <span
+                className="underline cursor-pointer hover:text-primary"
+                onClick={() => setTermsOpen(true)}
+              >
                 Terms and Conditions
               </span>
             </p>
@@ -227,6 +233,7 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
         transactionSubmitted={transactionSubmitted}
         transactionFailed={transactionFailed}
       />
+      <TermsModal open={termsOpen} onOpenChange={setTermsOpen} />
     </Modal>
   );
 }
