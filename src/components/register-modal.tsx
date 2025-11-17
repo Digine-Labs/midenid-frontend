@@ -13,13 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
 import { useWallet, WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { useWalletAccount } from "@/contexts/WalletAccountContext";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { CircleHelp } from "lucide-react";
+import { Zap } from "lucide-react";
 import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
@@ -30,11 +24,16 @@ import { bech32ToAccountId } from "@/lib/midenClient";
 import { registerName } from "@/lib/registerName";
 import { TransactionStatusAlerts } from "@/pages/register/components/transaction-status-alerts";
 import { TermsModal } from "@/pages/register/components/terms-modal";
+import { PRICING_TIERS, calculateDomainPrice, TOKEN_SYMBOL, type PricingTier as PricingTierBase } from "@/shared/pricing";
 
 
 interface RegisterModalProps {
   domain: string;
   trigger: ReactNode;
+}
+
+interface PricingTier extends PricingTierBase {
+  price: number;
 }
 
 function RegisterModalTrigger({ children }: { children: ReactNode }) {
@@ -58,7 +57,20 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
   const [transactionFailed, setTransactionFailed] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
-  const navigate = useNavigate()
+  const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
+  const navigate = useNavigate();
+
+  // Calculate pricing tiers based on domain length
+  const pricingTiers: PricingTier[] = useMemo(
+    () => {
+      const domainLength = domain.length;
+      return PRICING_TIERS.map(tier => ({
+        ...tier,
+        price: calculateDomainPrice(domainLength, tier.years, tier.displayYears),
+      }));
+    },
+    [domain]
+  );
 
   const faucetId = useMemo(
     () => AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string),
@@ -104,21 +116,22 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
   const gradientLight =
     "linear-gradient(90deg, #0FE046 0%, #11B83D 25%, #08CB00 50%, #11B83D 75%, #0FE046 100%)";
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (tier: PricingTier) => {
     if (connected && accountId && requestTransaction) {
       // Reset previous states
       setTransactionSubmitted(false);
       setTransactionFailed(false);
       setIsPurchasing(true);
+      setSelectedTier(tier);
 
       try {
-        const buyAmount = BigInt(1000000);
+        const buyAmount = BigInt(tier.price * 1000000);
 
         const result = await registerName({
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           faucetId: faucetId,
-          amount: buyAmount, // pricing-card.tsx provides MIDEN amount
+          amount: buyAmount,
           domain: domain,
           requestTransaction: requestTransaction,
         });
@@ -129,7 +142,7 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
           navigate('/register/receipt', {
             state: {
               domain,
-              years: 1,
+              years: tier.years,
               price: buyAmount,
               noteId: result.noteId,
               accountId: accountId
@@ -145,9 +158,6 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
       }
     }
   };
-
-  // Price in MIDEN tokens
-  const price = 1;
 
   return (
     <Modal>
@@ -176,45 +186,71 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
             </div>
           </div>
 
-          {/* Bottom Section - Purchase */}
+          {/* Bottom Section - Purchase Options */}
           <div className="space-y-4 pb-2">
-            {/* Wallet Connection or Purchase Button with Tooltip */}
-            <div className="flex justify-center items-center gap-2">
-              {!connected ? (
+            {!connected ? (
+              <div className="flex justify-center">
                 <WalletMultiButton />
-              ) : (
-                <>
+              </div>
+            ) : (
+              <div className="space-y-3 px-4">
+                {/* Best Value - 5 Years */}
+                <div className="relative">
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-md z-10">
+                    <Zap className="w-3 h-3" />
+                    BEST VALUE - Save 40%
+                  </div>
                   <Button
-                    onClick={handlePurchase}
+                    onClick={() => handlePurchase(pricingTiers[2])}
                     disabled={isPurchasing || walletHasDomain}
-                    className="w-full max-w-xs px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
+                    className="w-full px-8 py-8 text-lg bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
                     size="lg"
                   >
-                    {isPurchasing ? "Processing..." : walletHasDomain ? (
+                    {isPurchasing && selectedTier?.years === 5 ? (
+                      "Processing..."
+                    ) : walletHasDomain ? (
                       "Wallet Already Has a Domain"
                     ) : (
-                      <>
-                        <span>Claim</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-bold">Claim 5 Years</span>
                         <span className="opacity-90">•</span>
-                        <span className="font-bold">{price} MIDEN</span>
-                      </>
+                        <span className="text-xl">{pricingTiers[2]?.price} {TOKEN_SYMBOL}</span>
+                      </div>
                     )}
                   </Button>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <CircleHelp className="h-5 w-5 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs border border-white">
-                        <p className="text-sm">
-                          This registration is for <strong>testnet only</strong>. Your domain will be available during the testing phase.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </>
-              )}
-            </div>
+                </div>
+
+                {/* 3 Years Button and 1 Year Link on Same Line */}
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => handlePurchase(pricingTiers[1])}
+                    disabled={isPurchasing || walletHasDomain}
+                    className="flex-1 px-4 py-6 bg-secondary text-accent-foreground hover:bg-accent/90"
+                    size="sm"
+                  >
+                    {isPurchasing && selectedTier?.years === 3 ? (
+                      "Processing..."
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="font-semibold">3 Years</span>
+                        <span className="text-sm opacity-80">{pricingTiers[1]?.price} {TOKEN_SYMBOL}</span>
+                      </div>
+                    )}
+                  </Button>
+                    or
+                  {/* 1 Year Text Link */}
+                  <button
+                    onClick={() => handlePurchase(pricingTiers[0])}
+                    disabled={isPurchasing || walletHasDomain}
+                    className="text-sm text-muted-foreground hover:text-primary underline disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    {isPurchasing && selectedTier?.years === 1
+                      ? "Processing..."
+                      : `1 year (${pricingTiers[0]?.price} ${TOKEN_SYMBOL})`}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Terms and Conditions Text */}
             <p className="text-xs text-center text-muted-foreground px-4">
