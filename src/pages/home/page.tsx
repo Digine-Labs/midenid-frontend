@@ -90,7 +90,6 @@ export default function Home() {
               One <RoughNotation type="highlight" color={identityColor} strokeWidth={2} iterations={2} show={true} padding={[2, 4]}>name</RoughNotation> to rule them all! Your digital identity across the Miden universe.
             </p>
           </div>
-          <button onClick={handleMockGoToReceipt}>aaaaaaaaaaaaaaaaaaaaaaaa</button>
 
           <div className="w-full space-y-4 ">
             {/*<Card className="bg-yellow-100 border-green-500 rounded-md">
