@@ -5,7 +5,6 @@ import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/theme-provider'
-import { useNavigate } from 'react-router'
 import { bech32ToAccountId } from '@/lib/midenClient'
 import { useWallet } from '@demox-labs/miden-wallet-adapter'
 
@@ -14,7 +13,6 @@ export default function Home() {
   const [debouncedValue, setDebouncedValue] = useState('')
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
-  const navigate = useNavigate()
   const { accountId: rawAccountId } = useWallet()
 
   const accountId = useMemo(() => {
@@ -23,6 +21,7 @@ export default function Home() {
     } else return undefined;
   }, [rawAccountId]);
 
+  console.log(accountId)
   // Use darker green for identity highlight only in dark mode
   const identityColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046'
 
@@ -65,17 +64,6 @@ export default function Home() {
     }
   }, [showTooltip])
 
-  const handleMockGoToReceipt = () => {
-    navigate('/register/receipt', {
-      state: {
-        domain: "asd",
-        years: 1,
-        price: BigInt(1000000),
-        noteId: "0xc1c6d5f344ad15d062d1fd17372137fbfcde7848374d4c876627271c552d5687",
-        accountId: accountId
-      }
-    })
-  }
 
   return (
     <>
