@@ -1,7 +1,6 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 interface ConfirmedStepProps {
@@ -9,7 +8,7 @@ interface ConfirmedStepProps {
   onGoHome: () => void;
 }
 
-export function ConfirmedStep({ domain, onGoHome }: ConfirmedStepProps) {
+export function ConfirmedStep({ domain }: ConfirmedStepProps) {
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
       {/* Success Icon with Animation */}

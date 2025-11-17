@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useMemo } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { Zap } from "lucide-react";
