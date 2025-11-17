@@ -104,10 +104,10 @@ export const ModalBody = ({
 
           <motion.div
             initial={{
-              opacity: 0,
-              scale: 0.5,
-              rotateX: 40,
-              y: 40,
+              opacity: 1,
+              scale: 1,
+              rotateX: 0,
+              y: 0,
             }}
             animate={{
               opacity: 1,
@@ -117,13 +117,11 @@ export const ModalBody = ({
             }}
             exit={{
               opacity: 0,
-              scale: 0.8,
-              rotateX: 10,
+              scale: 0.95,
+              rotateX: 0,
             }}
             transition={{
-              type: "spring",
-              stiffness: 260,
-              damping: 15,
+              duration: 0.2,
             }}
             className="min-h-[50%] max-h-[90%] md:max-w-[40%] relative z-50 flex flex-col flex-1"
           >

@@ -64,13 +64,13 @@ export const PRICING_TIERS: PricingTier[] = [
 /**
  * Calculate the total price for a domain registration
  * @param domainLength - Length of the domain name (without .miden)
- * @param years - Number of years to register
+ * @param _years - Number of years to register
  * @param displayYears - Number of years the user actually pays for (with discount)
  * @returns Total price in USD
  */
 export function calculateDomainPrice(
   domainLength: number,
-  years: number,
+  _years: number,
   displayYears: number
 ): number {
   const pricePerYear = getDomainPricePerYear(domainLength);
