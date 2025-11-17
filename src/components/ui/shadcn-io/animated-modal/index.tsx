@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 import { BackgroundGradient } from "@/components/ui/shadcn-io/background-gradient";
 
@@ -70,6 +71,11 @@ export const ModalBody = ({
   className?: string;
 }) => {
   const { open } = useModal();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -83,7 +89,9 @@ export const ModalBody = ({
   const { setOpen } = useModal();
   useOnClickOutside(modalRef as React.RefObject<HTMLElement>, () => setOpen(false));
 
-  return (
+  if (!mounted) return null;
+
+  const modalContent = (
     <AnimatePresence>
       {open && (
         <motion.div
@@ -98,7 +106,7 @@ export const ModalBody = ({
             opacity: 0,
             backdropFilter: "blur(0px)",
           }}
-          className="fixed [perspective:800px] [transform-style:preserve-3d] inset-0 h-full w-full  flex items-center justify-center z-50"
+          className="fixed [perspective:800px] [transform-style:preserve-3d] inset-0 h-full w-full  flex items-center justify-center z-[9999]"
         >
           <Overlay />
 
@@ -123,7 +131,7 @@ export const ModalBody = ({
             transition={{
               duration: 0.2,
             }}
-            className="min-h-[50%] max-h-[90%] md:max-w-[40%] relative z-50 flex flex-col flex-1"
+            className="min-h-[50%] max-h-[90%] md:max-w-[40%] relative z-[10000] flex flex-col flex-1"
           >
             <BackgroundGradient
               containerClassName="w-full h-full rounded-3xl"
@@ -145,6 +153,8 @@ export const ModalBody = ({
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export const ModalContent = ({
@@ -194,7 +204,7 @@ const Overlay = ({ className }: { className?: string }) => {
         opacity: 0,
         backdropFilter: "blur(0px)",
       }}
-      className={`fixed inset-0 h-full w-full bg-black bg-opacity-50 z-50 ${className}`}
+      className={`fixed inset-0 h-full w-full bg-black bg-opacity-50 z-[9998] ${className}`}
     ></motion.div>
   );
 };

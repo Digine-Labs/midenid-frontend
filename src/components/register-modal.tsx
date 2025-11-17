@@ -6,14 +6,10 @@ import {
   ModalContent,
   useModal,
 } from "@/components/ui/shadcn-io/animated-modal";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { cloneElement, isValidElement, useMemo } from "react";
-import { GradientText } from "@/components/ui/shadcn-io/gradient-text";
-import { Button } from "@/components/ui/button";
-import { useTheme } from "@/components/theme-provider";
-import { useWallet, WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
+import { useWallet } from "@demox-labs/miden-wallet-adapter";
 import { useWalletAccount } from "@/contexts/WalletAccountContext";
-import { Zap } from "lucide-react";
 import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
@@ -24,8 +20,11 @@ import { bech32ToAccountId } from "@/lib/midenClient";
 import { registerName } from "@/lib/registerName";
 import { TransactionStatusAlerts } from "@/pages/register/components/transaction-status-alerts";
 import { TermsModal } from "@/pages/register/components/terms-modal";
-import { PRICING_TIERS, calculateDomainPrice, TOKEN_SYMBOL, type PricingTier as PricingTierBase } from "@/shared/pricing";
-
+import { type PricingTier as PricingTierBase } from "@/shared/pricing";
+import { AnimatePresence, motion } from "framer-motion";
+import { RegistrationStep } from "./register-modal/registration-step";
+import { ProcessingStep } from "./register-modal/processing-step";
+import { ConfirmedStep } from "./register-modal/confirmed-step";
 
 interface RegisterModalProps {
   domain: string;
@@ -35,6 +34,8 @@ interface RegisterModalProps {
 interface PricingTier extends PricingTierBase {
   price: number;
 }
+
+type ModalStep = "registration" | "processing" | "confirmed";
 
 function RegisterModalTrigger({ children }: { children: ReactNode }) {
   const { setOpen } = useModal();
@@ -49,28 +50,17 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
   return <div onClick={() => setOpen(true)}>{children}</div>;
 }
 
-export function RegisterModal({ domain, trigger }: RegisterModalProps) {
-  const { resolvedTheme } = useTheme();
+function RegisterModalContent({ domain }: { domain: string }) {
   const { connected, accountId: rawAccountId, requestTransaction } = useWallet();
   const { hasRegisteredDomain: walletHasDomain } = useWalletAccount();
+  const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
   const navigate = useNavigate();
-
-  // Calculate pricing tiers based on domain length
-  const pricingTiers: PricingTier[] = useMemo(
-    () => {
-      const domainLength = domain.length;
-      return PRICING_TIERS.map(tier => ({
-        ...tier,
-        price: calculateDomainPrice(domainLength, tier.years, tier.displayYears),
-      }));
-    },
-    [domain]
-  );
+  const { open, setOpen } = useModal();
 
   const faucetId = useMemo(
     () => AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string),
@@ -88,33 +78,26 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
     } else return undefined;
   }, [rawAccountId]);
 
-  // Fun title options
-  const funTitles = useMemo(
-    () => [
-      "Something new is cooking!",
-      "A newcomer is about to join!",
-      "Fresh arrival incoming!",
-      "New identity unlocking...",
-      "The adventure begins here!",
-      "Welcome to the neighborhood!",
-      "Your digital home awaits!",
-      "Ready to make history?",
-      "Claim your spot in the verse!",
-      "One step closer to greatness!",
-    ],
-    []
-  );
+  // Reset to registration step when modal is closed or domain changes
+  useEffect(() => {
+    if (!open) {
+      // Reset all states when modal closes
+      setCurrentStep("registration");
+      setTransactionSubmitted(false);
+      setTransactionFailed(false);
+      setIsPurchasing(false);
+      setSelectedTier(null);
+    }
+  }, [open]);
 
-  const randomTitle = useMemo(
-    () => funTitles[Math.floor(Math.random() * funTitles.length)],
-    [funTitles]
-  );
-
-  // Gradient colors based on theme
-  const gradientDark =
-    "linear-gradient(90deg, #0FE046 0%, #5FFF7F 25%, #7FFFA0 50%, #5FFF7F 75%, #0FE046 100%)";
-  const gradientLight =
-    "linear-gradient(90deg, #0FE046 0%, #11B83D 25%, #08CB00 50%, #11B83D 75%, #0FE046 100%)";
+  // Reset when domain changes
+  useEffect(() => {
+    setCurrentStep("registration");
+    setTransactionSubmitted(false);
+    setTransactionFailed(false);
+    setIsPurchasing(false);
+    setSelectedTier(null);
+  }, [domain]);
 
   const handlePurchase = async (tier: PricingTier) => {
     if (connected && accountId && requestTransaction) {
@@ -127,7 +110,7 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
       try {
         const buyAmount = BigInt(tier.price * 1000000);
 
-        const result = await registerName({
+        await registerName({
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           faucetId: faucetId,
@@ -135,134 +118,80 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
           domain: domain,
           requestTransaction: requestTransaction,
         });
-        // Reset terms and show wallet prompt
-        setTransactionSubmitted(true);
 
-        if (result.txId && result.noteId) {
-          navigate('/register/receipt', {
-            state: {
-              domain,
-              years: tier.years,
-              price: buyAmount,
-              noteId: result.noteId,
-              accountId: accountId
-            }
-          })
-        }
+        // Transaction approved by wallet, show processing step
+        setTransactionSubmitted(true);
+        setCurrentStep("processing");
+
+        // After 5 seconds, show confirmed step
+        setTimeout(() => {
+          setCurrentStep("confirmed");
+        }, 5000);
 
       } catch (error) {
         console.error("Registration failed:", error);
         setTransactionFailed(true);
+        setCurrentStep("registration");
       } finally {
         setIsPurchasing(false);
       }
     }
   };
 
+  const handleGoHome = () => {
+    setOpen(false);
+    navigate('/');
+  };
+
   return (
-    <Modal>
-      <RegisterModalTrigger>{trigger}</RegisterModalTrigger>
+    <>
       <ModalBody>
         <ModalContent className="flex flex-col justify-between">
-          {/* Top Section - Fun Title */}
-          <div className="text-center pt-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-neutral-800 dark:text-neutral-200">
-              {randomTitle}
-            </h2>
-          </div>
-
-          {/* Middle Section - Domain Display */}
-          <div className="flex-1 flex items-center justify-center py-8">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-3">
-                Your new identity:
-              </p>
-              <div className="text-4xl md:text-5xl font-bold">
-                <GradientText
-                  text={`${domain}.miden`}
-                  gradient={resolvedTheme === "dark" ? gradientDark : gradientLight}
+          <AnimatePresence mode="wait">
+            {currentStep === "registration" && (
+              <motion.div
+                key="registration"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <RegistrationStep
+                  domain={domain}
+                  connected={connected}
+                  isPurchasing={isPurchasing}
+                  walletHasDomain={walletHasDomain}
+                  selectedTier={selectedTier}
+                  onPurchase={handlePurchase}
+                  onTermsClick={() => setTermsOpen(true)}
                 />
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Section - Purchase Options */}
-          <div className="space-y-4 pb-2">
-            {!connected ? (
-              <div className="flex justify-center">
-                <WalletMultiButton />
-              </div>
-            ) : (
-              <div className="space-y-3 px-4">
-                {/* Best Value - 5 Years */}
-                <div className="relative">
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-md z-10">
-                    <Zap className="w-3 h-3" />
-                    BEST VALUE - Save 40%
-                  </div>
-                  <Button
-                    onClick={() => handlePurchase(pricingTiers[2])}
-                    disabled={isPurchasing || walletHasDomain}
-                    className="w-full px-8 py-8 text-lg bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
-                    size="lg"
-                  >
-                    {isPurchasing && selectedTier?.years === 5 ? (
-                      "Processing..."
-                    ) : walletHasDomain ? (
-                      "Wallet Already Has a Domain"
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl font-bold">Claim 5 Years</span>
-                        <span className="opacity-90">•</span>
-                        <span className="text-xl">{pricingTiers[2]?.price} {TOKEN_SYMBOL}</span>
-                      </div>
-                    )}
-                  </Button>
-                </div>
-
-                {/* 3 Years Button and 1 Year Link on Same Line */}
-                <div className="flex items-center gap-3">
-                  <Button
-                    onClick={() => handlePurchase(pricingTiers[1])}
-                    disabled={isPurchasing || walletHasDomain}
-                    className="flex-1 px-4 py-6 bg-secondary text-accent-foreground hover:bg-accent/90"
-                    size="sm"
-                  >
-                    {isPurchasing && selectedTier?.years === 3 ? (
-                      "Processing..."
-                    ) : (
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="font-semibold">3 Years</span>
-                        <span className="text-sm opacity-80">{pricingTiers[1]?.price} {TOKEN_SYMBOL}</span>
-                      </div>
-                    )}
-                  </Button>
-                    or
-                  {/* 1 Year Text Link */}
-                  <button
-                    onClick={() => handlePurchase(pricingTiers[0])}
-                    disabled={isPurchasing || walletHasDomain}
-                    className="text-sm text-muted-foreground hover:text-primary underline disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                  >
-                    {isPurchasing && selectedTier?.years === 1
-                      ? "Processing..."
-                      : `1 year (${pricingTiers[0]?.price} ${TOKEN_SYMBOL})`}
-                  </button>
-                </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* Terms and Conditions Text */}
-            <p className="text-xs text-center text-muted-foreground px-4">
-              By purchasing, you accept our{" "}
-              <span
-                className="underline cursor-pointer hover:text-primary"
-                onClick={() => setTermsOpen(true)}
+            {currentStep === "processing" && (
+              <motion.div
+                key="processing"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
               >
-                Terms and Conditions
-              </span>
-            </p>
-          </div>
+                <ProcessingStep domain={domain} />
+              </motion.div>
+            )}
+
+            {currentStep === "confirmed" && (
+              <motion.div
+                key="confirmed"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ConfirmedStep domain={domain} onGoHome={handleGoHome} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </ModalContent>
       </ModalBody>
       <TransactionStatusAlerts
@@ -270,6 +199,15 @@ export function RegisterModal({ domain, trigger }: RegisterModalProps) {
         transactionFailed={transactionFailed}
       />
       <TermsModal open={termsOpen} onOpenChange={setTermsOpen} />
+    </>
+  );
+}
+
+export function RegisterModal({ domain, trigger }: RegisterModalProps) {
+  return (
+    <Modal>
+      <RegisterModalTrigger>{trigger}</RegisterModalTrigger>
+      <RegisterModalContent domain={domain} />
     </Modal>
   );
 }

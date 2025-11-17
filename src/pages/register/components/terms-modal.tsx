@@ -18,20 +18,19 @@ export function TermsModal({ open, onOpenChange }: TermsModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
         <DialogOverlay
-          className="z-[100]"
+          className="z-[10001]"
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
         />
         <DialogContent
-          className="sm:max-w-md z-[100]"
+          className="sm:max-w-md max-w-[90vw] z-[10002] fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]"
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
         >
           <DialogHeader>
             <DialogTitle>Terms and Conditions</DialogTitle>
-            <DialogClose />
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
             <p className="text-sm text-muted-foreground">
               By checking this box, you agree to our terms of service and privacy policy.
               You acknowledge that you understand the domain registration process and associated costs.
