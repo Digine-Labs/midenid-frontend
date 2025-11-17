@@ -126,13 +126,13 @@ export const ModalBody = ({
             className="min-h-[50%] max-h-[90%] md:max-w-[40%] relative z-50 flex flex-col flex-1"
           >
             <BackgroundGradient
-              containerClassName="w-full h-full rounded-2xl"
-              className="w-full h-full flex flex-col rounded-2xl"
+              containerClassName="w-full h-full rounded-3xl"
+              className="w-full h-full flex flex-col rounded-3xl"
             >
               <div
                 ref={modalRef}
                 className={cn(
-                  "bg-white dark:bg-neutral-950 rounded-2xl relative flex flex-col flex-1 overflow-hidden",
+                  "bg-white dark:bg-neutral-950 rounded-3xl relative flex flex-col flex-1 overflow-hidden",
                   className
                 )}
               >
