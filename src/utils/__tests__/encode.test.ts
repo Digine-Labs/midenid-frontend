@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { encodeChar, encodeDomain, unsafeEncodeDomain, encodeNameToWord, encodeAccountIdToWord } from '../encode';
+import { encodeChar, encodeDomain, unsafeEncodeDomain, encodeDomainOld, encodeAccountIdToWord } from '../encode';
 import { decodeDomain } from '../decode';
 
 describe('encodeChar', () => {
@@ -200,10 +200,10 @@ describe('unsafeEncodeDomain', () => {
   });
 });
 
-describe('encodeNameToWord', () => {
+describe('encodeDomainOld', () => {
   it('should encode name in reverse mode (default)', () => {
     const name = 'alice';
-    const encoded = encodeNameToWord(name);
+    const encoded = encodeDomainOld(name);
     const felts = encoded.toFelts();
 
     expect(felts[3].asInt()).toBe(BigInt(name.length)); // length in last position
@@ -211,7 +211,7 @@ describe('encodeNameToWord', () => {
 
   it('should encode name in non-reverse mode', () => {
     const name = 'alice';
-    const encoded = encodeNameToWord(name, false);
+    const encoded = encodeDomainOld(name, false);
     const felts = encoded.toFelts();
 
     expect(felts[0].asInt()).toBe(BigInt(name.length)); // length in first position
@@ -219,18 +219,18 @@ describe('encodeNameToWord', () => {
 
   it('should throw error for names exceeding 20 characters', () => {
     const tooLongName = 'a'.repeat(21);
-    expect(() => encodeNameToWord(tooLongName)).toThrow('Name must not exceed 20 characters');
+    expect(() => encodeDomainOld(tooLongName)).toThrow('Name must not exceed 20 characters');
   });
 
   it('should encode max length name (20 characters)', () => {
     const maxName = 'a'.repeat(20);
-    expect(() => encodeNameToWord(maxName)).not.toThrow();
+    expect(() => encodeDomainOld(maxName)).not.toThrow();
   });
 
   it('should produce different felt ordering for reverse vs non-reverse', () => {
     const name = 'test';
-    const reversedWord = encodeNameToWord(name, true);
-    const normalWord = encodeNameToWord(name, false);
+    const reversedWord = encodeDomainOld(name, true);
+    const normalWord = encodeDomainOld(name, false);
 
     const reversedFelts = reversedWord.toFelts();
     const normalFelts = normalWord.toFelts();

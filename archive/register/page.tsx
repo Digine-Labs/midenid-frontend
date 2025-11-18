@@ -10,7 +10,7 @@ import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { registerName } from "@/lib/registerName";
 import { bech32ToAccountId } from "@/lib/midenClient";
 import { AccountId } from "@demox-labs/miden-sdk";
-import { TransactionStatusAlerts } from "./components/transaction-status-alerts";
+import { TransactionStatusAlerts } from "@/components/transaction-status-alerts";
 import { RoughNotation } from "react-rough-notation";
 import { useTheme } from "@/components/theme-provider";
 import {

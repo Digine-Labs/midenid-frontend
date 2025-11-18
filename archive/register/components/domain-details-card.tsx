@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 //import { HighlightText } from "@/components/ui/shadcn-io/highlight-text"
 import { SlidingNumber } from '@/components/ui/shadcn-io/sliding-number'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { TermsModal } from './terms-modal'
+import { TermsModal } from '@/components/terms-modal'
 import { Checkbox } from '@/components/ui/checkbox'
 
 interface DomainDetailsCardProps {

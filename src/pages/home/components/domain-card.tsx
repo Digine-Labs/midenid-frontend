@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
-import { encodeNameToWord, isDomainRegistered } from '@/utils'
+import { encodeDomainOld, hasStorageValue } from '@/utils'
 import { AccountId } from '@demox-labs/miden-sdk'
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
 import { useStorage } from '@/hooks/useStorage'
 import { RegisterModal } from '@/components/register-modal'
+import { useWallet, useWalletModal } from '@demox-labs/miden-wallet-adapter'
 
 interface DomainCardProps {
   domain: string
@@ -15,6 +16,8 @@ interface DomainCardProps {
 export function DomainCard({ domain }: DomainCardProps) {
   const [loading, setLoading] = useState(true)
   const [domainAvailable, setDomainAvailable] = useState(false)
+  const { connected } = useWallet();
+  const walletModal = useWalletModal();
 
   const contractId = useMemo(
     () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
@@ -25,7 +28,7 @@ export function DomainCard({ domain }: DomainCardProps) {
   const storageKey = useMemo(() => {
     if (!domain) return undefined;
     try {
-      return encodeNameToWord(domain);
+      return encodeDomainOld(domain);
     } catch (error) {
       console.error("Failed to encode domain:", error);
       return undefined;
@@ -40,7 +43,7 @@ export function DomainCard({ domain }: DomainCardProps) {
   });
 
   // Check registration status
-  const isRegistered = useMemo(() => isDomainRegistered(storageItem), [storageItem]);
+  const isRegistered = useMemo(() => hasStorageValue(storageItem), [storageItem]);
 
 
   // Update domain availability based on storage check
@@ -62,23 +65,31 @@ export function DomainCard({ domain }: DomainCardProps) {
     setLoading(false);
   }, [domain, storageKey, isCheckingStorage, isRegistered])
 
+  // Handle card click - open wallet modal if not connected
+  const handleCardClick = () => {
+    if (!loading && domainAvailable && !connected) {
+      walletModal.setVisible(true);
+    }
+  };
+
   const cardContent = (
     <Card
       className="cursor-pointer hover:shadow transition-all duration-200 border hover:border-primary/50 bg-card"
+      onClick={handleCardClick}
     >
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">
-            {domain}.miden
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-lg font-semibold break-all min-w-0 flex-1 text-left">
+            {domain}<span className="whitespace-nowrap">.miden</span>
           </CardTitle>
           {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary flex-shrink-0" />
           ) : domainAvailable ? (
-            <Badge variant="secondary" className="bg-primary text-green-800">
+            <Badge variant="secondary" className="bg-primary text-green-800 flex-shrink-0">
               Available
             </Badge>
           ) : (
-            <Badge variant="secondary" className="bg-red-200 text-red-800">
+            <Badge variant="secondary" className="bg-red-200 text-red-800 flex-shrink-0">
               Unavailable
             </Badge>
           )}
@@ -88,7 +99,7 @@ export function DomainCard({ domain }: DomainCardProps) {
   );
 
   // If domain is available and not loading, wrap in RegisterModal
-  if (!loading && domainAvailable) {
+  if (!loading && domainAvailable && connected) {
     return <RegisterModal domain={domain} trigger={cardContent} />;
   }
 

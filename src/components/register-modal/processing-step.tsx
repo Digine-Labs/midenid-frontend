@@ -28,7 +28,7 @@ export function ProcessingStep({ domain }: ProcessingStepProps) {
           Sending to Blockchain
         </h2>
         <p className="text-muted-foreground text-sm md:text-base">
-          Your transaction is being processed...
+          Please open your Miden wallet app to create the transaction and complete your domain registration.
         </p>
       </div>
 
@@ -37,8 +37,8 @@ export function ProcessingStep({ domain }: ProcessingStepProps) {
         <p className="text-sm text-muted-foreground mb-2">
           Registering:
         </p>
-        <div className="text-3xl md:text-4xl font-bold text-primary">
-          {domain}.miden
+        <div className="text-3xl md:text-4xl font-bold text-primary break-all">
+          {domain}<span className="whitespace-nowrap">.miden</span>
         </div>
       </div>
 

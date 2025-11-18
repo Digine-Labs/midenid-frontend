@@ -78,8 +78,8 @@ export function RegistrationStep({
           <p className="text-sm text-muted-foreground mb-3">
             Your new identity:
           </p>
-          <div className="text-4xl md:text-5xl font-bold text-primary">
-            {domain}.miden
+          <div className="text-4xl md:text-5xl font-bold text-primary break-all">
+            {domain}<span className="whitespace-nowrap">.miden</span>
           </div>
         </div>
       </div>
@@ -91,17 +91,18 @@ export function RegistrationStep({
             <WalletMultiButton />
           </div>
         ) : (
-          <div className="space-y-3 px-4">
+          <div className="space-y-3 px-4 ">
             {/* Best Value - 5 Years */}
             <div className="relative">
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-md z-10">
-                <Zap className="w-3 h-3" />
-                BEST VALUE - Save 40%
-              </div>
+              {!walletHasDomain &&
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-0.5 rounded-full text-xs font-bold items-center gap-1 shadow-md z-10 flex" style={{ width: "190px" }}>
+                  <Zap className="w-3 h-3" />
+                  BEST VALUE - Save 40%
+                </div>}
               <Button
                 onClick={() => onPurchase(pricingTiers[2])}
                 disabled={isPurchasing || walletHasDomain}
-                className="w-full px-8 py-8 text-lg bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
+                className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
                 size="lg"
               >
                 {isPurchasing && selectedTier?.years === 5 ? (
@@ -110,43 +111,44 @@ export function RegistrationStep({
                   "Wallet Already Has a Domain"
                 ) : (
                   <div className="flex items-center gap-3">
-                    <span className="text-xl font-bold">Claim 5 Years</span>
+                    <span className="text-md xs:text-xl font-bold">Claim 5 Years</span>
                     <span className="opacity-90">•</span>
-                    <span className="text-xl">{pricingTiers[2]?.price} {TOKEN_SYMBOL}</span>
+                    <span className="text-md xs:text-xl">{pricingTiers[2]?.price} {TOKEN_SYMBOL}</span>
                   </div>
                 )}
               </Button>
             </div>
 
             {/* 3 Years Button and 1 Year Link on Same Line */}
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => onPurchase(pricingTiers[1])}
-                disabled={isPurchasing || walletHasDomain}
-                className="flex-1 px-4 py-6 bg-secondary text-accent-foreground hover:bg-accent/90"
-                size="sm"
-              >
-                {isPurchasing && selectedTier?.years === 3 ? (
-                  "Processing..."
-                ) : (
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="font-semibold">3 Years</span>
-                    <span className="text-sm opacity-80">{pricingTiers[1]?.price} {TOKEN_SYMBOL}</span>
-                  </div>
-                )}
-              </Button>
+            {!walletHasDomain &&
+              <div className="flex flex-col xs:flex-row items-center gap-3">
+                <Button
+                  onClick={() => onPurchase(pricingTiers[1])}
+                  disabled={isPurchasing || walletHasDomain}
+                  className="w-full xs:flex-1 px-4 py-6 bg-secondary text-accent-foreground hover:bg-accent/90"
+                  size="sm"
+                >
+                  {isPurchasing && selectedTier?.years === 3 ? (
+                    "Processing..."
+                  ) : (
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="font-semibold">3 Years</span>
+                      <span className="text-sm opacity-80">{pricingTiers[1]?.price} {TOKEN_SYMBOL}</span>
+                    </div>
+                  )}
+                </Button>
                 or
-              {/* 1 Year Text Link */}
-              <button
-                onClick={() => onPurchase(pricingTiers[0])}
-                disabled={isPurchasing || walletHasDomain}
-                className="text-sm text-muted-foreground hover:text-primary underline disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-              >
-                {isPurchasing && selectedTier?.years === 1
-                  ? "Processing..."
-                  : `1 year (${pricingTiers[0]?.price} ${TOKEN_SYMBOL})`}
-              </button>
-            </div>
+                {/* 1 Year Text Link */}
+                <button
+                  onClick={() => onPurchase(pricingTiers[0])}
+                  disabled={isPurchasing || walletHasDomain}
+                  className="text-sm text-muted-foreground hover:text-primary underline disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {isPurchasing && selectedTier?.years === 1
+                    ? "Processing..."
+                    : `1 year (${pricingTiers[0]?.price} ${TOKEN_SYMBOL})`}
+                </button>
+              </div>}
           </div>
         )}
 

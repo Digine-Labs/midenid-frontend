@@ -1,21 +1,21 @@
 import { Word } from "@demox-labs/miden-sdk";
 
 /**
- * Checks if a domain name is registered by examining the storage Word value.
+ * Checks if a storage Word value contains data (non-zero).
  *
- * In the Miden.name registry, slot 3 stores Name -> AccountID mappings.
- * - If the value is [0, 0, 0, 0], the name is NOT registered
- * - If the value is [prefix, suffix, 0, 0], the name IS registered
+ * This is a helper function to determine if a storage slot has been written to.
+ * - If the value is [0, 0, 0, 0], the storage is empty (returns false)
+ * - If the value contains any non-zero data, the storage has data (returns true)
  *
- * @param storageWord - The Word value retrieved from storage slot 3
- * @returns true if the name is registered, false otherwise
+ * @param storageWord - The Word value retrieved from storage
+ * @returns true if the storage contains data, false otherwise
  */
-export function isDomainRegistered(storageWord: Word | undefined): boolean {
+export function hasStorageValue(storageWord: Word | undefined): boolean {
   if (!storageWord) return false;
 
   const u64s = storageWord.toU64s();
 
-  // If all values are 0, the domain is NOT registered
+  // If all values are 0, the storage is empty
   const isZero = u64s[0] === 0n && u64s[1] === 0n && u64s[2] === 0n && u64s[3] === 0n;
 
   return !isZero;
@@ -28,7 +28,7 @@ export function isDomainRegistered(storageWord: Word | undefined): boolean {
  * @returns An object with prefix and suffix if registered, or null if not registered
  */
 export function getOwnerFromStorageWord(storageWord: Word | undefined): { prefix: string, suffix: string } | null {
-  if (!storageWord || !isDomainRegistered(storageWord)) {
+  if (!storageWord || !hasStorageValue(storageWord)) {
     return null;
   }
 
@@ -42,25 +42,4 @@ export function getOwnerFromStorageWord(storageWord: Word | undefined): { prefix
     prefix: felts[0].toString(),  // Index 0 in reversed array = prefix
     suffix: felts[1].toString(),  // Index 1 in reversed array = suffix
   };
-}
-
-/**
- * Checks if an account has a registered domain by examining the storage Word value from slot 4.
- *
- * In the Miden.name registry, slot 4 stores ID -> Name mappings.
- * - If the value is [0, 0, 0, 0], the account has NO domain registered
- * - If the value contains data, the account HAS a domain registered
- *
- * @param storageWord - The Word value retrieved from storage slot 4
- * @returns true if the account has a registered domain, false otherwise
- */
-export function hasRegisteredDomain(storageWord: Word | undefined): boolean {
-  if (!storageWord) return false;
-
-  const u64s = storageWord.toU64s();
-
-  // If all values are 0, the account has NO domain
-  const isZero = u64s[0] === 0n && u64s[1] === 0n && u64s[2] === 0n && u64s[3] === 0n;
-
-  return !isZero;
 }

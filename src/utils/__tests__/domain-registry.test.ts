@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { isDomainRegistered, getOwnerFromStorageWord, hasRegisteredDomain } from '../domain-registry';
+import { hasStorageValue, getOwnerFromStorageWord } from '../domain-registry';
 import { Word, Felt } from '@demox-labs/miden-sdk';
 
 describe('isDomainRegistered', () => {
   it('should return false for undefined Word', () => {
-    expect(isDomainRegistered(undefined)).toBe(false);
+    expect(hasStorageValue(undefined)).toBe(false);
   });
 
   it('should return false for zero Word (unregistered domain)', () => {
@@ -14,7 +14,7 @@ describe('isDomainRegistered', () => {
       new Felt(0n),
       new Felt(0n)
     ]);
-    expect(isDomainRegistered(zeroWord)).toBe(false);
+    expect(hasStorageValue(zeroWord)).toBe(false);
   });
 
   it('should return true for non-zero Word (registered domain)', () => {
@@ -24,7 +24,7 @@ describe('isDomainRegistered', () => {
       new Felt(0n),
       new Felt(0n)
     ]);
-    expect(isDomainRegistered(registeredWord)).toBe(true);
+    expect(hasStorageValue(registeredWord)).toBe(true);
   });
 
   it('should return true if any part is non-zero', () => {
@@ -34,7 +34,7 @@ describe('isDomainRegistered', () => {
       new Felt(0n),
       new Felt(0n)
     ]);
-    expect(isDomainRegistered(partialWord)).toBe(true);
+    expect(hasStorageValue(partialWord)).toBe(true);
   });
 });
 
@@ -89,7 +89,7 @@ describe('getOwnerFromStorageWord', () => {
 
 describe('hasRegisteredDomain', () => {
   it('should return false for undefined Word', () => {
-    expect(hasRegisteredDomain(undefined)).toBe(false);
+    expect(hasStorageValue(undefined)).toBe(false);
   });
 
   it('should return false for zero Word (no domain registered)', () => {
@@ -99,7 +99,7 @@ describe('hasRegisteredDomain', () => {
       new Felt(0n),
       new Felt(0n)
     ]);
-    expect(hasRegisteredDomain(zeroWord)).toBe(false);
+    expect(hasStorageValue(zeroWord)).toBe(false);
   });
 
   it('should return true for non-zero Word (domain registered)', () => {
@@ -109,7 +109,7 @@ describe('hasRegisteredDomain', () => {
       new Felt(0x503090c01n), // "alice" encoded
       new Felt(5n)            // length
     ]);
-    expect(hasRegisteredDomain(domainWord)).toBe(true);
+    expect(hasStorageValue(domainWord)).toBe(true);
   });
 
   it('should return true if any part is non-zero', () => {
@@ -119,7 +119,7 @@ describe('hasRegisteredDomain', () => {
       new Felt(0n),
       new Felt(1n) // Just length field set
     ]);
-    expect(hasRegisteredDomain(partialWord)).toBe(true);
+    expect(hasStorageValue(partialWord)).toBe(true);
   });
 });
 
@@ -139,8 +139,8 @@ describe('domain-registry integration tests', () => {
       new Felt(0n)
     ]);
 
-    expect(isDomainRegistered(unregisteredWord)).toBe(false);
-    expect(isDomainRegistered(registeredWord)).toBe(true);
+    expect(hasStorageValue(unregisteredWord)).toBe(false);
+    expect(hasStorageValue(registeredWord)).toBe(true);
 
     expect(getOwnerFromStorageWord(unregisteredWord)).toBeNull();
     expect(getOwnerFromStorageWord(registeredWord)).not.toBeNull();
@@ -161,7 +161,7 @@ describe('domain-registry integration tests', () => {
       new Felt(5n)
     ]);
 
-    expect(hasRegisteredDomain(noDomainWord)).toBe(false);
-    expect(hasRegisteredDomain(hasDomainWord)).toBe(true);
+    expect(hasStorageValue(noDomainWord)).toBe(false);
+    expect(hasStorageValue(hasDomainWord)).toBe(true);
   });
 });

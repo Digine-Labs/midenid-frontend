@@ -18,13 +18,14 @@ import { AccountId } from "@demox-labs/miden-sdk";
 import { useNavigate } from "react-router";
 import { bech32ToAccountId } from "@/lib/midenClient";
 import { registerName } from "@/lib/registerName";
-import { TransactionStatusAlerts } from "@/pages/register/components/transaction-status-alerts";
-import { TermsModal } from "@/pages/register/components/terms-modal";
+import { TransactionStatusAlerts } from "@/components/transaction-status-alerts";
+import { TermsModal } from "@/components/terms-modal";
 import { type PricingTier as PricingTierBase } from "@/shared/pricing";
 import { AnimatePresence, motion } from "framer-motion";
 import { RegistrationStep } from "./register-modal/registration-step";
 import { ProcessingStep } from "./register-modal/processing-step";
 import { ConfirmedStep } from "./register-modal/confirmed-step";
+import { hasRegisteredDomain } from "@/lib/midenClient";
 
 interface RegisterModalProps {
   domain: string;
@@ -52,7 +53,7 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
 
 function RegisterModalContent({ domain }: { domain: string }) {
   const { connected, accountId: rawAccountId, requestTransaction } = useWallet();
-  const { hasRegisteredDomain: walletHasDomain } = useWalletAccount();
+  const { hasRegisteredDomain: walletHasDomain, refetch: refetchWalletAccount } = useWalletAccount();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
@@ -123,10 +124,9 @@ function RegisterModalContent({ domain }: { domain: string }) {
         setTransactionSubmitted(true);
         setCurrentStep("processing");
 
-        // After 5 seconds, show confirmed step
-        setTimeout(() => {
+        if (await hasRegisteredDomain(accountId)) {
           setCurrentStep("confirmed");
-        }, 5000);
+        }
 
       } catch (error) {
         console.error("Registration failed:", error);
@@ -134,6 +134,8 @@ function RegisterModalContent({ domain }: { domain: string }) {
         setCurrentStep("registration");
       } finally {
         setIsPurchasing(false);
+        // Refetch wallet account data to update hasRegisteredDomain
+        refetchWalletAccount();
       }
     }
   };

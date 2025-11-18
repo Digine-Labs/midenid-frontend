@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react';
 import { AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
 import { bech32ToAccountId, safeAccountImport } from '@/lib/midenClient';
-import { encodeAccountIdToWord, hasRegisteredDomain as checkHasRegisteredDomain, decodeDomainFromWordOld } from '@/utils';
+import { encodeAccountIdToWord, hasStorageValue, decodeDomainFromWordOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS, MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
 
 interface WalletAccountContextValue {
@@ -94,7 +94,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
         if (!isActive) return;
 
         // Check if account has a registered domain
-        const hasDomain = checkHasRegisteredDomain(domainWord);
+        const hasDomain = hasStorageValue(domainWord);
         setHasRegisteredDomain(hasDomain);
 
         // Decode domain name if exists

@@ -8,7 +8,7 @@ import {
   NoteFilter,
   NoteFilterTypes,
 } from '@demox-labs/miden-sdk';
-import { hasRegisteredDomain as checkHasRegisteredDomain, encodeAccountIdToWord } from '@/utils';
+import { hasStorageValue, encodeAccountIdToWord } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
 
 
@@ -98,7 +98,7 @@ export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean
 
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
 
-  let client = await instantiateClient({ accountsToImport: [accountId] })
+  let client = await instantiateClient({ accountsToImport: [accountId, contractId] })
 
   while (attempts < maxAttempts) {
     await client.syncState()
@@ -118,7 +118,7 @@ export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean
       console.warn('Failed to get domain from storage:', error);
     }
 
-    const hasDomain = checkHasRegisteredDomain(domainWord);
+    const hasDomain = hasStorageValue(domainWord);
 
     if (hasDomain) {
       return true

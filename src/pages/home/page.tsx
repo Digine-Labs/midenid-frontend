@@ -1,27 +1,18 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/theme-provider'
-import { bech32ToAccountId } from '@/lib/midenClient'
-import { useWallet } from '@demox-labs/miden-wallet-adapter'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
-  const { accountId: rawAccountId } = useWallet()
 
-  const accountId = useMemo(() => {
-    if (rawAccountId != null) {
-      return bech32ToAccountId(rawAccountId);
-    } else return undefined;
-  }, [rawAccountId]);
 
-  console.log(accountId)
   // Use darker green for identity highlight only in dark mode
   const identityColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046'
 
@@ -69,7 +60,7 @@ export default function Home() {
     <>
       <TestnetWarningModal />
       <main className="relative flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
-        <div className="relative z-10 w-full sm:max-w-md md:max-w-2xl lg:max-w-3xl text-center">
+        <div className="relative z-10 w-full md:max-w-3xl text-center">
           <div className="space-y-2 mb-6">
             <h1 className="text-3xl sm:text-3xl md:text-4xl font-bold tracking-wide">
               Choose your m<span className="text-primary">id</span>en name
@@ -107,7 +98,7 @@ export default function Home() {
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-red-600 text-white">
-                  <p>Only English letters and numbers are allowed</p>
+                  <p>Maximum 20 characters and only English letters and numbers are allowed</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

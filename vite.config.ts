@@ -34,7 +34,6 @@ export default defineConfig({
             '@radix-ui/react-menubar',
             '@radix-ui/react-slot',
             '@radix-ui/react-tooltip',
-            '@radix-ui/react-alert-dialog',
             '@radix-ui/react-checkbox',
             '@radix-ui/react-separator',
             '@radix-ui/react-accordion'

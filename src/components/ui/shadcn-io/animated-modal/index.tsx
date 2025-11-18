@@ -131,7 +131,7 @@ export const ModalBody = ({
             transition={{
               duration: 0.2,
             }}
-            className="min-h-[50%] max-h-[90%] md:max-w-[40%] relative z-[10000] flex flex-col flex-1"
+            className="min-h-[50%] max-h-[90%] max-w-[90%] md:max-w-[70%] lg:max-w-[700px] relative z-[10000] flex flex-col flex-1"
           >
             <BackgroundGradient
               containerClassName="w-full h-full rounded-3xl"
@@ -165,7 +165,7 @@ export const ModalContent = ({
   className?: string;
 }) => {
   return (
-    <div className={cn("flex flex-col flex-1 p-8 md:p-10", className)}>
+    <div className={cn("flex flex-col flex-1 p-2 md:p-10 sm:p-8", className)}>
       {children}
     </div>
   );
@@ -226,7 +226,7 @@ const CloseIcon = () => {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-black dark:text-white h-4 w-4 group-hover:scale-125 group-hover:rotate-3 transition duration-200"
+        className="text-black dark:text-white h-4 w-4 hover:scale-125 hover:rotate-3 transition duration-200"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M18 6l-12 12" />

@@ -54,8 +54,8 @@ export function ConfirmedStep({ domain }: ConfirmedStepProps) {
         <p className="text-sm text-muted-foreground mb-2">
           Your new identity:
         </p>
-        <div className="text-3xl md:text-4xl font-bold text-primary">
-          {domain}.miden
+        <div className="text-3xl md:text-4xl font-bold text-primary break-all">
+          {domain}<span className="whitespace-nowrap">.miden</span>
         </div>
       </motion.div>
     </div>

@@ -6,7 +6,7 @@ import { useBalance } from '@/hooks/useBalance'
 import { bech32ToAccountId } from '@/lib/midenClient'
 import { formatBalance } from '@/utils'
 import { MIDEN_FAUCET_ID_BECH32 } from '@/shared/constants'
-import { TermsModal } from './terms-modal'
+import { TermsModal } from '@/components/terms-modal'
 
 interface PricingCardProps {
   domain: string

@@ -23,7 +23,7 @@ import {
     TransactionType,
 } from "@demox-labs/miden-wallet-adapter";
 import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
-import { encodeNameToWord } from '@/utils';
+import { encodeDomainOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_CODE, REGISTER_NOTE_SCRIPT } from '@/shared';
 
 export interface NoteFromMasmParams {
@@ -81,7 +81,7 @@ export async function registerName({
         const serialNumber = generateRandomSerialNumber();
 
         const noteType = NoteType.Public;
-        const domainWord = encodeNameToWord(domain, true);
+        const domainWord = encodeDomainOld(domain, true);
 
         const assets = new FungibleAsset(faucetId, amount);
         const noteAssets = new NoteAssets([assets]);
