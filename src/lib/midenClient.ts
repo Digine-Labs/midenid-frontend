@@ -93,7 +93,7 @@ export async function isNoteCommitted(accountId: AccountId, noteId: string): Pro
 }
 
 export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean> {
-  const maxAttempts = 30 // 30 attempts * 2 seconds = 60 seconds
+  const maxAttempts = 30 // 30 attempts * 5 seconds = 150 seconds
   let attempts = 0
 
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
@@ -124,7 +124,7 @@ export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean
       return true
     }
 
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise(resolve => setTimeout(resolve, 5000))
     attempts++
   }
 

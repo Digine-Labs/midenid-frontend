@@ -124,8 +124,14 @@ function RegisterModalContent({ domain }: { domain: string }) {
         setTransactionSubmitted(true);
         setCurrentStep("processing");
 
+        // check if domain is registered. If not registered in 150 seconds, show error
         if (await hasRegisteredDomain(accountId)) {
           setCurrentStep("confirmed");
+        } else {
+          setTransactionFailed(true);
+          setCurrentStep("registration");
+          setIsPurchasing(false);
+          refetchWalletAccount();
         }
 
       } catch (error) {
