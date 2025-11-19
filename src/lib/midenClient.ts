@@ -58,39 +58,49 @@ export function generateRandomSerialNumber(): Word {
   ]);
 }
 
-export async function hasRegisteredDomain(domain: string): Promise<boolean> {
+export async function hasRegisteredDomain(
+  domain: string,
+  providedClient?: WebClient
+): Promise<boolean> {
   const maxAttempts = 30 // 30 attempts * 5 seconds = 150 seconds
   let attempts = 0
 
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
 
-  let client = await instantiateClient({ accountsToImport: [contractId] })
+  // Use provided client or create new one
+  const client = providedClient || await instantiateClient({ accountsToImport: [contractId] })
+  const shouldTerminate = !providedClient; // Only terminate if we created the client
 
   const storageKey = encodeDomainOld(domain);
 
-  while (attempts < maxAttempts) {
-    await client.syncState()
+  try {
+    while (attempts < maxAttempts) {
+      await client.syncState()
 
-    const contractAccount = await client.getAccount(contractId);
-    let domainWord: Word | undefined;
+      const contractAccount = await client.getAccount(contractId);
+      let domainWord: Word | undefined;
 
-    try {
-      domainWord = contractAccount?.storage().getMapItem(3, storageKey);
-    } catch (error) {
-      console.warn('Failed to get domain from storage:', error);
+      try {
+        domainWord = contractAccount?.storage().getMapItem(3, storageKey);
+      } catch (error) {
+        console.warn('Failed to get domain from storage:', error);
+      }
+
+      const hasDomain = hasStorageValue(domainWord);
+
+      if (hasDomain) {
+        return true
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      attempts++
     }
 
-    const hasDomain = hasStorageValue(domainWord);
-
-    if (hasDomain) {
-      return true
+    return false
+  } finally {
+    // Only terminate if we created the client ourselves
+    if (shouldTerminate) {
+      client.terminate()
     }
-
-    await new Promise(resolve => setTimeout(resolve, 5000))
-    attempts++
   }
-
-  client.terminate()
-
-  return false
 }

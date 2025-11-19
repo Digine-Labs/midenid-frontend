@@ -4,7 +4,7 @@ import { AccountId, Word } from '@demox-labs/miden-sdk';
 import { bech32ToAccountId } from '@/lib/midenClient';
 import { encodeAccountIdToWord, hasStorageValue, decodeDomainFromWordOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS, MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
-import { instantiateClient } from '@/lib/midenClient';
+import { useMidenClient } from './MidenClientContext';
 
 interface WalletAccountContextValue {
   accountId: AccountId | undefined;
@@ -19,6 +19,7 @@ const WalletAccountContext = createContext<WalletAccountContextValue | undefined
 
 export function WalletAccountProvider({ children }: { children: ReactNode }) {
   const { connected, accountId: rawAccountId } = useWallet();
+  const { getClient } = useMidenClient();
   const [accountId, setAccountId] = useState<AccountId | undefined>(undefined);
   const [hasRegisteredDomain, setHasRegisteredDomain] = useState(false);
   const [registeredDomain, setRegisteredDomain] = useState<string | null>(null);
@@ -61,10 +62,8 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
         const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS);
         const faucetId = AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS);
 
-        const client = await instantiateClient({ accountsToImport: [accountId, contractId] });
-        await client.syncState();
-
-        if (!isActive) return
+        const client = await getClient();
+        if (!client || !isActive) return;
 
         // Encode accountId to Word for storage query
         const prefixFelt = accountId.prefix();

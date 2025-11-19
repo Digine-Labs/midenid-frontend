@@ -1,6 +1,6 @@
-import { type AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
+import { type AccountId, type WebClient, Word } from '@demox-labs/miden-sdk';
 import { useEffect, useState, useMemo } from 'react';
-import { instantiateClient } from '@/lib/midenClient';
+import { useMidenClient } from '@/contexts/MidenClientContext';
 
 interface StorageParams {
     readonly accountId: AccountId;
@@ -57,6 +57,7 @@ export const useStorage = (
     const [storageHex, setStorageHex] = useState<string | undefined>(undefined);
     const [storageU64s, setStorageU64s] = useState<BigUint64Array | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
+    const { getClient } = useMidenClient();
 
     // Safely serialize key to hex for stable dependency comparison
     const keyHex = useMemo(() => {
@@ -87,14 +88,10 @@ export const useStorage = (
                 return;
             }
 
-            let client: WebClient | null = null;
-
             try {
-                client = await instantiateClient({ accountsToImport: [accountId] });
+                const client = await getClient();
 
                 if (!client || !accountId || isCancelled) return;
-
-                await client.syncState();
 
                 let item;
                 if (key !== undefined) {
@@ -128,11 +125,6 @@ export const useStorage = (
                 if (!isCancelled) {
                     setIsLoading(false);
                 }
-                if (client) {
-                    client.terminate();
-                }
-
-                client?.terminate()
             }
         };
 
@@ -141,7 +133,7 @@ export const useStorage = (
         return () => {
             isCancelled = true;
         };
-    }, [accountId, index, keyHex]); // Include keyHex so effect reruns when key changes
+    }, [accountId, index, keyHex, getClient]); // Include keyHex so effect reruns when key changes
 
     return {
         storageItem,      // Raw Word object
