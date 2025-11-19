@@ -14,7 +14,7 @@ import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
-import { AccountId, NoteInputs, FeltArray } from "@demox-labs/miden-sdk";
+import { AccountId } from "@demox-labs/miden-sdk";
 import { useNavigate } from "react-router";
 import { registerName } from "@/lib/registerName";
 import { TransactionStatusAlerts } from "@/components/transaction-status-alerts";
@@ -25,9 +25,11 @@ import { RegistrationStep } from "./register-modal/registration-step";
 import { ProcessingStep } from "./register-modal/processing-step";
 import { ConfirmedStep } from "./register-modal/confirmed-step";
 import { hasRegisteredDomain } from "@/lib/midenClient";
-import { transactionCreator } from "@/lib/transactionCreator";
-import { REGISTER_NOTE_SCRIPT, MIDEN_ID_CONTRACT_CODE } from "@/shared";
-import { encodeDomainOld } from "@/utils/encode";
+// import { transactionCreator } from "@/lib/transactionCreator";
+// import { REGISTER_NOTE_SCRIPT, MIDEN_ID_CONTRACT_CODE } from "@/shared";
+// import { encodeDomainOld } from "@/utils/encode";
+// import {  NoteInputs, FeltArray } from "@demox-labs/miden-sdk";
+
 
 interface RegisterModalProps {
   domain: string;

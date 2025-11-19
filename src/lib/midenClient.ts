@@ -6,7 +6,7 @@ import {
   Word,
   Felt,
 } from '@demox-labs/miden-sdk';
-import { hasStorageValue, encodeAccountIdToWord, encodeDomainOld } from '@/utils';
+import { hasStorageValue, encodeDomainOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
 
 

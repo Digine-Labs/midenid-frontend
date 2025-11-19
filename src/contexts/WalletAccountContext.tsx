@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react';
-import { AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
-import { bech32ToAccountId, safeAccountImport } from '@/lib/midenClient';
+import { AccountId, Word } from '@demox-labs/miden-sdk';
+import { bech32ToAccountId } from '@/lib/midenClient';
 import { encodeAccountIdToWord, hasStorageValue, decodeDomainFromWordOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS, MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
 import { instantiateClient } from '@/lib/midenClient';
