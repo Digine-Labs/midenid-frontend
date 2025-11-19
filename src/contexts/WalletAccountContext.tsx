@@ -4,6 +4,7 @@ import { AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
 import { bech32ToAccountId, safeAccountImport } from '@/lib/midenClient';
 import { encodeAccountIdToWord, hasStorageValue, decodeDomainFromWordOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS, MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
+import { instantiateClient } from '@/lib/midenClient';
 
 interface WalletAccountContextValue {
   accountId: AccountId | undefined;
@@ -18,7 +19,6 @@ const WalletAccountContext = createContext<WalletAccountContextValue | undefined
 
 export function WalletAccountProvider({ children }: { children: ReactNode }) {
   const { connected, accountId: rawAccountId } = useWallet();
-
   const [accountId, setAccountId] = useState<AccountId | undefined>(undefined);
   const [hasRegisteredDomain, setHasRegisteredDomain] = useState(false);
   const [registeredDomain, setRegisteredDomain] = useState<string | null>(null);
@@ -58,21 +58,13 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
 
       try {
-        const nodeEndpoint = 'https://rpc.testnet.miden.io';
-        const client = await WebClient.createClient(nodeEndpoint);
+        const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS);
+        const faucetId = AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS);
+
+        const client = await instantiateClient({ accountsToImport: [accountId, contractId] });
         await client.syncState();
 
-        if (!isActive) return;
-
-        // Import account
-        await safeAccountImport(client, accountId);
-
-        // Get contract IDs
-        const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
-        const faucetId = AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string);
-
-        // Import contract account
-        await safeAccountImport(client, contractId);
+        if (!isActive) return
 
         // Encode accountId to Word for storage query
         const prefixFelt = accountId.prefix();

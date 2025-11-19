@@ -1,10 +1,7 @@
 import {
     AccountId,
-    AccountStorageRequirements,
-    AssemblerUtils,
     Felt,
     FeltArray,
-    ForeignAccount,
     FungibleAsset,
     Note,
     NoteAssets,
@@ -15,9 +12,8 @@ import {
     NoteTag,
     NoteType,
     OutputNote,
-    OutputNotesArray,
-    TransactionKernel,
     TransactionRequestBuilder,
+    MidenArrays
 } from '@demox-labs/miden-sdk';
 import {
     CustomTransaction,
@@ -25,15 +21,16 @@ import {
     TransactionType,
 } from "@demox-labs/miden-wallet-adapter";
 import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
-import { encodeDomain } from '@/utils';
-import { MIDEN_NAMING_CONTRACT_CODE, REGISTER_NAME_NOTE, PRICING_ACCOUNT_ADDRESS } from '@/shared';
 
 export interface NoteFromMasmParams {
     senderAccountId: AccountId;
     destinationAccountId: AccountId;
+    noteScript: string;
+    libraryScript: string;
+    libraryName: string;
+    noteInputs: NoteInputs;
     faucetId: AccountId;
     amount: bigint;
-    domain: string;
     requestTransaction: (tx: MidenTransaction) => Promise<string>;
 }
 
@@ -42,46 +39,70 @@ export interface NoteFromMasmParams {
  * Example function for note transactions using a MASM script
  *
  * @param senderAccountId - The connected wallet's account ID (from useWallet hook)
+ * @param destinationAccountId - The account ID to send the note to (smart contract's ID)
+ * @param noteScript - The MASM note script as a string
+ * @param libraryScript - The MASM library script as a string
+ * @param libraryName - The name of the library to link in the script (e.g., "miden_id::registry")
+ * @param noteInputs - The inputs to pass to the note script
  * @param faucetId - The faucet account ID to source tokens from (defaults to Miden testnet faucet)
  * @param amount - Amount of tokens to transfer (in base units, e.g., BigInt(50))
  * @param requestTransaction - Function to request transaction signing from the miden-wallet-adapter
  * @returns Transaction ID and Note ID string that can be used to view on MidenScan
  * @throws {Error} If transfer fails
+ * 
+ * 
+ * @example
+ * ```ts
+ * const noteInputs = new NoteInputs(
+ *  new FeltArray([
+ *      domainWord.toFelts()[0],
+ *      domainWord.toFelts()[1],
+ *      domainWord.toFelts()[2],
+ *      domainWord.toFelts()[3],
+ *      ])
+ *  );
+ * 
+ * const { txId, noteId } = await transactionCreator({
+ * senderAccountId,
+ * destinationAccountId,
+ * noteScript: REGISTER_NOTE_SCRIPT,
+ * libraryScript: MIDEN_ID_CONTRACT_CODE,
+ * libraryName: "miden_id::registry",
+ * noteInputs,
+ * faucetId,
+ * amount: BigInt(100),
+ * requestTransaction,
+ * });
+ * 
+ * ```
+ * 
  */
-export async function registerNameNew({
+export async function transactionCreator({
     senderAccountId,
     destinationAccountId,
+    noteScript,
+    libraryScript,
+    libraryName,
+    noteInputs,
     faucetId,
     amount,
-    domain,
     requestTransaction,
 }: NoteFromMasmParams): Promise<{ txId: string; noteId: string }> {
     if (typeof window === "undefined") {
         console.warn("webClient() can only run in the browser");
-        return { txId: "", noteId: "" };
+        return { txId: "N/A", noteId: "N/A" };
     }
 
     try {
         const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
 
-        // this constant(PRICING_ACCOUNT_ADDRESS) needs to be changed when pricing contract is deployed
-        let pricingAccountId = AccountId.fromHex(PRICING_ACCOUNT_ADDRESS)
+        const builder = client.createScriptBuilder();
 
-        let storageRequirements = new AccountStorageRequirements()
+        let registerComponentLib = builder.buildLibrary(libraryName, libraryScript)
 
-        let foreignAccount = ForeignAccount.public(pricingAccountId, storageRequirements)
+        builder.linkDynamicLibrary(registerComponentLib)
 
-        let assembler = TransactionKernel.assembler();
-
-        let registerComponentLib = AssemblerUtils.createAccountComponentLibrary(
-            assembler,
-            "miden_name::naming",
-            MIDEN_NAMING_CONTRACT_CODE
-        );
-
-        let script = assembler.withDebugMode(true)
-            .withLibrary(registerComponentLib)
-            .compileNoteScript(REGISTER_NAME_NOTE);
+        let script = builder.compileNoteScript(noteScript)
 
         // Sync state to get latest blockchain data
         await client.syncState();
@@ -89,12 +110,11 @@ export async function registerNameNew({
         // Create a new serial number for the note
         const serialNumber = generateRandomSerialNumber();
 
-        const noteType = NoteType.Public;
-        const domainWord = encodeDomain(domain);
+        const noteType = NoteType.Public
 
         const assets = new FungibleAsset(faucetId, amount);
         const noteAssets = new NoteAssets([assets]);
-        const noteTag = NoteTag.fromAccountId(senderAccountId);
+        const noteTag = NoteTag.fromAccountId(destinationAccountId);
 
         const noteMetadata = new NoteMetadata(
             senderAccountId,
@@ -102,19 +122,6 @@ export async function registerNameNew({
             noteTag,
             NoteExecutionHint.always(),
             new Felt(BigInt(0))
-        );
-
-        const noteInputs = new NoteInputs(
-            new FeltArray([
-                faucetId.suffix(),
-                faucetId.prefix(),
-                new Felt(BigInt(0)),
-                new Felt(BigInt(0)),
-                domainWord.toFelts()[0],
-                domainWord.toFelts()[1],
-                domainWord.toFelts()[2],
-                domainWord.toFelts()[3],
-            ])
         );
 
         const note = new Note(
@@ -125,15 +132,13 @@ export async function registerNameNew({
 
         const noteId = note.id().toString();
 
+        const noteArray = new MidenArrays().OutputNoteArray([OutputNote.full(note)]);
+
         let transactionRequest = new TransactionRequestBuilder()
-            .withOwnOutputNotes(new OutputNotesArray([OutputNote.full(note)])).withForeignAccounts([foreignAccount])
+            .withOwnOutputNotes(noteArray)
             .build();
 
         await client.syncState();
-
-        // let txResult = await client.newTransaction(senderAccountId, transactionRequest)
-
-        // await client.submitTransaction(txResult)
 
         const tx = new CustomTransaction(
             accountIdToBech32(senderAccountId), // from
@@ -148,7 +153,7 @@ export async function registerNameNew({
             payload: tx,
         });
 
-        console.log("Transaction submitted. ID:", txId, "Note ID:", noteId);
+        client.terminate()
 
         return { txId, noteId };
     } catch (error) {

@@ -14,9 +14,8 @@ import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
-import { AccountId } from "@demox-labs/miden-sdk";
+import { AccountId, NoteInputs, FeltArray } from "@demox-labs/miden-sdk";
 import { useNavigate } from "react-router";
-import { bech32ToAccountId } from "@/lib/midenClient";
 import { registerName } from "@/lib/registerName";
 import { TransactionStatusAlerts } from "@/components/transaction-status-alerts";
 import { TermsModal } from "@/components/terms-modal";
@@ -26,6 +25,9 @@ import { RegistrationStep } from "./register-modal/registration-step";
 import { ProcessingStep } from "./register-modal/processing-step";
 import { ConfirmedStep } from "./register-modal/confirmed-step";
 import { hasRegisteredDomain } from "@/lib/midenClient";
+import { transactionCreator } from "@/lib/transactionCreator";
+import { REGISTER_NOTE_SCRIPT, MIDEN_ID_CONTRACT_CODE } from "@/shared";
+import { encodeDomainOld } from "@/utils/encode";
 
 interface RegisterModalProps {
   domain: string;
@@ -52,8 +54,8 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
 }
 
 function RegisterModalContent({ domain }: { domain: string }) {
-  const { connected, accountId: rawAccountId, requestTransaction } = useWallet();
-  const { hasRegisteredDomain: walletHasDomain, refetch: refetchWalletAccount } = useWalletAccount();
+  const { connected, requestTransaction } = useWallet();
+  const { hasRegisteredDomain: walletHasDomain, refetch: refetchWalletAccount, accountId } = useWalletAccount();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
@@ -72,12 +74,6 @@ function RegisterModalContent({ domain }: { domain: string }) {
     () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
     []
   );
-
-  const accountId = useMemo(() => {
-    if (rawAccountId != null) {
-      return bech32ToAccountId(rawAccountId);
-    } else return undefined;
-  }, [rawAccountId]);
 
   // Reset to registration step when modal is closed or domain changes
   useEffect(() => {
@@ -120,12 +116,36 @@ function RegisterModalContent({ domain }: { domain: string }) {
           requestTransaction: requestTransaction,
         });
 
+        //! senin istediğin gibi bi tx oluşturucu
+        // const domainWord = encodeDomainOld(domain, true);
+
+        // const noteInputs = new NoteInputs(
+        //   new FeltArray([
+        //     domainWord.toFelts()[0],
+        //     domainWord.toFelts()[1],
+        //     domainWord.toFelts()[2],
+        //     domainWord.toFelts()[3],
+        //   ])
+        // );
+
+        // await transactionCreator({
+        //   senderAccountId: accountId,
+        //   destinationAccountId: destinationAccountId,
+        //   noteScript: REGISTER_NOTE_SCRIPT,
+        //   libraryScript: MIDEN_ID_CONTRACT_CODE,
+        //   libraryName: "miden_id::registry",
+        //   noteInputs: noteInputs,
+        //   faucetId: faucetId,
+        //   amount: buyAmount,
+        //   requestTransaction: requestTransaction,
+        // })
+
         // Transaction approved by wallet, show processing step
         setTransactionSubmitted(true);
         setCurrentStep("processing");
 
         // check if domain is registered. If not registered in 150 seconds, show error
-        if (await hasRegisteredDomain(accountId)) {
+        if (await hasRegisteredDomain(domain)) {
           setCurrentStep("confirmed");
         } else {
           setTransactionFailed(true);

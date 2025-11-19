@@ -1,6 +1,5 @@
 import {
     AccountId,
-    AssemblerUtils,
     Felt,
     FeltArray,
     FungibleAsset,
@@ -13,9 +12,8 @@ import {
     NoteTag,
     NoteType,
     OutputNote,
-    OutputNotesArray,
-    TransactionKernel,
     TransactionRequestBuilder,
+    MidenArrays
 } from '@demox-labs/miden-sdk';
 import {
     CustomTransaction,
@@ -62,17 +60,13 @@ export async function registerName({
     try {
         const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
 
-        let assembler = TransactionKernel.assembler();
+        const builder = client.createScriptBuilder();
 
-        let registerComponentLib = AssemblerUtils.createAccountComponentLibrary(
-            assembler,
-            "miden_id::registry",
-            MIDEN_ID_CONTRACT_CODE
-        );
+        let registerComponentLib = builder.buildLibrary("miden_id::registry", MIDEN_ID_CONTRACT_CODE)
 
-        let script = assembler.withDebugMode(true)
-            .withLibrary(registerComponentLib)
-            .compileNoteScript(REGISTER_NOTE_SCRIPT);
+        builder.linkDynamicLibrary(registerComponentLib)
+
+        let script = builder.compileNoteScript(REGISTER_NOTE_SCRIPT)
 
         // Sync state to get latest blockchain data
         await client.syncState();
@@ -112,8 +106,10 @@ export async function registerName({
 
         const noteId = note.id().toString();
 
+        const noteArray = new MidenArrays().OutputNoteArray([OutputNote.full(note)]);
+
         let transactionRequest = new TransactionRequestBuilder()
-            .withOwnOutputNotes(new OutputNotesArray([OutputNote.full(note)]))
+            .withOwnOutputNotes(noteArray)
             .build();
 
         await client.syncState();
@@ -130,6 +126,8 @@ export async function registerName({
             type: TransactionType.Custom,
             payload: tx,
         });
+
+        client.terminate()
 
         return { txId, noteId };
     } catch (error) {

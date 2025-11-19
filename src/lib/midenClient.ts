@@ -5,10 +5,8 @@ import {
   WebClient,
   Word,
   Felt,
-  NoteFilter,
-  NoteFilterTypes,
 } from '@demox-labs/miden-sdk';
-import { hasStorageValue, encodeAccountIdToWord } from '@/utils';
+import { hasStorageValue, encodeAccountIdToWord, encodeDomainOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
 
 
@@ -60,51 +58,15 @@ export function generateRandomSerialNumber(): Word {
   ]);
 }
 
-export async function isNoteCommitted(accountId: AccountId, noteId: string): Promise<boolean> {
-  const maxAttempts = 30 // 30 attempts * 2 seconds = 60 seconds
-  let attempts = 0
-  console.log("started")
-
-  let client = await instantiateClient({ accountsToImport: [] })
-
-  while (attempts < maxAttempts) {
-    await client.syncState()
-
-    const noteFilter = new NoteFilter(NoteFilterTypes.Committed)
-
-    const consumableNotes = await client.getConsumableNotes(accountId)
-    const committedNotes = await client.getInputNotes(noteFilter)
-
-    const found = consumableNotes.some((note) => note.inputNoteRecord().id().toString() === noteId)
-      || committedNotes.some((note) => note.id().toString() === noteId)
-
-    if (found) {
-      console.log(`✅ note found ${noteId}`)
-      return true
-    }
-
-    console.log(`Note ${noteId} not found. Waiting...`)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    attempts++
-  }
-
-  console.log(`❌ note ${noteId} not found after 60 seconds`)
-  return false
-}
-
-export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean> {
+export async function hasRegisteredDomain(domain: string): Promise<boolean> {
   const maxAttempts = 30 // 30 attempts * 5 seconds = 150 seconds
   let attempts = 0
 
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
 
-  let client = await instantiateClient({ accountsToImport: [accountId, contractId] })
+  let client = await instantiateClient({ accountsToImport: [contractId] })
 
-  const prefixFelt = accountId.prefix();
-  const suffixFelt = accountId.suffix();
-  const prefix = prefixFelt.asInt();
-  const suffix = suffixFelt.asInt();
-  const storageKey = encodeAccountIdToWord(prefix, suffix);
+  const storageKey = encodeDomainOld(domain);
 
   while (attempts < maxAttempts) {
     await client.syncState()
@@ -113,7 +75,7 @@ export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean
     let domainWord: Word | undefined;
 
     try {
-      domainWord = contractAccount?.storage().getMapItem(4, storageKey);
+      domainWord = contractAccount?.storage().getMapItem(3, storageKey);
     } catch (error) {
       console.warn('Failed to get domain from storage:', error);
     }
@@ -127,6 +89,8 @@ export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean
     await new Promise(resolve => setTimeout(resolve, 5000))
     attempts++
   }
+
+  client.terminate()
 
   return false
 }

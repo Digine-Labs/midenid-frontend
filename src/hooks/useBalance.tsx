@@ -1,6 +1,7 @@
-import { type AccountId, WebClient } from '@demox-labs/miden-sdk';
+import { type AccountId, type WebClient } from '@demox-labs/miden-sdk';
 import { useEffect, useState } from 'react';
 import { safeAccountImport } from '@/lib/midenClient';
+import { instantiateClient } from '@/lib/midenClient';
 
 interface BalanceParams {
     readonly accountId?: AccountId;
@@ -29,8 +30,7 @@ export const useBalance = (
         const initAndRefresh = async () => {
             if (!accountId || !faucetId) return;
 
-            const nodeEndpoint = "https://rpc.testnet.miden.io";
-            const client = await WebClient.createClient(nodeEndpoint);
+            const client = await instantiateClient({ accountsToImport: [] })
 
             const refreshBalance = async () => {
                 if (!isActive) return;

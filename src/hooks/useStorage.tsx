@@ -131,6 +131,8 @@ export const useStorage = (
                 if (client) {
                     client.terminate();
                 }
+
+                client?.terminate()
             }
         };
 
