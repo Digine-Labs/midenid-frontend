@@ -1,6 +1,6 @@
 export const REGISTER_NOTE_SCRIPT = `
 use.miden_id::registry
-use.miden::note
+use.miden::active_note
 use.std::sys
 
 const.NOTE_INPUT_PTR=0
@@ -10,7 +10,7 @@ const.NOTE_INPUT_PTR=0
 begin
     # Load the name from note inputs
     push.NOTE_INPUT_PTR
-    exec.note::get_inputs
+    exec.active_note::get_inputs
     push.0
     mem_loadw
 
