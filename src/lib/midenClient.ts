@@ -100,14 +100,14 @@ export async function hasRegisteredDomain(accountId: AccountId): Promise<boolean
 
   let client = await instantiateClient({ accountsToImport: [accountId, contractId] })
 
+  const prefixFelt = accountId.prefix();
+  const suffixFelt = accountId.suffix();
+  const prefix = prefixFelt.asInt();
+  const suffix = suffixFelt.asInt();
+  const storageKey = encodeAccountIdToWord(prefix, suffix);
+
   while (attempts < maxAttempts) {
     await client.syncState()
-
-    const prefixFelt = accountId.prefix();
-    const suffixFelt = accountId.suffix();
-    const prefix = prefixFelt.asInt();
-    const suffix = suffixFelt.asInt();
-    const storageKey = encodeAccountIdToWord(prefix, suffix);
 
     const contractAccount = await client.getAccount(contractId);
     let domainWord: Word | undefined;
