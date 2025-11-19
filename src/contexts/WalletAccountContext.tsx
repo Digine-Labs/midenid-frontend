@@ -110,6 +110,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
           setBalance(walletBalance ? BigInt(walletBalance) : BigInt(0));
         }
 
+        client.terminate()
       } catch (error) {
         console.error('WalletAccountContext: Failed to fetch wallet data:', error);
         if (isActive) {

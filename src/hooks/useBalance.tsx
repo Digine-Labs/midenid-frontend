@@ -47,6 +47,7 @@ export const useBalance = (
             };
 
             await refreshBalance();
+            client.terminate()
             clear = setInterval(refreshBalance, 10000);
         };
 
