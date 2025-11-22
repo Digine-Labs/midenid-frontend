@@ -106,7 +106,7 @@ export async function registerName({
 
         const noteId = note.id().toString();
 
-        const noteArray = new MidenArrays().OutputNoteArray([OutputNote.full(note)]);
+        const noteArray = new MidenArrays.OutputNoteArray([OutputNote.full(note)]);
 
         let transactionRequest = new TransactionRequestBuilder()
             .withOwnOutputNotes(noteArray)

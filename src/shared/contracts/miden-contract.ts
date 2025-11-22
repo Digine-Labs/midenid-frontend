@@ -1,6 +1,7 @@
 export const MIDEN_ID_CONTRACT_CODE = `
-use.miden::account
-use.miden::note
+use.miden::native_account
+use.miden::active_account
+use.miden::active_note
 use.std::sys
 
 const.ALREADY_INITIALIZED="Already Initialized"
@@ -45,12 +46,12 @@ export.init
     # [0, 0, 0, price, price, token_prefix, token_suffix]
     push.5
     # [5, 0, 0, 0, price, price, token_prefix, token_suffix]
-    exec.account::set_item
+    exec.native_account::set_item
     # [OLD_PRICE_WORD, price, token_prefix, token_suffix]
     dropw drop
     # [token_prefix, token_suffix]
 
-    exec.note::get_sender
+    exec.active_note::get_sender
     # [owner_prefix, owner_suffix, token_prefix, token_suffix]
     exec._update_owner
     # [token_prefix, token_suffix]
@@ -88,7 +89,7 @@ end
 # Output: [pad(16)]
 # Standard Miden wallet interface - receive an asset into the account vault
 export.receive_asset
-    exec.account::add_asset
+    exec.native_account::add_asset
     # => [ASSET', pad(12)]
 
     # drop the final asset
@@ -124,7 +125,7 @@ export.register_name
     # [NAME]
 
     # Get the sender address
-    exec.note::get_sender
+    exec.active_note::get_sender
     # [prefix, suffix, NAME(4)] = 6 elements
 
     # Check if account already has a name (one name per account)
@@ -169,13 +170,13 @@ end
 # Input: [index]
 # Output: [STORAGE_ITEM]
 export.read_storage
-    exec.account::get_item
+    exec.active_account::get_item
 end
 
 # Input: [index, KEY]
 # Output: [STORAGE_ITEM]
 export.read_storage_map
-    exec.account::get_map_item
+    exec.active_account::get_map_item
 end
 
 
@@ -184,7 +185,7 @@ end
 export.is_name_registered
     push.3
     # [3, NAME]
-    exec.account::get_map_item
+    exec.active_account::get_map_item
     # [VALUE]
     push.0.0.0.0
     # [ZERO_WORD, VALUE]
@@ -211,7 +212,7 @@ end
 # Returns: []
 proc._write_to_name_map
     push.3  # Storage slot 3 for Name->ID mapping
-    exec.account::set_map_item
+    exec.native_account::set_map_item
     dropw dropw
 end
 
@@ -220,7 +221,7 @@ end
 # Returns: []
 proc._write_to_id_map
     push.4  # Storage slot 4 for ID->Name mapping
-    exec.account::set_map_item
+    exec.native_account::set_map_item
     dropw dropw
 end
 
@@ -244,7 +245,7 @@ proc._get_name_by_addr
     # [0, 0, addr_prefix, addr_suffix]
     push.4
     # [4, 0, 0, addr_prefix, addr_suffix]
-    exec.account::get_map_item
+    exec.active_account::get_map_item
     # [VALUE]
 end
 
@@ -253,7 +254,7 @@ end
 proc._get_addr_by_name
     push.3
     # [3, NAME]
-    exec.account::get_map_item
+    exec.active_account::get_map_item
     # [VALUE]
     drop drop
 end
@@ -263,7 +264,7 @@ end
 proc._assert_name_not_registered
     push.3
     # [3, NAME]
-    exec.account::get_map_item
+    exec.active_account::get_map_item
     # [VALUE] - returns the value (4 elements)
     push.0.0.0.0
     # [ZERO_WORD, VALUE]
@@ -300,7 +301,7 @@ proc._assert_not_have_name
     # Query slot 4 for existing name
     push.4
     # [4, 0, 0, prefix, suffix, n0, n1, n2, n3, n0, n1, n2, n3]
-    exec.account::get_map_item
+    exec.active_account::get_map_item
     # [VALUE(4), n0, n1, n2, n3, n0, n1, n2, n3]
 
     # Check if VALUE is zero (no name registered - this is what we want)
@@ -356,7 +357,7 @@ end
 proc._assert_initialized
     push.0
     # [0]
-    exec.account::get_item
+    exec.active_account::get_item
     # Returns: [0, 0, 0, 0] if NOT initialized, [1, 0, 0, 0] if initialized
     # Stack is now [1, 0, 0, 0] (or [0, 0, 0, 0] if not initialized)
     # The initialized flag is at position 0
@@ -384,7 +385,7 @@ proc._set_initialized
     # [1, 0, 0, 0, 0]
     movup.4
     # [0, 1, 0, 0, 0]
-    exec.account::set_item
+    exec.native_account::set_item
     # [OLD_WORD]
     dropw
 end
@@ -395,7 +396,7 @@ proc._set_price
     # [p0, p1, p2, p3, ...REST]
     push.5
     # [5, p0, p1, p2, p3, ...REST]
-    exec.account::set_item
+    exec.native_account::set_item
     # Consumes [5, p0, p1, p2, p3], returns [old0, old1, old2, old3]
     # Stack: [old0, old1, old2, old3, ...REST]
     dropw
@@ -407,7 +408,7 @@ end
 proc._get_price_word
     push.5
     # [5]
-    exec.account::get_item
+    exec.active_account::get_item
     # [PRICE]
 end
 
@@ -420,16 +421,16 @@ proc._update_owner
     # [0, 0, owner_suffix, owner_prefix]
     push.1
     # [1, 0, 0, owner_suffix, owner_prefix]
-    exec.account::set_item
+    exec.native_account::set_item
     # set_item reverses: stores as Word[owner_prefix, owner_suffix, 0, 0]
     # [OLD_VALUE]
     dropw
 end
 
 proc._assert_only_owner
-    exec.note::get_sender
+    exec.active_note::get_sender
     push.1
-    exec.account::get_item
+    exec.active_account::get_item
     drop drop
     dup.1 dup.3
     assert_eq.err=OWNER_PREFIX_MISMATCH
@@ -451,7 +452,7 @@ proc._set_payment_token
     # [0, 0, token_suffix, token_prefix]
     push.2
     # [2, 0, 0, token_suffix, token_prefix]
-    exec.account::set_item
+    exec.native_account::set_item
     dropw
 end
 
@@ -460,11 +461,11 @@ end
 proc._get_balance
     push.2
     # [2]
-    exec.account::get_item
+    exec.active_account::get_item
     # [PAYMENT_TOKEN] - returns Word as stored: [token_prefix, token_suffix, 0, 0]
     drop drop
     # [token_prefix, token_suffix]
-    exec.account::get_balance
+    exec.active_account::get_balance
     # [balance]
 end
 
@@ -473,7 +474,7 @@ end
 proc._validate_payment
     exec._get_balance
     # [initial_balance]
-    exec.note::add_assets_to_account
+    exec.active_note::add_assets_to_account
     # [initial_balance]
     exec._get_balance
     # [after_balance, initial_balance]
@@ -539,4 +540,4 @@ proc._validate_payment_old
         assert.err=WRONG_AMOUNT_PAID
     end
 end
-`;
+`
