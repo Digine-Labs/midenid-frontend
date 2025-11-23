@@ -25,11 +25,6 @@ import { RegistrationStep } from "./register-modal/registration-step";
 import { ProcessingStep } from "./register-modal/processing-step";
 import { ConfirmedStep } from "./register-modal/confirmed-step";
 import { hasRegisteredDomain } from "@/lib/midenClient";
-// import { transactionCreator } from "@/lib/transactionCreator";
-// import { REGISTER_NOTE_SCRIPT, MIDEN_ID_CONTRACT_CODE } from "@/shared";
-// import { encodeDomainOld } from "@/utils/encode";
-// import {  NoteInputs, FeltArray } from "@demox-labs/miden-sdk";
-
 
 interface RegisterModalProps {
   domain: string;
@@ -100,7 +95,6 @@ function RegisterModalContent({ domain }: { domain: string }) {
 
   const handlePurchase = async (tier: PricingTier) => {
     if (connected && accountId && requestTransaction) {
-      // Reset previous states
       setTransactionSubmitted(false);
       setTransactionFailed(false);
       setIsPurchasing(true);
@@ -118,31 +112,6 @@ function RegisterModalContent({ domain }: { domain: string }) {
           requestTransaction: requestTransaction,
         });
 
-        //! senin istediğin gibi bi tx oluşturucu
-        // const domainWord = encodeDomainOld(domain, true);
-
-        // const noteInputs = new NoteInputs(
-        //   new FeltArray([
-        //     domainWord.toFelts()[0],
-        //     domainWord.toFelts()[1],
-        //     domainWord.toFelts()[2],
-        //     domainWord.toFelts()[3],
-        //   ])
-        // );
-
-        // await transactionCreator({
-        //   senderAccountId: accountId,
-        //   destinationAccountId: destinationAccountId,
-        //   noteScript: REGISTER_NOTE_SCRIPT,
-        //   libraryScript: MIDEN_ID_CONTRACT_CODE,
-        //   libraryName: "miden_id::registry",
-        //   noteInputs: noteInputs,
-        //   faucetId: faucetId,
-        //   amount: buyAmount,
-        //   requestTransaction: requestTransaction,
-        // })
-
-        // Transaction approved by wallet, show processing step
         setTransactionSubmitted(true);
         setCurrentStep("processing");
 
@@ -157,7 +126,6 @@ function RegisterModalContent({ domain }: { domain: string }) {
         }
 
       } catch (error) {
-        console.error("Registration failed:", error);
         setTransactionFailed(true);
         setCurrentStep("registration");
       } finally {

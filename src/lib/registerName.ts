@@ -19,7 +19,7 @@ import {
     CustomTransaction,
     type MidenTransaction,
     TransactionType,
-} from "@demox-labs/miden-wallet-adapter";
+} from "@demox-labs/miden-wallet-adapter-base";
 import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
 import { encodeDomainOld } from '@/utils';
 import { MIDEN_ID_CONTRACT_CODE, REGISTER_NOTE_SCRIPT } from '@/shared';
@@ -61,14 +61,10 @@ export async function registerName({
         const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
 
         const builder = client.createScriptBuilder();
-
-        let registerComponentLib = builder.buildLibrary("miden_id::registry", MIDEN_ID_CONTRACT_CODE)
-
+        const registerComponentLib = builder.buildLibrary("miden_id::registry", MIDEN_ID_CONTRACT_CODE)
         builder.linkDynamicLibrary(registerComponentLib)
+        const script = builder.compileNoteScript(REGISTER_NOTE_SCRIPT)
 
-        let script = builder.compileNoteScript(REGISTER_NOTE_SCRIPT)
-
-        // Sync state to get latest blockchain data
         await client.syncState();
 
         // Create a new serial number for the note
@@ -105,18 +101,17 @@ export async function registerName({
         );
 
         const noteId = note.id().toString();
-
         const noteArray = new MidenArrays.OutputNoteArray([OutputNote.full(note)]);
 
-        let transactionRequest = new TransactionRequestBuilder()
+        const transactionRequest = new TransactionRequestBuilder()
             .withOwnOutputNotes(noteArray)
             .build();
 
         await client.syncState();
 
         const tx = new CustomTransaction(
-            accountIdToBech32(senderAccountId), // from
-            accountIdToBech32(destinationAccountId), // to
+            accountIdToBech32(senderAccountId),
+            accountIdToBech32(destinationAccountId),
             transactionRequest,
             [],
             [],
@@ -132,6 +127,6 @@ export async function registerName({
         return { txId, noteId };
     } catch (error) {
         console.error("Note transaction failed:", error);
-        throw new Error("Note transaction failed");
+        throw new Error(`Note transaction failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 }

@@ -18,7 +18,7 @@ import {
     CustomTransaction,
     type MidenTransaction,
     TransactionType,
-} from "@demox-labs/miden-wallet-adapter";
+} from "@demox-labs/miden-wallet-adapter-base";
 import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
 
 export interface NoteFromMasmParams {
