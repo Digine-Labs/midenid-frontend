@@ -2,7 +2,7 @@ import { Menubar } from '@/components/ui/menubar'
 import { Separator } from '@/components/ui/separator'
 import { Link } from 'react-router'
 import { MobileSidebar } from './mobile-sidebar'
-import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter'
+import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter-reactui'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +47,9 @@ export function SiteHeader() {
                   SOON
                 </span>
               </div>
+              <Link to="/sign-message" className="text-sm font-medium hover:text-primary transition-colors">
+                Sign Message
+              </Link>
               <a href="https://docs.miden.name/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-primary transition-colors">
                 Docs
               </a>

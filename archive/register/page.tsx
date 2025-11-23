@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { useWallet } from "@demox-labs/miden-wallet-adapter";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-base";
 import { Button } from "@/components/ui/button";
 //import { PricingCard } from "./components/pricing-card";
 import { DomainDetailsCard } from "./components/domain-details-card";
 import { Faq } from "./components/faq";
 import { Breadcrumb } from "./components/breadcrumb";
-import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
+import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-base";
 import { registerName } from "@/lib/registerName";
 import { bech32ToAccountId } from "@/lib/midenClient";
 import { AccountId } from "@demox-labs/miden-sdk";

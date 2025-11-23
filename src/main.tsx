@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from '@/components/theme-provider'
 import { WalletProvider } from '@demox-labs/miden-wallet-adapter-react'
-import { MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter'
+import { MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter-miden'
 import { WalletModalProvider } from '@demox-labs/miden-wallet-adapter-reactui'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { WalletAccountProvider } from '@/contexts/WalletAccountContext'
@@ -12,6 +12,7 @@ import { WalletAccountProvider } from '@/contexts/WalletAccountContext'
 const Home = lazy(() => import('@/pages/home/page'))
 const Identity = lazy(() => import('./pages/identity/page.tsx'))
 const MyDomains = lazy(() => import('./pages/myDomains/page.tsx'))
+const SignMessage = lazy(() => import('./pages/sign-message/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
 const PageLoader = () => (
@@ -52,6 +53,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <MyDomains />
+          </Suspense>
+        )
+      },
+      {
+        path: "sign-message",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SignMessage />
           </Suspense>
         )
       },
