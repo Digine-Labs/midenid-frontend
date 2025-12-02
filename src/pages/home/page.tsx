@@ -5,12 +5,27 @@ import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/theme-provider'
+// import { instantiateClient } from '@/lib/midenClient'
+// import { AccountId, NoteFilter, NoteFilterTypes } from '@demox-labs/miden-sdk'
+// import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
+
+
+  // const handleClick = async () => {
+  //   const client = await instantiateClient({ accountsToImport: [AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS)] })
+
+  //   const tags = await client.getConsumableNotes(AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS))
+
+  //   console.log(tags)
+
+  //   client.terminate()
+  // }
+
 
 
   // Use darker green for identity highlight only in dark mode
@@ -69,6 +84,7 @@ export default function Home() {
               One <RoughNotation type="highlight" color={identityColor} strokeWidth={2} iterations={2} show={true} padding={[2, 4]}>name</RoughNotation> to rule them all! Your digital identity across the Miden universe.
             </p>
           </div>
+          {/* <button onClick={handleClick}>aaaaaaaaaa</button> */}
 
           <div className="w-full space-y-4 ">
             {/*<Card className="bg-yellow-100 border-green-500 rounded-md">

@@ -108,7 +108,7 @@ export default function Register() {
   const {
     connected,
     requestTransaction,
-    accountId: rawAccountId,
+    address: rawAccountId,
   } = useWallet();
 
   const faucetId = useMemo(

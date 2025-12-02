@@ -1,3 +1,3 @@
-export const MIDEN_ID_CONTRACT_ADDRESS = "0xeb75913defe9d8403441014c8c3893";
-export const MIDEN_FAUCET_CONTRACT_ADDRESS = "0x83592005c13d47203ec1e3124c654d";
-export const MIDEN_FAUCET_ID_BECH32 = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4"
+export const MIDEN_ID_CONTRACT_ADDRESS = "0xbd2796e63cf3444048304a63d47ddf";
+export const MIDEN_FAUCET_CONTRACT_ADDRESS = "0x54bf4e12ef20082070758b022456c7";
+export const MIDEN_FAUCET_ID_BECH32 = "mtst1ap2t7nsjausqsgrswk9syfzkcu328yna"

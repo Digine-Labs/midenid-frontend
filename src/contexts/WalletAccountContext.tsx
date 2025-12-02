@@ -18,7 +18,7 @@ interface WalletAccountContextValue {
 const WalletAccountContext = createContext<WalletAccountContextValue | undefined>(undefined);
 
 export function WalletAccountProvider({ children }: { children: ReactNode }) {
-  const { connected, accountId: rawAccountId } = useWallet();
+  const { connected, address: rawAccountId } = useWallet();
   const [accountId, setAccountId] = useState<AccountId | undefined>(undefined);
   const [hasRegisteredDomain, setHasRegisteredDomain] = useState(false);
   const [registeredDomain, setRegisteredDomain] = useState<string | null>(null);

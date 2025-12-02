@@ -1,0 +1,18 @@
+export const TRANSFER_DOMAIN_SCRIPT = `
+use.miden_name::naming
+use.miden::active_note
+use.std::sys
+
+const.NEW_OWNER_PTR=0
+const.DOMAIN_PTR=4
+
+# Input (arguments): [NEW_OWNER, DOMAIN]
+begin
+    push.0
+    exec.active_note::get_inputs
+    drop drop
+    mem_loadw_be.DOMAIN_PTR padw mem_loadw_be.NEW_OWNER_PTR
+    # [NEW_OWNER, DOMAIN]
+    call.naming::transfer
+    exec.sys::truncate_stack
+end`

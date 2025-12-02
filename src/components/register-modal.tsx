@@ -14,9 +14,8 @@ import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
-import { AccountId } from "@demox-labs/miden-sdk";
+import { AccountId, Felt } from "@demox-labs/miden-sdk";
 import { useNavigate } from "react-router";
-import { registerName } from "@/lib/registerName";
 import { TransactionStatusAlerts } from "@/components/transaction-status-alerts";
 import { TermsModal } from "@/components/terms-modal";
 import { type PricingTier as PricingTierBase } from "@/shared/pricing";
@@ -25,10 +24,10 @@ import { RegistrationStep } from "./register-modal/registration-step";
 import { ProcessingStep } from "./register-modal/processing-step";
 import { ConfirmedStep } from "./register-modal/confirmed-step";
 import { hasRegisteredDomain } from "@/lib/midenClient";
-// import { transactionCreator } from "@/lib/transactionCreator";
-// import { REGISTER_NOTE_SCRIPT, MIDEN_ID_CONTRACT_CODE } from "@/shared";
-// import { encodeDomainOld } from "@/utils/encode";
-// import {  NoteInputs, FeltArray } from "@demox-labs/miden-sdk";
+import { transactionCreator } from "@/lib/transactionCreator";
+import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
+import { encodeDomain } from "@/utils/encode";
+import { NoteInputs, FeltArray, MidenArrays } from "@demox-labs/miden-sdk";
 
 
 interface RegisterModalProps {
@@ -109,38 +108,36 @@ function RegisterModalContent({ domain }: { domain: string }) {
       try {
         const buyAmount = BigInt(tier.price * 1000000);
 
-        await registerName({
+        const domainWord = encodeDomain(domain);
+
+        const noteInputs = new NoteInputs(
+          new MidenArrays.FeltArray([
+            new Felt(faucetId.suffix().asInt()),
+            new Felt(faucetId.prefix().asInt()),
+            new Felt(BigInt(0)),
+            new Felt(BigInt(0)),
+            domainWord.toFelts()[0],
+            domainWord.toFelts()[1],
+            domainWord.toFelts()[2],
+            domainWord.toFelts()[3],
+            new Felt(BigInt(tier.years)),
+            new Felt(BigInt(0)),
+            new Felt(BigInt(0)),
+            new Felt(BigInt(0)),
+          ])
+        );
+
+        await transactionCreator({
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
+          noteScript: REGISTER_NOTE_SCRIPT,
+          libraryScript: MIDEN_NAME_CONTRACT_CODE,
+          libraryName: "miden_name::naming",
+          noteInputs: noteInputs,
           faucetId: faucetId,
           amount: buyAmount,
-          domain: domain,
           requestTransaction: requestTransaction,
-        });
-
-        //! senin istediğin gibi bi tx oluşturucu
-        // const domainWord = encodeDomainOld(domain, true);
-
-        // const noteInputs = new NoteInputs(
-        //   new FeltArray([
-        //     domainWord.toFelts()[0],
-        //     domainWord.toFelts()[1],
-        //     domainWord.toFelts()[2],
-        //     domainWord.toFelts()[3],
-        //   ])
-        // );
-
-        // await transactionCreator({
-        //   senderAccountId: accountId,
-        //   destinationAccountId: destinationAccountId,
-        //   noteScript: REGISTER_NOTE_SCRIPT,
-        //   libraryScript: MIDEN_ID_CONTRACT_CODE,
-        //   libraryName: "miden_id::registry",
-        //   noteInputs: noteInputs,
-        //   faucetId: faucetId,
-        //   amount: buyAmount,
-        //   requestTransaction: requestTransaction,
-        // })
+        })
 
         // Transaction approved by wallet, show processing step
         setTransactionSubmitted(true);
