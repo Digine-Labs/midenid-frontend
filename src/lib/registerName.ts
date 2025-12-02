@@ -1,7 +1,6 @@
 import {
     AccountId,
     Felt,
-    FeltArray,
     FungibleAsset,
     Note,
     NoteAssets,
