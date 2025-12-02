@@ -27,7 +27,7 @@ import { hasRegisteredDomain } from "@/lib/midenClient";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
-import { NoteInputs, FeltArray, MidenArrays } from "@demox-labs/miden-sdk";
+import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
 
 
 interface RegisterModalProps {
