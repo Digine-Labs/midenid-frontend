@@ -33,7 +33,7 @@ export function TransactionStatusAlerts({
   useEffect(() => {
     if (transactionFailed) {
       toast.error("Transaction Failed", {
-        description: "Transaction could not be created. Please contact the project owners for assistance.",
+        description: "Transaction could not be created. Please contact the project telegram/discord for assistance.",
         icon: <AlertTriangle className="h-5 w-5" />,
         duration: 5000,
         style: {

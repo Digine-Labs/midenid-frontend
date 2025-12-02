@@ -48,7 +48,9 @@ export const instantiateClient = async (
     }
   }
 
-  await client.syncState();
+  const state = await client.syncState();
+
+  console.log(state.blockNum())
 
   return client;
 };
