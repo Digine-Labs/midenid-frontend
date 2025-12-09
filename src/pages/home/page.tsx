@@ -6,7 +6,7 @@ import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/theme-provider'
 // import { instantiateClient } from '@/lib/midenClient'
-// import { AccountId, NoteFilter, NoteFilterTypes } from '@demox-labs/miden-sdk'
+// import { AccountId } from '@demox-labs/miden-sdk'
 // import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared'
 
 export default function Home() {
@@ -15,13 +15,25 @@ export default function Home() {
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
 
-
   // const handleClick = async () => {
-  //   const client = await instantiateClient({ accountsToImport: [AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS)] })
 
-  //   const tags = await client.getConsumableNotes(AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS))
+  //   const account = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS)
 
-  //   console.log(tags)
+  //   console.log("Checking consumable notes through miden web client")
+
+  //   const client = await instantiateClient({ accountsToImport: [account] })
+
+  //   const notes = await client.getConsumableNotes(account)
+
+  //   const noteIds = notes.map((note) =>
+  //     note.inputNoteRecord().id().toString(),
+  //   );
+
+  //   console.log(notes, noteIds)
+
+  //   const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
+
+  //   await client.submitNewTransaction(account, consumeTxRequest);
 
   //   client.terminate()
   // }
