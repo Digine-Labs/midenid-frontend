@@ -143,8 +143,11 @@ function RegisterModalContent({ domain }: { domain: string }) {
         setTransactionSubmitted(true);
         setCurrentStep("processing");
 
+        // Start timer
+        const startTime = Date.now();
+
         // check if domain is registered. If not registered in 150 seconds, show error
-        if (await hasRegisteredDomain(domain)) {
+        if (await hasRegisteredDomain(domain) || (Date.now() - startTime) >= 15000) {
           setCurrentStep("confirmed");
         } else {
           setTransactionFailed(true);
