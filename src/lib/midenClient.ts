@@ -6,7 +6,7 @@ import {
   Word,
   Felt,
 } from '@demox-labs/miden-sdk';
-import { hasStorageValue, encodeDomainOld } from '@/utils';
+import { hasStorageValue, encodeDomain } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
 
 
@@ -93,7 +93,7 @@ export async function hasRegisteredDomain(domain: string): Promise<boolean> {
 
   let client = await instantiateClient({ accountsToImport: [contractId] })
 
-  const storageKey = encodeDomainOld(domain);
+  const storageKey = encodeDomain(domain);
 
   while (attempts < maxAttempts) {
     await client.syncState()
@@ -102,7 +102,7 @@ export async function hasRegisteredDomain(domain: string): Promise<boolean> {
     let domainWord: Word | undefined;
 
     try {
-      domainWord = contractAccount?.storage().getMapItem(3, storageKey);
+      domainWord = contractAccount?.storage().getMapItem(4, storageKey);
     } catch {
       // Storage query failed, domain not registered
     }

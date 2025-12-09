@@ -83,7 +83,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
         let domainWord: Word | undefined;
 
         try {
-          domainWord = contractAccount?.storage().getMapItem(4, storageKey);
+          domainWord = contractAccount?.storage().getMapItem(3, storageKey);
         } catch {
           // Storage query failed, domain not registered
         }
