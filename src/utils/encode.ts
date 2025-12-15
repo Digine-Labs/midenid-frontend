@@ -242,8 +242,8 @@ export function encodeAccountIdToWord(prefix: bigint, suffix: bigint): Word {
   const felts: Felt[] = [
     new Felt(suffix),
     new Felt(prefix),
-    new Felt(0n),
-    new Felt(0n),
+    new Felt(BigInt(0)),
+    new Felt(BigInt(0)),
   ];
 
   return Word.newFromFelts(felts);

@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
-import { Zap } from "lucide-react";
+// import { Zap } from "lucide-react";
 import { PRICING_TIERS, calculateDomainPrice, TOKEN_SYMBOL, type PricingTier as PricingTierBase } from "@/shared/pricing";
 
 interface PricingTier extends PricingTierBase {
@@ -93,14 +93,17 @@ export function RegistrationStep({
         ) : (
           <div className="space-y-3 px-4 ">
             {/* Best Value - 5 Years */}
+
+            {/* THIS IS BUTTON FOR 5 YEARS TEMPORARILY DISABLED AND MADE IT 1 YEAR ONLY */}
+
             <div className="relative">
-              {!walletHasDomain &&
+              {/* {!walletHasDomain &&
                 <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-0.5 rounded-full text-xs font-bold items-center gap-1 shadow-md z-10 flex" style={{ width: "190px" }}>
                   <Zap className="w-3 h-3" />
                   BEST VALUE - Save 40%
-                </div>}
+                </div>} */}
               <Button
-                onClick={() => onPurchase(pricingTiers[2])}
+                onClick={() => onPurchase(pricingTiers[0])}
                 disabled={isPurchasing || walletHasDomain}
                 className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
                 size="lg"
@@ -111,16 +114,18 @@ export function RegistrationStep({
                   "Wallet Already Has a Domain"
                 ) : (
                   <div className="flex items-center gap-3">
-                    <span className="text-md xs:text-xl font-bold">Claim 5 Years</span>
+                    <span className="text-md xs:text-xl font-bold">Claim 1 Year</span>
                     <span className="opacity-90">•</span>
-                    <span className="text-md xs:text-xl">{pricingTiers[2]?.price} {TOKEN_SYMBOL}</span>
+                    <span className="text-md xs:text-xl">{pricingTiers[0]?.price} {TOKEN_SYMBOL}</span>
                   </div>
                 )}
               </Button>
             </div>
 
+            {/* BUTTONS FOR 1 AND 3 YEARS TEMPORARILY DISABLED */}
+
             {/* 3 Years Button and 1 Year Link on Same Line */}
-            {!walletHasDomain &&
+            {/* {!walletHasDomain &&
               <div className="flex flex-col xs:flex-row items-center gap-3">
                 <Button
                   onClick={() => onPurchase(pricingTiers[1])}
@@ -137,9 +142,9 @@ export function RegistrationStep({
                     </div>
                   )}
                 </Button>
-                or
-                {/* 1 Year Text Link */}
-                <button
+                or */}
+            {/* 1 Year Text Link */}
+            {/* <button
                   onClick={() => onPurchase(pricingTiers[0])}
                   disabled={isPurchasing || walletHasDomain}
                   className="text-sm text-muted-foreground hover:text-primary underline disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
@@ -148,7 +153,7 @@ export function RegistrationStep({
                     ? "Processing..."
                     : `1 year (${pricingTiers[0]?.price} ${TOKEN_SYMBOL})`}
                 </button>
-              </div>}
+              </div>} */}
           </div>
         )}
 

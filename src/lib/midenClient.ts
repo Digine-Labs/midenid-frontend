@@ -86,7 +86,7 @@ export function generateRandomSerialNumber(): Word {
 }
 
 export async function hasRegisteredDomain(domain: string): Promise<boolean> {
-  const maxAttempts = 30 // 30 attempts * 5 seconds = 150 seconds
+  const maxAttempts = 15 // 15 attempts * 5 seconds = 75 seconds
   let attempts = 0
 
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
@@ -102,7 +102,7 @@ export async function hasRegisteredDomain(domain: string): Promise<boolean> {
     let domainWord: Word | undefined;
 
     try {
-      domainWord = contractAccount?.storage().getMapItem(4, storageKey);
+      domainWord = contractAccount?.storage().getMapItem(5, storageKey);
     } catch {
       // Storage query failed, domain not registered
     }
