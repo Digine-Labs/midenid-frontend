@@ -127,7 +127,7 @@ function RegisterModalContent({ domain }: { domain: string }) {
           ])
         );
 
-        await transactionCreator({
+        const { noteId } = await transactionCreator({
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           noteScript: REGISTER_NOTE_SCRIPT,
@@ -139,15 +139,14 @@ function RegisterModalContent({ domain }: { domain: string }) {
           requestTransaction: requestTransaction,
         })
 
+        console.log("noteId:", noteId);
+
         // Transaction approved by wallet, show processing step
         setTransactionSubmitted(true);
         setCurrentStep("processing");
 
-        // Start timer
-        const startTime = Date.now();
-
         // check if domain is registered. If not registered in 150 seconds, show error
-        if (await hasRegisteredDomain(domain) || (Date.now() - startTime) >= 15000) {
+        if (await hasRegisteredDomain(domain)) {
           setCurrentStep("confirmed");
         } else {
           setTransactionFailed(true);
