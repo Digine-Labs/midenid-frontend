@@ -114,7 +114,7 @@ export function RegistrationStep({
                   "Wallet Already Has a Domain"
                 ) : (
                   <div className="flex items-center gap-3">
-                    <span className="text-md xs:text-xl font-bold">Claim 1 Year</span>
+                    <span className="text-md xs:text-xl font-bold">Claim</span>
                     <span className="opacity-90">•</span>
                     <span className="text-md xs:text-xl">{pricingTiers[0]?.price} {TOKEN_SYMBOL}</span>
                   </div>
