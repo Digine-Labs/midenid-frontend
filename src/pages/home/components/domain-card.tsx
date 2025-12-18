@@ -35,7 +35,7 @@ export function DomainCard({ domain }: DomainCardProps) {
     }
   }, [domain]);
 
-  // Check if domain is registered by querying storage slot 3 (Name -> ID mapping)
+  // Check if domain is registered by querying storage slot 5 (Name -> ID mapping)
   const { storageItem, isLoading: isCheckingStorage } = useStorage({
     accountId: contractId,
     index: 5,
