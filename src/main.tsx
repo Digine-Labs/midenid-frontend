@@ -13,6 +13,7 @@ const Home = lazy(() => import('@/pages/home/page'))
 const Identity = lazy(() => import('./pages/identity/page.tsx'))
 const MyDomains = lazy(() => import('./pages/myDomains/page.tsx'))
 const SignMessage = lazy(() => import('./pages/sign-message/page.tsx'))
+const RegisterProfile = lazy(() => import('./pages/register-profile/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
 const PageLoader = () => (
@@ -61,6 +62,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <SignMessage />
+          </Suspense>
+        )
+      },
+      {
+        path: "register-profile",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <RegisterProfile />
           </Suspense>
         )
       },

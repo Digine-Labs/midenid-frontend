@@ -18,7 +18,7 @@ interface WalletAccountContextValue {
 const WalletAccountContext = createContext<WalletAccountContextValue | undefined>(undefined);
 
 export function WalletAccountProvider({ children }: { children: ReactNode }) {
-  const { connected, accountId: rawAccountId } = useWallet();
+  const { connected, address: rawAccountId } = useWallet();
   const [accountId, setAccountId] = useState<AccountId | undefined>(undefined);
   const [hasRegisteredDomain, setHasRegisteredDomain] = useState(false);
   const [registeredDomain, setRegisteredDomain] = useState<string | null>(null);
@@ -33,30 +33,35 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
       setHasRegisteredDomain(false);
       setRegisteredDomain(null);
       setBalance(null);
+      setIsLoading(false);
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const id = bech32ToAccountId(rawAccountId);
       setAccountId(id);
     } catch (error) {
-      console.error('WalletAccountContext: Failed to convert accountId:', error);
+      console.error('Failed to convert accountId:', error);
       setAccountId(undefined);
+      setIsLoading(false);
     }
   }, [connected, rawAccountId]);
 
   // Fetch wallet data when accountId changes
   useEffect(() => {
     if (!accountId || !connected) {
-      setIsLoading(false);
+      // Only reset loading if we're not connected (disconnected case)
+      if (!connected) {
+        setIsLoading(false);
+      }
       return;
     }
 
     let isActive = true;
 
     const fetchWalletData = async () => {
-      setIsLoading(true);
-
       try {
         const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS);
         const faucetId = AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS);
@@ -79,8 +84,8 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
 
         try {
           domainWord = contractAccount?.storage().getMapItem(4, storageKey);
-        } catch (error) {
-          console.warn('Failed to get domain from storage:', error);
+        } catch {
+          // Storage query failed, domain not registered
         }
 
         if (!isActive) return;
@@ -94,8 +99,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
           try {
             const domain = decodeDomainFromWordOld(domainWord);
             setRegisteredDomain(domain);
-          } catch (error) {
-            console.error('Failed to decode domain:', error);
+          } catch {
             setRegisteredDomain(null);
           }
         } else {
@@ -110,9 +114,9 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
           setBalance(walletBalance ? BigInt(walletBalance) : BigInt(0));
         }
 
-        client.terminate()
+        client.terminate();
       } catch (error) {
-        console.error('WalletAccountContext: Failed to fetch wallet data:', error);
+        console.error('Failed to fetch wallet data:', error);
         if (isActive) {
           setHasRegisteredDomain(false);
           setRegisteredDomain(null);
