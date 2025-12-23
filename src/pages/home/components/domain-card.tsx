@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
-import { encodeDomainOld, hasStorageValue } from '@/utils'
+import { encodeDomain, hasStorageValue } from '@/utils'
 import { AccountId } from '@demox-labs/miden-sdk'
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
 import { useStorage } from '@/hooks/useStorage'
@@ -28,17 +28,17 @@ export function DomainCard({ domain }: DomainCardProps) {
   const storageKey = useMemo(() => {
     if (!domain) return undefined;
     try {
-      return encodeDomainOld(domain);
+      return encodeDomain(domain);
     } catch (error) {
       console.error("Failed to encode domain:", error);
       return undefined;
     }
   }, [domain]);
 
-  // Check if domain is registered by querying storage slot 3 (Name -> ID mapping)
+  // Check if domain is registered by querying storage slot 5 (Name -> ID mapping)
   const { storageItem, isLoading: isCheckingStorage } = useStorage({
     accountId: contractId,
-    index: 3,
+    index: 5,
     key: storageKey
   });
 

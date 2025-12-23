@@ -1,4 +1,4 @@
-export const REGISTER_NOTE_SCRIPT = `
+export const REGISTER_NOTE_SCRIPT_OLD = `
 use.miden_id::registry
 use.miden::active_note
 use.std::sys

@@ -1,7 +1,6 @@
 import {
     AccountId,
     Felt,
-    FeltArray,
     FungibleAsset,
     Note,
     NoteAssets,
@@ -22,7 +21,7 @@ import {
 } from "@demox-labs/miden-wallet-adapter-base";
 import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
 import { encodeDomainOld } from '@/utils';
-import { MIDEN_ID_CONTRACT_CODE, REGISTER_NOTE_SCRIPT } from '@/shared';
+import { MIDEN_ID_CONTRACT_CODE_OLD, REGISTER_NOTE_SCRIPT_OLD } from '@/shared';
 
 export interface NoteFromMasmParams {
     senderAccountId: AccountId;
@@ -61,9 +60,12 @@ export async function registerName({
         const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
 
         const builder = client.createScriptBuilder();
-        const registerComponentLib = builder.buildLibrary("miden_id::registry", MIDEN_ID_CONTRACT_CODE)
+
+        let registerComponentLib = builder.buildLibrary("miden_id::registry", MIDEN_ID_CONTRACT_CODE_OLD)
+
         builder.linkDynamicLibrary(registerComponentLib)
-        const script = builder.compileNoteScript(REGISTER_NOTE_SCRIPT)
+
+        let script = builder.compileNoteScript(REGISTER_NOTE_SCRIPT_OLD)
 
         await client.syncState();
 
@@ -86,7 +88,7 @@ export async function registerName({
         );
 
         const noteInputs = new NoteInputs(
-            new FeltArray([
+            new MidenArrays.FeltArray([
                 domainWord.toFelts()[0],
                 domainWord.toFelts()[1],
                 domainWord.toFelts()[2],
@@ -121,8 +123,6 @@ export async function registerName({
             type: TransactionType.Custom,
             payload: tx,
         });
-
-        client.terminate()
 
         return { txId, noteId };
     } catch (error) {

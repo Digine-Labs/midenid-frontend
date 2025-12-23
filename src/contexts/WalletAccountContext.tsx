@@ -83,9 +83,9 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
         let domainWord: Word | undefined;
 
         try {
-          domainWord = contractAccount?.storage().getMapItem(4, storageKey);
-        } catch {
-          // Storage query failed, domain not registered
+          domainWord = contractAccount?.storage().getMapItem(3, storageKey);
+        } catch (error) {
+          console.warn('Failed to get domain from storage:', error);
         }
 
         if (!isActive) return;

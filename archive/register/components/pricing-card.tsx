@@ -33,7 +33,7 @@ const BASE_PRICE_PER_YEAR = 1
 
 export function PricingCard({ domain, years, termsAccepted, onTermsChange, onAmountChange }: PricingCardProps) {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
-  const { accountId: rawAccountId } = useWallet()
+  const { address: rawAccountId } = useWallet()
 
   const accountId = useMemo(() => {
     if (rawAccountId != null) {

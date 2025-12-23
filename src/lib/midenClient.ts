@@ -6,7 +6,7 @@ import {
   Word,
   Felt,
 } from '@demox-labs/miden-sdk';
-import { hasStorageValue, encodeDomainOld } from '@/utils';
+import { hasStorageValue, encodeDomain } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
 
 
@@ -48,7 +48,9 @@ export const instantiateClient = async (
     }
   }
 
-  await client.syncState();
+  const state = await client.syncState();
+
+  console.log(state.blockNum())
 
   return client;
 };
@@ -84,14 +86,14 @@ export function generateRandomSerialNumber(): Word {
 }
 
 export async function hasRegisteredDomain(domain: string): Promise<boolean> {
-  const maxAttempts = 30 // 30 attempts * 5 seconds = 150 seconds
+  const maxAttempts = 15 // 15 attempts * 5 seconds = 75 seconds
   let attempts = 0
 
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
 
   let client = await instantiateClient({ accountsToImport: [contractId] })
 
-  const storageKey = encodeDomainOld(domain);
+  const storageKey = encodeDomain(domain);
 
   while (attempts < maxAttempts) {
     await client.syncState()
@@ -100,9 +102,9 @@ export async function hasRegisteredDomain(domain: string): Promise<boolean> {
     let domainWord: Word | undefined;
 
     try {
-      domainWord = contractAccount?.storage().getMapItem(3, storageKey);
-    } catch {
-      // Storage query failed, domain not registered
+      domainWord = contractAccount?.storage().getMapItem(5, storageKey);
+    } catch (error) {
+      console.warn('Failed to get domain from storage:', error);
     }
 
     const hasDomain = hasStorageValue(domainWord);
