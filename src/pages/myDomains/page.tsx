@@ -6,30 +6,23 @@ import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Plus, Globe, Twitter, Github, User, Pencil, RefreshCw } from 'lucide-react'
-
-const API_BASE = "http://localhost:3080/metadata/domains"
-const API_ACCOUNTS = "http://localhost:3080/accounts"
-
-interface DomainProfile {
-  domain: string
-  bio?: string
-  twitter?: string
-  github?: string
-  image_url?: string
-}
+import { Plus, Globe, Github, User, Pencil, RefreshCw } from 'lucide-react'
+import { getAccountAllDomains, fetchProfile } from '@/api'
+import type { ProfileData } from '@/api'
+import { useTheme } from '@/components/theme-provider'
 
 interface DomainInfo {
   domain: string
-  profile?: DomainProfile
+  profile?: ProfileData
 }
 
 export default function MyDomains() {
   const navigate = useNavigate()
   const { connected, address } = useWallet()
   const { isLoading: isWalletLoading } = useWalletAccount()
-
+  const { resolvedTheme } = useTheme()
   const [domains, setDomains] = useState<DomainInfo[]>([])
+  const [activeDomain, setActiveDomain] = useState<string | null>(null)
   const [isLoadingDomains, setIsLoadingDomains] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,20 +34,23 @@ export default function MyDomains() {
     setError(null)
 
     try {
-      // Get domains from bech32 address
-      // API: GET /bech32_to_domains?bech32=... returns { domains: [...], account_id: "...", bech32: "..." }
-      const response = await fetch(`${API_ACCOUNTS}/${encodeURIComponent(address)}/domains`)
+      // Get all domains for this account using the new API
+      const result = await getAccountAllDomains(address)
 
-      if (!response.ok) {
-        if (response.status === 404) {
+      if (!result.success) {
+        if (result.error?.includes('404')) {
           setDomains([])
+          setActiveDomain(null)
           return
         }
-        throw new Error(`Failed to fetch domains: ${response.status}`)
+        throw new Error(result.error || 'Failed to fetch domains')
       }
 
-      const data = await response.json()
-      const domainNames: string[] = data.domains || []
+      const domainNames: string[] = result.data?.domains || []
+      const activeD = result.data?.active_domain || null
+
+      // Set active domain
+      setActiveDomain(activeD)
 
       if (!Array.isArray(domainNames) || domainNames.length === 0) {
         setDomains([])
@@ -64,12 +60,12 @@ export default function MyDomains() {
       // Fetch profiles for all domains in parallel
       const domainsWithProfiles = await Promise.all(
         domainNames.map(async (domainName) => {
-          let profile: DomainProfile | undefined
+          let profile: ProfileData | undefined
 
           try {
-            const profileResponse = await fetch(`${API_BASE}/${encodeURIComponent(domainName)}/profile`)
-            if (profileResponse.ok) {
-              profile = await profileResponse.json()
+            const profileData = await fetchProfile(domainName)
+            if (profileData) {
+              profile = profileData
             }
           } catch {
             // Profile fetch failed, continue without it
@@ -101,13 +97,13 @@ export default function MyDomains() {
   }, [connected, address, isWalletLoading])
 
   const handleAddDomain = () => {
-    // Navigate with mode=new to prevent auto-loading existing domain
-    navigate('/register-profile?mode=new')
+    // Navigate to home page for domain registration
+    navigate('/')
   }
 
   const handleEditDomain = (domainName: string) => {
-    // Navigate to register-profile with edit mode and domain name
-    navigate(`/register-profile?mode=edit&domain=${encodeURIComponent(domainName)}`)
+    // Navigate to identity page with domain in state
+    navigate('/identity', { state: { domain: domainName } })
   }
 
   const isLoading = isWalletLoading || isLoadingDomains
@@ -153,9 +149,9 @@ export default function MyDomains() {
           <h1 className="text-3xl sm:text-4xl font-bold tracking-wide">
             My Domains
           </h1>
-          <div className="flex justify-center items-center gap-2 text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <p>Loading your domains...</p>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading your identity...</p>
           </div>
         </div>
       </PageWrapper>
@@ -277,9 +273,11 @@ export default function MyDomains() {
                       <h2 className="text-xl font-semibold truncate">
                         {domainInfo.domain}.m<span className="text-primary">id</span>en
                       </h2>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 flex-shrink-0">
-                        Active
-                      </Badge>
+                      {activeDomain === domainInfo.domain && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 flex-shrink-0">
+                          Active
+                        </Badge>
+                      )}
                     </div>
 
                     {domainInfo.profile?.bio && (
@@ -292,7 +290,12 @@ export default function MyDomains() {
                     <div className="flex flex-wrap gap-3 text-sm">
                       {domainInfo.profile?.twitter && (
                         <div className="flex items-center gap-1 text-muted-foreground">
-                          <Twitter className="h-3 w-3" />
+                          <img
+                            src="/icons/twitter.png"
+                            alt="Twitter"
+                            className="h-3 w-3"
+                            style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }}
+                          />
                           <span>{domainInfo.profile.twitter}</span>
                         </div>
                       )}

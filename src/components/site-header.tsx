@@ -50,9 +50,6 @@ export function SiteHeader() {
                   SOON
                 </span>
               </div>
-              <Link to="/sign-message" className="text-sm font-medium hover:text-primary transition-colors">
-                Sign Message
-              </Link>
               <a href="https://docs.miden.name/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-primary transition-colors">
                 Docs
               </a>

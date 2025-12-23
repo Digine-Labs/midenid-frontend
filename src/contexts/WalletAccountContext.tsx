@@ -1,16 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react';
-import { AccountId, Word } from '@demox-labs/miden-sdk';
+import { AccountId } from '@demox-labs/miden-sdk';
 import { bech32ToAccountId } from '@/lib/midenClient';
-import { encodeAccountIdToWord, hasStorageValue, decodeDomainFromWordOld } from '@/utils';
-import { MIDEN_ID_CONTRACT_ADDRESS, MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
-import { instantiateClient } from '@/lib/midenClient';
+import { getAccountAllDomains } from '@/api/accounts';
 
 interface WalletAccountContextValue {
   accountId: AccountId | undefined;
+  bech32: string | null;
   hasRegisteredDomain: boolean;
-  registeredDomain: string | null;
-  balance: bigint | null;
+  activeDomain: string | null;
+  allDomains: string[] | null;
   isLoading: boolean;
   refetch: () => void;
 }
@@ -20,9 +19,10 @@ const WalletAccountContext = createContext<WalletAccountContextValue | undefined
 export function WalletAccountProvider({ children }: { children: ReactNode }) {
   const { connected, address: rawAccountId } = useWallet();
   const [accountId, setAccountId] = useState<AccountId | undefined>(undefined);
+  const bech32 = rawAccountId;
   const [hasRegisteredDomain, setHasRegisteredDomain] = useState(false);
-  const [registeredDomain, setRegisteredDomain] = useState<string | null>(null);
-  const [balance, setBalance] = useState<bigint | null>(null);
+  const [activeDomain, setActiveDomain] = useState<string | null>(null);
+  const [allDomains, setAllDomains] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
@@ -31,8 +31,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     if (!connected || !rawAccountId) {
       setAccountId(undefined);
       setHasRegisteredDomain(false);
-      setRegisteredDomain(null);
-      setBalance(null);
+      setActiveDomain(null);
       setIsLoading(false);
       return;
     }
@@ -63,64 +62,19 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
 
     const fetchWalletData = async () => {
       try {
-        const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS);
-        const faucetId = AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS);
-
-        const client = await instantiateClient({ accountsToImport: [accountId, contractId] });
-        await client.syncState();
-
-        if (!isActive) return
-
-        // Encode accountId to Word for storage query
-        const prefixFelt = accountId.prefix();
-        const suffixFelt = accountId.suffix();
-        const prefix = prefixFelt.asInt();
-        const suffix = suffixFelt.asInt();
-        const storageKey = encodeAccountIdToWord(prefix, suffix);
-
-        // Query storage slot 4 (ID -> Name mapping) for registered domain
-        const contractAccount = await client.getAccount(contractId);
-        let domainWord: Word | undefined;
-
-        try {
-          domainWord = contractAccount?.storage().getMapItem(3, storageKey);
-        } catch (error) {
-          console.warn('Failed to get domain from storage:', error);
+        const allDomainsResponse = await getAccountAllDomains(accountId.toString());
+        if (allDomainsResponse.success && allDomainsResponse.data) {
+          setAllDomains(allDomainsResponse.data.domains);
+          setHasRegisteredDomain(allDomainsResponse.data.domains.length > 0);
+          setActiveDomain(allDomainsResponse.data.active_domain || null);
         }
 
-        if (!isActive) return;
-
-        // Check if account has a registered domain
-        const hasDomain = hasStorageValue(domainWord);
-        setHasRegisteredDomain(hasDomain);
-
-        // Decode domain name if exists
-        if (hasDomain && domainWord) {
-          try {
-            const domain = decodeDomainFromWordOld(domainWord);
-            setRegisteredDomain(domain);
-          } catch {
-            setRegisteredDomain(null);
-          }
-        } else {
-          setRegisteredDomain(null);
-        }
-
-        // Fetch balance
-        const userAccount = await client.getAccount(accountId);
-        const walletBalance = userAccount?.vault().getBalance(faucetId);
-
-        if (isActive) {
-          setBalance(walletBalance ? BigInt(walletBalance) : BigInt(0));
-        }
-
-        client.terminate();
       } catch (error) {
         console.error('Failed to fetch wallet data:', error);
         if (isActive) {
           setHasRegisteredDomain(false);
-          setRegisteredDomain(null);
-          setBalance(null);
+          setActiveDomain(null);
+          setAllDomains(null);
         }
       } finally {
         if (isActive) {
@@ -144,9 +98,10 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     <WalletAccountContext.Provider
       value={{
         accountId,
+        bech32,
         hasRegisteredDomain,
-        registeredDomain,
-        balance,
+        activeDomain,
+        allDomains,
         isLoading,
         refetch,
       }}
