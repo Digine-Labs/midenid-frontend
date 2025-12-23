@@ -28,6 +28,7 @@ import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
 import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
+import { createDomainMetadata } from "@/api";
 
 interface RegisterModalProps {
   domain: string;
@@ -55,7 +56,7 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
 
 function RegisterModalContent({ domain }: { domain: string }) {
   const { connected, requestTransaction } = useWallet();
-  const { hasRegisteredDomain: walletHasDomain, refetch: refetchWalletAccount, accountId } = useWalletAccount();
+  const { refetch: refetchWalletAccount, accountId, bech32 } = useWalletAccount();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
@@ -125,7 +126,7 @@ function RegisterModalContent({ domain }: { domain: string }) {
           ])
         );
 
-        const { noteId } = await transactionCreator({
+        const { noteId, blockNumber } = await transactionCreator({
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           noteScript: REGISTER_NOTE_SCRIPT,
@@ -146,11 +147,16 @@ function RegisterModalContent({ domain }: { domain: string }) {
         // check if domain is registered. If not registered in 150 seconds, show error
         if (await hasRegisteredDomain(domain)) {
           setCurrentStep("confirmed");
+          createDomainMetadata({
+            domain: domain,
+            account_id: accountId.toString(),
+            bech32: bech32!,
+            created_block: blockNumber!,
+            updated_block: blockNumber!,
+          });
         } else {
           setTransactionFailed(true);
           setCurrentStep("registration");
-          setIsPurchasing(false);
-          refetchWalletAccount();
         }
 
       } catch (error) {
@@ -186,7 +192,6 @@ function RegisterModalContent({ domain }: { domain: string }) {
                   domain={domain}
                   connected={connected}
                   isPurchasing={isPurchasing}
-                  walletHasDomain={walletHasDomain}
                   selectedTier={selectedTier}
                   onPurchase={handlePurchase}
                   onTermsClick={() => setTermsOpen(true)}

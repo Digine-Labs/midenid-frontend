@@ -14,7 +14,6 @@ interface RegistrationStepProps {
   domain: string;
   connected: boolean;
   isPurchasing: boolean;
-  walletHasDomain: boolean;
   selectedTier: PricingTier | null;
   onPurchase: (tier: PricingTier) => void;
   onTermsClick: () => void;
@@ -24,7 +23,6 @@ export function RegistrationStep({
   domain,
   connected,
   isPurchasing,
-  walletHasDomain,
   selectedTier,
   onPurchase,
   onTermsClick
@@ -104,14 +102,12 @@ export function RegistrationStep({
                 </div>} */}
               <Button
                 onClick={() => onPurchase(pricingTiers[0])}
-                disabled={isPurchasing || walletHasDomain}
+                disabled={isPurchasing}
                 className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
                 size="lg"
               >
                 {isPurchasing && selectedTier?.years === 5 ? (
                   "Processing..."
-                ) : walletHasDomain ? (
-                  "Wallet Already Has a Domain"
                 ) : (
                   <div className="flex items-center gap-3">
                     <span className="text-md xs:text-xl font-bold">Claim</span>
@@ -122,7 +118,7 @@ export function RegistrationStep({
               </Button>
             </div>
 
-            {/* BUTTONS FOR 1 AND 3 YEARS TEMPORARILY DISABLED */}
+            {/* BUTTONS FOR 5 AND 3 YEARS TEMPORARILY DISABLED */}
 
             {/* 3 Years Button and 1 Year Link on Same Line */}
             {/* {!walletHasDomain &&

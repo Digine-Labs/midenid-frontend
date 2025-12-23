@@ -5,9 +5,17 @@ import {
   WebClient,
   Word,
   Felt,
+  SigningInputs,
 } from '@demox-labs/miden-sdk';
-import { hasStorageValue, encodeDomain } from '@/utils';
+import { hasStorageValue, encodeDomain, uint8ArrayToHex, createMessage } from '@/utils';
+import type { CreateMessageParams } from '@/utils';
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
+
+export interface SignedData {
+  message_hex: string;
+  pubkey_hex: string;
+  signature_hex: string;
+}
 
 
 // Helper to clear IndexedDB if schema is incompatible
@@ -120,4 +128,59 @@ export async function hasRegisteredDomain(domain: string): Promise<boolean> {
   client.terminate()
 
   return false
+}
+
+/**
+ * Sign profile data with Miden wallet
+ * @param params - Profile data to sign
+ * @param signBytes - Wallet signing function
+ * @param publicKey - Wallet public key
+ * @returns Signed data with hex-encoded signature
+ */
+export async function signProfileData(
+  params: CreateMessageParams,
+  signBytes: (data: Uint8Array, kind: any) => Promise<Uint8Array>,
+  publicKey: Uint8Array
+): Promise<SignedData> {
+  const message = createMessage(params);
+  const messageBytes = new TextEncoder().encode(message);
+
+  try {
+    // Convert message to Felt array (8-byte chunks)
+    const felts: Felt[] = [];
+    for (let i = 0; i < messageBytes.length; i += 8) {
+      const chunk = messageBytes.slice(i, i + 8);
+      let value = 0n;
+      for (let j = 0; j < chunk.length; j++) {
+        value |= BigInt(chunk[j]) << BigInt(j * 8);
+      }
+      felts.push(new Felt(value));
+    }
+
+    // Create SigningInputs and get commitment
+    const signingInputs = SigningInputs.newArbitrary(felts);
+    const commitment = signingInputs.toCommitment();
+    const commitmentBytes = commitment.serialize();
+
+    // Sign with wallet
+    const signatureBytes = await signBytes(commitmentBytes, "word");
+
+    const result = {
+      message_hex: uint8ArrayToHex(commitmentBytes),
+      pubkey_hex: uint8ArrayToHex(publicKey),
+      signature_hex: uint8ArrayToHex(signatureBytes)
+    };
+
+    // Clean up WASM memory
+    try {
+      signingInputs.free();
+    } catch {
+      // Already freed
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Signing failed:', error);
+    throw error;
+  }
 }

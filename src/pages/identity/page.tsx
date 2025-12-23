@@ -1,12 +1,17 @@
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useWalletAccount } from "@/contexts/WalletAccountContext";
+import { useLocation } from "react-router";
 import { NoWalletConnected } from "./components/NoWalletConnected";
 import { NoDomainRegistered } from "./components/NoDomainRegistered";
 import { IdentityProfile } from "./components/IdentityProfile";
 
 export default function Identity() {
   const { connected } = useWallet();
-  const { hasRegisteredDomain, registeredDomain, isLoading } = useWalletAccount();
+  const { hasRegisteredDomain, isLoading } = useWalletAccount();
+  const location = useLocation();
+
+  // Get domain from location state (passed from MyDomains page)
+  const domain = location.state?.domain;
 
   // Show wallet connection prompt if not connected
   if (!connected) {
@@ -40,9 +45,7 @@ export default function Identity() {
       style={{ minHeight: "calc(100vh - 3.5rem)" }}
     >
       <IdentityProfile
-        domainName={registeredDomain || undefined}
-        domainPurchaseDate={new Date("2024-03-15")} // TODO: Get from blockchain
-        lastModifiedDate={new Date()} // TODO: Get from blockchain
+        domainName={domain}
       />
     </main>
   );

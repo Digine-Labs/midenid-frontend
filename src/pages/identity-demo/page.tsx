@@ -20,8 +20,6 @@ export default function IdentityDemo() {
         return (
           <IdentityProfile
             domainName="alice"
-            domainPurchaseDate={new Date("2024-03-15")}
-            lastModifiedDate={new Date()}
           />
         );
       default:
@@ -71,7 +69,7 @@ export default function IdentityDemo() {
       </div>
 
       {/* View Container */}
-      <div className="pt-32">
+      <div >
         {renderView()}
       </div>
     </div>

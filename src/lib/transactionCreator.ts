@@ -86,7 +86,7 @@ export async function transactionCreator({
     faucetId,
     amount,
     requestTransaction,
-}: NoteFromMasmParams): Promise<{ txId: string; noteId: string }> {
+}: NoteFromMasmParams): Promise<{ txId: string; noteId: string, blockNumber?: number }> {
     if (typeof window === "undefined") {
         console.warn("webClient() can only run in the browser");
         return { txId: "N/A", noteId: "N/A" };
@@ -152,9 +152,14 @@ export async function transactionCreator({
             payload: tx,
         });
 
+        const state = await client.syncState();
+
+        const blockNumber = state.blockNum()
+
+
         client.terminate()
 
-        return { txId, noteId };
+        return { txId, noteId, blockNumber };
     } catch (error) {
         console.error("Note transaction failed:", error);
         throw new Error("Note transaction failed");
