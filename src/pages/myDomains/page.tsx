@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2, Plus, Globe, Twitter, Github, User, Pencil, RefreshCw } from 'lucide-react'
 
 const API_BASE = "http://localhost:3080/metadata/domains"
-const API_BECH32_TO_DOMAINS = "http://localhost:3080/bech32_to_domains"
+const API_ACCOUNTS = "http://localhost:3080/accounts"
 
 interface DomainProfile {
   domain: string
@@ -43,7 +43,7 @@ export default function MyDomains() {
     try {
       // Get domains from bech32 address
       // API: GET /bech32_to_domains?bech32=... returns { domains: [...], account_id: "...", bech32: "..." }
-      const response = await fetch(`${API_BECH32_TO_DOMAINS}?bech32=${encodeURIComponent(address)}`)
+      const response = await fetch(`${API_ACCOUNTS}/${encodeURIComponent(address)}/domains`)
 
       if (!response.ok) {
         if (response.status === 404) {

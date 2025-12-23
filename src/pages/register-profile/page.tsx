@@ -12,7 +12,7 @@ import { Felt, SigningInputs } from "@demox-labs/miden-sdk"
 import { useWalletAccount } from "@/contexts/WalletAccountContext"
 
 const API_BASE = "http://localhost:3080/metadata/domains"
-const API_BECH32_TO_DOMAINS = "http://localhost:3080/bech32_to_domains"
+const API_ACCOUNTS = "http://localhost:3080/accounts"
 
 type RegistrationStep = "domain" | "profile"
 
@@ -68,7 +68,7 @@ export default function RegisterProfile() {
   const fetchDomainFromAPI = async (bech32Address: string) => {
     try {
       setIsFetchingDomainFromAPI(true)
-      const response = await fetch(`${API_BECH32_TO_DOMAINS}?bech32=${encodeURIComponent(bech32Address)}`)
+      const response = await fetch(`${API_ACCOUNTS}/${encodeURIComponent(bech32Address)}/domains`)
 
       if (response.ok) {
         const data = await response.json()
