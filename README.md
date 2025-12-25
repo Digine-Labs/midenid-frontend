@@ -239,7 +239,7 @@ npm run test:browser
 
 - **`WalletAccountContext`** - Centralizes wallet state
   - Provides: `accountId`, `hasRegisteredDomain`, `registeredDomain`, `balance`, `refetch()`
-  - Automatically checks if connected wallet owns a domain
+  - Automatically checks if the connected wallet owns a domain
   - Decodes domain names from contract storage
 
 ### Utilities
@@ -267,7 +267,7 @@ The application integrates with two production MASM smart contracts:
 
 ### Transaction Flow
 
-1. User selects domain and registration period
+1. User selects the domain and registration period
 2. Frontend compiles MASM note script via `AssemblerUtils.createAccountComponentLibrary()`
 3. `CustomTransaction` created with fungible assets (MIDEN tokens)
 4. Transaction submitted via `wallet.requestTransaction()`
