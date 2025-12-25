@@ -6,9 +6,9 @@ This directory contains the identity management feature for the Miden.name name 
 
 The identity page provides a complete user experience for managing Miden identities with three distinct states:
 
-1. **No Wallet Connected** - Shown when user hasn't connected their wallet
-2. **No Domain Registered** - Shown when user has wallet connected but no domain
-3. **Identity Profile** - Shown when user has a registered domain
+1. **No Wallet Connected** - Shown when the user hasn't connected their wallet
+2. **No Domain Registered** - Shown when the user has a wallet connected but no domain
+3. **Identity Profile** - Shown when the user has a registered domain
 
 ## File Structure
 
@@ -50,7 +50,7 @@ import { NoWalletConnected } from './components/NoWalletConnected';
 - Centered card layout with globe icon
 - Explanation of why to register a domain
 - Two action buttons:
-  - "Search for a Domain" - navigates to home page
+  - "Search for a Domain" - navigates to the home page
   - "View My Domains" - navigates to my-domains page
 - Benefits list for domain registration
 
@@ -124,7 +124,7 @@ return <IdentityProfile domainName={registeredDomain} />;
 
 ## Demo Page
 
-A demo page is available at `/identity-demo` that allows you to preview all three components without needing actual wallet connection or domain registration.
+A demo page is available at `/identity-demo` that allows you to preview all three components without needing an actual wallet connection or domain registration.
 
 **Access the demo:**
 1. Start the dev server: `npm run dev`
@@ -201,7 +201,7 @@ To test the components:
 
 1. **No Wallet State:** Visit `/identity` without connecting wallet
 2. **No Domain State:** Connect wallet without registering domain
-3. **Profile State:** Register a domain then visit `/identity`
+3. **Profile State:** Register a domain, then visit `/identity`
 4. **Demo Mode:** Visit `/identity-demo` to preview all states
 
 ## Future Enhancements
