@@ -6,6 +6,8 @@ import type {
   Profile,
   UpsertProfileRequest,
   ApiResponse,
+  BatchGetProfilesRequest,
+  BatchGetProfilesResponse,
 } from './types';
 import { API_BASE } from '@/shared/constants';
 
@@ -143,5 +145,43 @@ export async function deleteProfile(domain: string): Promise<ApiResponse<void>> 
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+/**
+ * Batch get profiles for multiple domains
+ * @param domains - Array of domain names to fetch profiles for
+ * @returns Batch response with profile results
+ */
+export async function batchGetProfiles(
+  domains: string[]
+): Promise<BatchGetProfilesResponse> {
+  if (!domains || domains.length === 0) {
+    return {
+      results: [],
+    };
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/metadata/profiles:batchGet`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ domains } as BatchGetProfilesRequest),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data: BatchGetProfilesResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to batch get profiles:', error);
+    throw error;
   }
 }

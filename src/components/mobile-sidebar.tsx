@@ -59,7 +59,6 @@ export function MobileSidebar() {
                 Docs
               </a>
             </SheetClose>
-            <p className="cursor-pointer text-base font-medium py-2 px-3 rounded-md text-gray-400">Identity - Coming Soon</p>
           </nav>
 
           {/* Wallet button */}

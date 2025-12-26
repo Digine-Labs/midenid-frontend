@@ -23,12 +23,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RegistrationStep } from "./register-modal/registration-step";
 import { ProcessingStep } from "./register-modal/processing-step";
 import { ConfirmedStep } from "./register-modal/confirmed-step";
-import { hasRegisteredDomain } from "@/lib/midenClient";
+import { hasRegisteredDomain, instantiateClient } from "@/lib/midenClient";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
 import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
 import { createDomainMetadata } from "@/api";
+import { useDomainRegistration } from "@/contexts/DomainRegistrationContext";
 
 
 interface RegisterModalProps {
@@ -55,9 +56,14 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
   return <div onClick={() => setOpen(true)}>{children}</div>;
 }
 
-function RegisterModalContent({ domain }: { domain: string }) {
+function RegisterModalContent({
+  domain,
+}: {
+  domain: string;
+}) {
   const { connected, requestTransaction } = useWallet();
   const { refetch: refetchWalletAccount, accountId, bech32 } = useWalletAccount();
+  const { onRegistrationComplete } = useDomainRegistration();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailed, setTransactionFailed] = useState(false);
@@ -77,17 +83,31 @@ function RegisterModalContent({ domain }: { domain: string }) {
     []
   );
 
+  // Track if registration was successful
+  const [registrationSuccessful, setRegistrationSuccessful] = useState(false);
+
   // Reset to registration step when modal is closed or domain changes
   useEffect(() => {
     if (!open) {
-      // Reset all states when modal closes
-      setCurrentStep("registration");
-      setTransactionSubmitted(false);
-      setTransactionFailed(false);
-      setIsPurchasing(false);
-      setSelectedTier(null);
+      // Wait for modal close animation to complete (300ms) before clearing states
+      const timer = setTimeout(() => {
+        // If registration was successful, clear the home page input
+        if (registrationSuccessful) {
+          onRegistrationComplete();
+          setRegistrationSuccessful(false);
+        }
+
+        // Reset all states when modal closes
+        setCurrentStep("registration");
+        setTransactionSubmitted(false);
+        setTransactionFailed(false);
+        setIsPurchasing(false);
+        setSelectedTier(null);
+      }, 280);
+
+      return () => clearTimeout(timer);
     }
-  }, [open]);
+  }, [open, registrationSuccessful, onRegistrationComplete]);
 
   // Reset when domain changes
   useEffect(() => {
@@ -110,6 +130,8 @@ function RegisterModalContent({ domain }: { domain: string }) {
 
         const domainWord = encodeDomain(domain);
 
+        const client = await instantiateClient({ accountsToImport: [accountId, destinationAccountId] })
+
         const noteInputs = new NoteInputs(
           new MidenArrays.FeltArray([
             new Felt(faucetId.suffix().asInt()),
@@ -120,14 +142,11 @@ function RegisterModalContent({ domain }: { domain: string }) {
             domainWord.toFelts()[1],
             domainWord.toFelts()[2],
             domainWord.toFelts()[3],
-            new Felt(BigInt(tier.years)),
-            new Felt(BigInt(0)),
-            new Felt(BigInt(0)),
-            new Felt(BigInt(0)),
           ])
         );
 
         const { noteId, blockNumber } = await transactionCreator({
+          client,
           senderAccountId: accountId,
           destinationAccountId: destinationAccountId,
           noteScript: REGISTER_NOTE_SCRIPT,
@@ -139,6 +158,8 @@ function RegisterModalContent({ domain }: { domain: string }) {
           requestTransaction: requestTransaction,
         })
 
+        client.terminate()
+
         console.log("noteId:", noteId);
 
         // Transaction approved by wallet, show processing step
@@ -148,6 +169,7 @@ function RegisterModalContent({ domain }: { domain: string }) {
         // check if domain is registered. If not registered in 150 seconds, show error
         if (await hasRegisteredDomain(domain)) {
           setCurrentStep("confirmed");
+          setRegistrationSuccessful(true);
           createDomainMetadata({
             domain: domain,
             account_id: accountId.toString(),
@@ -235,11 +257,16 @@ function RegisterModalContent({ domain }: { domain: string }) {
   );
 }
 
-export function RegisterModal({ domain, trigger }: RegisterModalProps) {
+export function RegisterModal({
+  domain,
+  trigger,
+}: RegisterModalProps) {
   return (
     <Modal>
       <RegisterModalTrigger>{trigger}</RegisterModalTrigger>
-      <RegisterModalContent domain={domain} />
+      <RegisterModalContent
+        domain={domain}
+      />
     </Modal>
   );
 }

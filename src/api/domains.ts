@@ -91,3 +91,54 @@ export async function resolveDomain(
     };
   }
 }
+
+/**
+ * Check if a domain is available for registration
+ * @param domain - Domain name to check
+ * @returns Object with available boolean (true = domain is available, false = already taken)
+ */
+export async function checkDomainAvailability(
+  domain: string
+): Promise<ApiResponse<{ available: boolean }>> {
+  if (!domain) {
+    return {
+      success: false,
+      error: 'Domain name is required',
+    };
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/domains/${encodeURIComponent(domain)}`
+    );
+
+    if (response.status === 404) {
+      // 404 = Domain not found = Available for registration
+      return {
+        success: true,
+        data: { available: true },
+      };
+    }
+
+    if (response.ok) {
+      // 200 = Domain found = Already taken
+      return {
+        success: true,
+        data: { available: false },
+      };
+    }
+
+    // Other errors (500, 400, etc.)
+    const errorText = await response.text();
+    return {
+      success: false,
+      error: `HTTP ${response.status}: ${errorText}`,
+    };
+  } catch (error) {
+    console.error('Failed to check domain availability:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}

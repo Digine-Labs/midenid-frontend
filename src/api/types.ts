@@ -179,6 +179,28 @@ export interface UpsertProfileRequest extends SignatureAuth {
 }
 
 /**
+ * Single profile result in batch response
+ */
+export interface ProfileResult {
+  domain: string;
+  profile?: Profile | null;
+}
+
+/**
+ * Batch get profiles request
+ */
+export interface BatchGetProfilesRequest {
+  domains: string[];
+}
+
+/**
+ * Batch get profiles response
+ */
+export interface BatchGetProfilesResponse {
+  results: ProfileResult[];
+}
+
+/**
  * Generic API response wrapper
  */
 export interface ApiResponse<T = any> {

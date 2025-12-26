@@ -12,16 +12,18 @@ import {
     NoteType,
     OutputNote,
     TransactionRequestBuilder,
-    MidenArrays
+    MidenArrays,
+    WebClient
 } from '@demox-labs/miden-sdk';
 import {
     CustomTransaction,
     type MidenTransaction,
     TransactionType,
 } from "@demox-labs/miden-wallet-adapter-base";
-import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
+import { generateRandomSerialNumber, accountIdToBech32 } from "./midenClient";
 
 export interface NoteFromMasmParams {
+    client: WebClient
     senderAccountId: AccountId;
     destinationAccountId: AccountId;
     noteScript: string;
@@ -77,6 +79,7 @@ export interface NoteFromMasmParams {
  * 
  */
 export async function transactionCreator({
+    client,
     senderAccountId,
     destinationAccountId,
     noteScript,
@@ -93,7 +96,6 @@ export async function transactionCreator({
     }
 
     try {
-        const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
 
         const builder = client.createScriptBuilder();
 
@@ -155,9 +157,6 @@ export async function transactionCreator({
         const state = await client.syncState();
 
         const blockNumber = state.blockNum()
-
-
-        client.terminate()
 
         return { txId, noteId, blockNumber };
     } catch (error) {
