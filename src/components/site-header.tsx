@@ -38,18 +38,9 @@ export function SiteHeader() {
               <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
                 Home
               </Link>
-              <div className="relative cursor-pointer text-sm font-medium text-gray-300 dark:text-gray-500">
+              <Link to="/my-domains" className="text-sm font-medium hover:text-primary transition-colors">
                 My Domains
-                <span className="absolute -top-2 -right-4 text-[8px] font-semibold text-primary">
-                  SOON
-                </span>
-              </div>
-              <div className="relative cursor-pointer text-sm font-medium text-gray-300 dark:text-gray-500">
-                Identity
-                <span className="absolute -top-2 -right-4 text-[8px] font-semibold text-primary">
-                  SOON
-                </span>
-              </div>
+              </Link>
               <a href="https://docs.miden.name/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-primary transition-colors">
                 Docs
               </a>

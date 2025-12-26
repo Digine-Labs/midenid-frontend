@@ -312,7 +312,7 @@ export function IdentityProfile({
             />
 
             {/* Image URL Input */}
-            <FormItem>
+            {/* <FormItem>
               <FormLabel>Profile Image URL</FormLabel>
               <FormControl>
                 <Input
@@ -326,7 +326,7 @@ export function IdentityProfile({
               <FormDescription>
                 Direct URL to your profile image
               </FormDescription>
-            </FormItem>
+            </FormItem> */}
 
             {/* Social Media Fields */}
             <div className="space-y-4">

@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Globe, Github, User, Pencil, RefreshCw } from 'lucide-react'
-import { getAccountAllDomains, fetchProfile } from '@/api'
+import { getAccountAllDomains, batchGetProfiles } from '@/api'
 import type { ProfileData } from '@/api'
 import { useTheme } from '@/components/theme-provider'
 
@@ -57,26 +57,33 @@ export default function MyDomains() {
         return
       }
 
-      // Fetch profiles for all domains in parallel
-      const domainsWithProfiles = await Promise.all(
-        domainNames.map(async (domainName) => {
-          let profile: ProfileData | undefined
+      // Fetch profiles for all domains using batch API
+      let domainsWithProfiles: DomainInfo[] = []
 
-          try {
-            const profileData = await fetchProfile(domainName)
-            if (profileData) {
-              profile = profileData
-            }
-          } catch {
-            // Profile fetch failed, continue without it
-          }
+      try {
+        const batchResult = await batchGetProfiles(domainNames)
 
-          return {
-            domain: domainName,
-            profile
-          }
-        })
-      )
+        domainsWithProfiles = batchResult.results.map((result) => ({
+          domain: result.domain,
+          profile: result.profile ? {
+            bio: result.profile.bio ?? undefined,
+            twitter: result.profile.twitter ?? undefined,
+            github: result.profile.github ?? undefined,
+            discord: result.profile.discord ?? undefined,
+            telegram: result.profile.telegram ?? undefined,
+            image_url: result.profile.image_url ?? undefined,
+            created_at: result.profile.created_at,
+            updated_at: result.profile.updated_at,
+          } : undefined
+        }))
+      } catch (err) {
+        console.error('Failed to batch fetch profiles:', err)
+        // If batch fetch fails, create domain list without profiles
+        domainsWithProfiles = domainNames.map((domainName) => ({
+          domain: domainName,
+          profile: undefined
+        }))
+      }
 
       setDomains(domainsWithProfiles)
     } catch (err) {
@@ -151,7 +158,7 @@ export default function MyDomains() {
           </h1>
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading your identity...</p>
+            <p className="mt-4 text-muted-foreground">Loading your domains...</p>
           </div>
         </div>
       </PageWrapper>

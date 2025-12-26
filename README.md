@@ -1,126 +1,112 @@
-# Miden.name
+# Miden ID Frontend
 
-A decentralized identity system built on the Miden ecosystem, allowing users to register and manage `.miden` domain names.
+A decentralized identity and domain name registration system built on the Miden blockchain. This frontend application allows users to register `.miden` domains, manage their digital identity, and connect their social profiles in a Web3 environment.
 
 ## Overview
 
-Miden.name provides a user-friendly interface for claiming and managing decentralized identities on the Miden network. Users can search for available `.miden` domain names, register them through wallet connection, and manage their on-chain identity.
+Miden ID is a blockchain-based naming service that enables users to:
+- Register and manage `.miden` domain names
+- Create decentralized identity profiles linked to their domains
+- Connect social media accounts (Twitter, GitHub, Discord, Telegram)
+- Manage multiple domains with wallet integration
+- Sign profile data with cryptographic verification
 
-The application leverages the Miden Wallet Adapter for seamless wallet integration and the Miden SDK for blockchain interactions, providing a complete frontend solution for decentralized identity management.
+## Features
 
-## Current Status
+### Domain Registration
+- **Real-time Domain Search**: Instant availability checking for `.miden` domains
+- **Multi-step Registration Flow**: Clear visual feedback throughout the registration process
+- **Domain Validation**: Supports 1-20 character alphanumeric domain names
 
-### ✅ Completed Features
-- **Real-time domain availability checking** from smart contract storage (queries slot 3: Name → Account ID mapping)
-- **Wallet connection and integration** with Miden Wallet Adapter
-- **Domain registration flow** with real MASM-based smart contract transactions
-- **Transaction receipt page** with Midenscan explorer links
-- **Balance tracking** with auto-refresh (10-second intervals)
-- **Wallet account context** with domain ownership checking
-- **Domain encoding/decoding utilities** with full test coverage
-- **Comprehensive test suite** using Vitest + Playwright
-- **Responsive design** for mobile and desktop
-- **Testnet warning modal**
-- **Dark/light theme toggle**
+### Identity Management
+- **Profile Customization**: Add bio (up to 280 characters), social links, and profile images
+- **Wallet-based Authentication**: Cryptographic signature verification for profile updates
+- **Multi-domain Support**: Switch between and manage multiple registered domains
+- **Profile Privacy**: Delete profile data while retaining domain ownership
 
-### 🚧 In Progress
-- **Identity Page**: UI implemented with form validation, blockchain integration pending
+### User Experience
+- **Responsive Design**: Mobile-first approach with adaptive layouts
+- **Dark/Light Theme**: System-aware theme with manual toggle
+- **Real-time Notifications**: Toast notifications for user actions and feedback
+- **Loading States**: Clear indicators for async operations
+- **Error Handling**: Comprehensive error messages and recovery options
 
-### 📋 Planned Features
-- Migration to new contracts
-- Domain transfer functionality
-- Advanced identity profile management with blockchain storage
-- Multi-domain management dashboard
+## Tech Stack
 
-## Architecture
+### Frontend Framework
+- **React 19.1.1** - Modern UI framework with hooks
+- **TypeScript 5.8.3** - Type-safe development
+- **Vite 7.1.2** - Fast build tool and dev server
+- **React Router 7.9.3** - Client-side routing
 
-### Tech Stack
-- **Frontend**: React 19 + TypeScript + Vite 7
-- **Routing**: React Router 7 (file-based routing)
-- **Styling**: TailwindCSS with custom CSS variables
-- **UI Components**: Radix UI primitives (Shadcn-style)
-- **Blockchain**: Miden SDK (`@demox-labs/miden-sdk`)
-- **Wallet**: Miden Wallet Adapter
+### Blockchain Integration
+- **Miden SDK 0.12.5** - Miden protocol integration
+- **Miden Wallet Adapter** - Wallet connectivity and transaction signing
+- **MASM Smart Contracts** - On-chain domain registration logic
 
-### Project Structure
+### UI Components
+- **shadcn/ui** - High-quality React component library
+- **Radix UI** - Accessible headless UI primitives
+- **Tailwind CSS 3.4.13** - Utility-first styling
+- **Lucide React** - Icon library
+- **Framer Motion** - Smooth animations
+
+### Form Management
+- **React Hook Form 7.64.0** - Performant form handling
+- **Zod 4.1.12** - TypeScript-first schema validation
+- **@hookform/resolvers** - Validation integration
+
+### Development Tools
+- **Vitest** - Fast unit testing
+- **Playwright** - End-to-end testing
+- **ESLint** - Code quality and linting
+- **Husky** - Git hooks for pre-commit checks
+
+## Project Structure
 
 ```
 src/
-├── components/          # Shared components
-│   ├── ui/             # Reusable UI primitives (Button, Card, Input, etc.)
-│   ├── site-header.tsx # Main navigation header with wallet & theme toggle
-│   ├── theme-provider.tsx
-│   └── ...
-├── contexts/           # React contexts
-│   └── WalletAccountContext.tsx # Wallet state & domain ownership
-├── hooks/              # Custom React hooks
-│   ├── useBalance.tsx  # Balance tracking with auto-refresh (10s intervals)
-│   └── useStorage.tsx  # Smart contract storage queries
-├── lib/                # Utilities and helpers
-│   ├── midenClient.ts  # Miden SDK utilities (client instantiation, conversions)
-│   ├── registerName.ts # Domain registration transaction logic
-│   └── utils.ts        # General utilities
-├── pages/              # Route pages
-│   ├── home/           # Domain search with real-time availability
-│   ├── register/       # Domain registration flow with wallet integration
-│   │   └── receipt/    # Transaction success page with Midenscan links
-│   ├── identity/       # User identity page (UI complete, blockchain pending)
-│   └── not-found/      # 404 page
-├── shared/             # Shared constants and configs
-│   ├── constants.ts    # Contract addresses & configuration
-│   ├── miden-contract.ts   # Registry contract MASM
-│   ├── miden-naming.ts     # Naming contract MASM
-│   └── miden-pricing.ts    # Pricing contract MASM
-├── utils/              # Utility functions with test coverage
-│   ├── encode.ts       # Domain name encoding to Word format
-│   ├── decode.ts       # Domain name decoding from blockchain
-│   ├── domain-registry.ts # Domain availability & ownership checks
-│   └── __tests__/      # Comprehensive test suite (Vitest)
-└── main.tsx            # App entry point with providers
+├── api/                          # Backend API integration
+│   ├── accounts.ts              # Account and domain lookups
+│   ├── domains.ts               # Domain resolution
+│   ├── profile.ts               # Profile CRUD operations
+│   ├── metadata.ts              # Domain metadata management
+│   └── types.ts                 # API response interfaces
+├── components/                   # Reusable React components
+│   ├── ui/                      # shadcn/ui components
+│   ├── register-modal/          # Domain registration workflow
+│   ├── site-header.tsx          # Navigation header
+│   └── theme-provider.tsx       # Theme management
+├── contexts/                     # React Context providers
+│   ├── WalletAccountContext.tsx # Wallet and account state
+│   └── DomainRegistrationContext.tsx # Registration callbacks
+├── hooks/                        # Custom React hooks
+├── lib/                          # Utility libraries
+│   ├── midenClient.ts           # Miden client management
+│   └── transactionCreator.ts    # Transaction signing
+├── pages/                        # Route components
+│   ├── home/                    # Domain search/registration
+│   ├── identity/                # Profile management
+│   ├── myDomains/               # Domain listing
+│   └── not-found/               # 404 page
+├── shared/                       # Shared constants and contracts
+│   ├── constants.ts             # Contract addresses, API endpoints
+│   ├── pricing.ts               # Domain pricing config
+│   ├── contracts/               # MASM smart contracts
+│   └── notes/                   # Transaction note scripts
+└── utils/                        # Helper functions
+    ├── encode.ts                # Domain name encoding
+    ├── decode.ts                # Domain name decoding
+    └── format.ts                # Formatting utilities
 ```
-
-### Key Features
-
-**Provider Hierarchy**:
-```
-WalletProvider (Wallet connection via Miden Wallet Adapter)
-  └─ WalletModalProvider (Wallet UI components)
-      └─ WalletAccountProvider (Account state & domain ownership)
-          └─ ThemeProvider (Dark/light mode)
-              └─ App Routes
-```
-
-**Domain Pricing**:
-- Base price: 1 MIDEN/year
-- Registration periods: 1-10 years
-- Pricing calculated dynamically based on selected duration
-
-**Domain Validation**:
-- Alphanumeric characters only (a-z, 0-9)
-- Maximum 20 characters (both frontend and contract)
-- Real-time validation with debouncing (500ms)
-
-**Smart Contract Storage**:
-- Registry Contract: `0xbcf3703152589f40689336e42bfbef`
-- Faucet Contract: `0x83592005c13d47203ec1e3124c654d`
-- Storage Layout:
-  - Slot 3: Name → Account ID mapping (domain availability)
-  - Slot 4: Account ID → Name mapping (ownership lookup)
-- Domain names encoded into Words (4 Felts, 7 characters per Felt)
-- Transactions use MASM note scripts compiled via AssemblerUtils
-
-**Domain Availability Checking**:
-- Queries smart contract storage slot 3 in real-time
-- Uses `useStorage` hook to fetch blockchain state
-- Encodes domain names with `encodeNameToWord()` utility
-- Validates via `isDomainRegistered()` utility function
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Miden Wallet browser extension installed
+- Miden wallet (for blockchain interactions)
+- Access to Miden testnet
 
 ### Installation
 
@@ -140,136 +126,215 @@ npm install
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+4. Open your browser and navigate to `http://localhost:5173`
 
 ### Available Scripts
 
-```bash
-# Start development server
-npm run dev
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run tests in watch mode |
+| `npm run test:ui` | Open Vitest UI dashboard |
+| `npm run test:run` | Run tests once (CI mode) |
 
-# Build for production
-npm run build
+## Configuration
 
-# Preview production build
-npm run preview
+### Environment Variables
 
-# Run linter
-npm run lint
+The application connects to:
+- **Miden Testnet RPC**: `https://rpc.testnet.miden.io`
 
-# Run tests
-npm run test
+### Smart Contract Addresses
 
-# Run tests with UI
-npm run test:ui
+- **Miden ID Contract**: `0xf090f55f132c11405c162476ac8469`
+- **Miden Faucet**: `0x54bf4e12ef20082070758b022456c7`
 
-# Run tests once (CI mode)
-npm run test:run
+Update these in `src/shared/constants.ts` if needed.
 
-# Run browser tests
-npm run test:browser
-```
+## Architecture
 
-### Environment
+### State Management
 
-The application currently connects to:
-- **Testnet RPC**: `https://rpc.testnet.miden.io`
-- **Transaction Prover**: `https://tx-prover.testnet.miden.io`
-- **Block Explorer**: `https://testnet.midenscan.com`
+The application uses React Context for state management:
 
-> ⚠️ **Note**: This is a testnet deployment. All transactions and data are for testing purposes only.
+- **WalletAccountContext**: Manages wallet connection, account ID, and owned domains
+- **DomainRegistrationContext**: Handles registration completion callbacks
 
-## Testing
+### Routing
 
-The project includes comprehensive test coverage using **Vitest** and **Playwright**.
+Client-side routing powered by React Router v7:
 
-### Test Coverage
+| Route | Component | Description |
+|-------|-----------|-------------|
+| `/` | Home | Domain search and registration |
+| `/identity` | Identity | Profile editor (requires domain) |
+| `/my-domains` | MyDomains | List of owned domains |
+| `/*` | NotFound | 404 error page |
 
-- **Encoding Utilities** (`encode.test.ts`): 278 lines
-  - Domain name encoding to Word format
-  - Character mapping (a-z → 1-26, 0-9 → 27-36)
-  - Multi-Felt packing (7 characters per Felt)
-  - Edge cases and validation
+### Domain Encoding
 
-- **Decoding Utilities** (`decode.test.ts`): 182 lines
-  - Word to domain name decoding
-  - Reverse character mapping
-  - Validation of decoded output
-
-- **Domain Registry** (`domain-registry.test.ts`): 168 lines
-  - `isDomainRegistered()` - Domain availability checks
-  - `hasRegisteredDomain()` - Ownership verification
-  - `getOwnerFromStorageWord()` - Owner extraction
-  - Storage slot handling
-
-- **Format Utilities** (`format.test.ts`)
-  - Formatting helpers and display utilities
-
-### Running Tests
-
-```bash
-# Run all tests in watch mode
-npm run test
-
-# Run tests with Vitest UI
-npm run test:ui
-
-# Run tests once (for CI/CD)
-npm run test:run
-
-# Run browser tests with Playwright
-npm run test:browser
-```
-
-## Key Components
-
-### Hooks
-
-- **`useStorage({ accountId, index, key })`** - Queries smart contract storage
-  - Returns: `{ storageItem, storageHex, storageU64s, isLoading }`
-  - Automatically syncs with blockchain state
-  - Used for domain availability and ownership checks
-
-- **`useBalance({ accountId, faucetId, client })`** - Fetches wallet balance
-  - Returns: `bigint | null`
-  - Auto-refreshes every 10 seconds
-  - Used for displaying available MIDEN tokens
-
-### Contexts
-
-- **`WalletAccountContext`** - Centralizes wallet state
-  - Provides: `accountId`, `hasRegisteredDomain`, `registeredDomain`, `balance`, `refetch()`
-  - Automatically checks if connected wallet owns a domain
-  - Decodes domain names from contract storage
-
-### Utilities
-
-- **`encodeNameToWord(name: string): Word`** - Encodes domain for storage
-- **`decodeDomain(word: Word): string`** - Decodes domain from blockchain
-- **`isDomainRegistered(storageWord?: Word): boolean`** - Checks availability
-- **`hasRegisteredDomain(storageWord?: Word): boolean`** - Checks ownership
-- **`bech32ToAccountId(bech32: string): AccountId`** - Converts wallet address
-- **`accountIdToBech32(accountId: AccountId): string`** - Converts to Bech32
-
-## Smart Contract Integration
-
-The application integrates with two production MASM smart contracts:
-
-2. **Naming Contract** (`miden-naming.ts` - 413 lines)
-   - Domain name encoding/decoding
-   - Name → Account ID mapping
-   - Account ID → Name reverse lookup
-
-3. **Pricing Contract** (`miden-pricing.ts` - 195 lines)
-   - Price calculation logic
-   - Payment processing
-   - Subscription management
+Domain names are encoded into Miden's `Word` format (4 Felts) for blockchain storage:
+- Characters `a-z` map to values 1-26
+- Characters `0-9` map to values 27-36
+- Maximum 20 characters supported
+- Packed efficiently for on-chain storage
 
 ### Transaction Flow
 
-1. User selects domain and registration period
-2. Frontend compiles MASM note script via `AssemblerUtils.createAccountComponentLibrary()`
-3. `CustomTransaction` created with fungible assets (MIDEN tokens)
-4. Transaction submitted via `wallet.requestTransaction()`
-5. Returns `txId` and `noteId` for tracking
-6. Receipt page displays success with Midenscan explorer link
+1. User initiates domain registration
+2. Frontend creates MASM transaction note with domain data
+3. Miden wallet signs and approves the transaction
+4. Transaction submitted to Miden blockchain
+5. Frontend polls for confirmation (up to 75 seconds)
+6. On success, domain metadata is saved to backend database
+7. Wallet context refreshes to include new domain
+
+## API Integration
+
+The frontend communicates with a backend API for:
+
+### Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/accounts/{id}` | GET | Get active domain for account |
+| `/accounts/{id}/domains` | GET | Get all domains for account |
+| `/domains/{domain}` | GET | Resolve domain to account ID |
+| `/metadata/domains/{domain}/profile` | GET/POST/DELETE | Profile CRUD |
+| `/metadata/domains/{domain}/enriched` | GET | Get domain with profile data |
+
+All profile modifications require cryptographic signatures for verification.
+
+## Development
+
+### Code Style
+
+- TypeScript for type safety
+- ESLint for code quality
+- Husky for pre-commit hooks
+- Consistent component structure (functional components with hooks)
+
+### Testing
+
+```bash
+# Run unit tests
+npm run test
+
+# Run with UI
+npm run test:ui
+
+# Run in browser mode
+npm run test:browser
+```
+
+Tests are located in `src/utils/__tests__/` and cover:
+- Domain encoding/decoding
+- Formatting utilities
+- Domain registry functions
+
+### Component Development
+
+Components follow shadcn/ui conventions:
+- Use Tailwind CSS for styling
+- Radix UI for accessible primitives
+- TypeScript interfaces for props
+- React Hook Form for forms
+
+## Deployment
+
+### Production Build
+
+```bash
+npm run build
+```
+
+Output is generated in the `dist/` directory with:
+- Optimized bundles
+- Code splitting (react, miden-wallet, ui, form vendors)
+- Minified assets
+- Tree-shaking applied
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+## Pricing Structure
+
+Domain pricing is character-based:
+
+| Characters | Price/Year |
+|------------|------------|
+| 1 char | $375 |
+| 2 chars | $250 |
+| 3 chars | $125 |
+| 4 chars | $50 |
+| 5+ chars | $20 |
+
+Prices are configured in `src/shared/pricing.ts`.
+
+## Browser Support
+
+- Modern browsers with ES2020+ support
+- IndexedDB for Miden client state
+- LocalStorage for theme preferences
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Commit Guidelines
+
+- Use conventional commits format
+- Run linting before committing
+- Ensure tests pass
+
+## Security
+
+- **Wallet Signatures**: All profile updates require cryptographic signatures
+- **Input Validation**: Zod schemas validate all form inputs
+- **XSS Prevention**: React's built-in escaping
+- **HTTPS**: Production should use HTTPS for API calls
+
+## Troubleshooting
+
+### Wallet Connection Issues
+- Ensure Miden wallet extension is installed
+- Check that you're on Miden testnet
+- Refresh the page and reconnect
+
+### Domain Registration Failures
+- Verify wallet has sufficient balance
+- Check domain availability before registration
+- Ensure domain name follows validation rules (1-20 alphanumeric chars)
+
+### Profile Update Errors
+- Confirm wallet is connected
+- Check that you own the domain
+- Verify signature approval in wallet
+
+## Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Check documentation at [\[docs\]](https://docs.miden.name/docs/overview)
+- Contact the development team
+
+## Acknowledgments
+
+- Miden blockchain team for the SDK
+- shadcn for the UI component library
+- Radix UI for accessible primitives
+- The React and TypeScript communities
+
+---
+
+Built with ❤️ for the Miden ecosystem

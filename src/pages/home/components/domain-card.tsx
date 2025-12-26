@@ -1,11 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
-import { encodeDomain, hasStorageValue } from '@/utils'
-import { AccountId } from '@demox-labs/miden-sdk'
-import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
-import { useStorage } from '@/hooks/useStorage'
+import { checkDomainAvailability } from '@/api'
 import { RegisterModal } from '@/components/register-modal'
 import { useWallet, useWalletModal } from '@demox-labs/miden-wallet-adapter'
 
@@ -13,57 +10,66 @@ interface DomainCardProps {
   domain: string
 }
 
+// Domain validation helper
+const isValidDomain = (domain: string): boolean => {
+  if (!domain || domain.length < 1 || domain.length > 20) return false;
+  return /^[a-z0-9]+$/i.test(domain);
+}
+
 export function DomainCard({ domain }: DomainCardProps) {
   const [loading, setLoading] = useState(true)
   const [domainAvailable, setDomainAvailable] = useState(false)
   const { connected } = useWallet();
   const walletModal = useWalletModal();
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const contractId = useMemo(
-    () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
-    []
-  );
-
-  // Encode domain name for storage lookup
-  const storageKey = useMemo(() => {
-    if (!domain) return undefined;
-    try {
-      return encodeDomain(domain);
-    } catch (error) {
-      console.error("Failed to encode domain:", error);
-      return undefined;
-    }
-  }, [domain]);
-
-  // Check if domain is registered by querying storage slot 5 (Name -> ID mapping)
-  const { storageItem, isLoading: isCheckingStorage } = useStorage({
-    accountId: contractId,
-    index: 5,
-    key: storageKey
-  });
-
-  // Check registration status
-  const isRegistered = useMemo(() => hasStorageValue(storageItem), [storageItem]);
-
-
-  // Update domain availability based on storage check
+  // Check domain availability using backend API (with debouncing and validation)
   useEffect(() => {
-    if (!domain || !storageKey) {
+    if (!domain) {
       setDomainAvailable(false);
       setLoading(false);
       return;
     }
 
-    // Show loading while storage is being fetched
-    if (isCheckingStorage) {
-      setLoading(true);
+    // Frontend validation
+    if (!isValidDomain(domain)) {
+      setDomainAvailable(false);
+      setLoading(false);
       return;
     }
 
-    // Storage fetch completed, update availability
-    setDomainAvailable(!isRegistered);
-    setLoading(false);
-  }, [domain, storageKey, isCheckingStorage, isRegistered])
+    // Debounce: 500ms wait before API call
+    setLoading(true);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const result = await checkDomainAvailability(domain);
+
+        if (result.success && result.data) {
+          setDomainAvailable(result.data.available);
+        } else {
+          // API error - default to unavailable (safe side)
+          setDomainAvailable(false);
+        }
+      } catch (error) {
+        console.error('Domain availability check failed:', error);
+        setDomainAvailable(false);
+      } finally {
+        setLoading(false);
+      }
+    }, 500);
+
+    // Cleanup on unmount or domain change
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [domain])
 
   // Handle card click - open wallet modal if not connected
   const handleCardClick = () => {
@@ -74,7 +80,10 @@ export function DomainCard({ domain }: DomainCardProps) {
 
   const cardContent = (
     <Card
-      className="cursor-pointer hover:shadow transition-all duration-200 border hover:border-primary/50 bg-card"
+      className={`cursor-pointer hover:shadow transition-all duration-200 border bg-card ${!loading && !domainAvailable
+        ? 'hover:border-destructive/50'
+        : 'hover:border-primary/50'
+        }`}
       onClick={handleCardClick}
     >
       <CardHeader>
@@ -100,7 +109,12 @@ export function DomainCard({ domain }: DomainCardProps) {
 
   // If domain is available and not loading, wrap in RegisterModal
   if (!loading && domainAvailable && connected) {
-    return <RegisterModal domain={domain} trigger={cardContent} />;
+    return (
+      <RegisterModal
+        domain={domain}
+        trigger={cardContent}
+      />
+    );
   }
 
   // Otherwise, just show the card (unavailable or loading)
