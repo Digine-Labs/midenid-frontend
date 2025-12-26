@@ -253,7 +253,7 @@ export default function MyDomains() {
           {domains.map((domainInfo) => (
             <Card
               key={domainInfo.domain}
-              className="bg-card hover:bg-accent/50 transition-colors cursor-pointer group"
+              className={`bg-card transition-colors cursor-pointer group hover:border-primary/50 ${resolvedTheme === "dark" ? "hover:bg-accent/50" : "hover:bg-accent/10"}`}
               onClick={() => handleEditDomain(domainInfo.domain)}
             >
               <CardContent className="p-6">
