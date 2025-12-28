@@ -8,21 +8,28 @@ import {
 } from '@/utils/transactionStorage';
 import type { PendingTransaction, TransactionResult } from '@/types/transaction';
 
-const POLLING_INTERVAL = 10000; // 10 seconds
-const MAX_ATTEMPTS = 8; // 8 attempts * 10s = 80 seconds
+const POLLING_INTERVAL = 10_000; // 10s
+const MAX_ATTEMPTS = 8;
 
 export const usePendingTransactions = (accountId?: string) => {
   const [pending, setPending] = useState<PendingTransaction[]>([]);
   const [isMonitoring, setIsMonitoring] = useState(false);
 
-  // Map<domain, isConfirmed>
+  // UI state
   const [confirmedDomains, setConfirmedDomains] =
     useState<Map<string, boolean>>(new Map());
 
-  // ✅ DEDUP / LOCK GUARD (state DEĞİL)
-  const processedDomainsRef = useRef<Set<string>>(new Set());
+  /**
+   * CONCURRENCY GUARDS
+   * inFlight  : async process continue
+   * completed : success
+   *
+   * useRef = sync, render bağımsız, race-safe
+   */
+  const inFlightDomainsRef = useRef<Set<string>>(new Set());
+  const completedDomainsRef = useRef<Set<string>>(new Set());
 
-  // Load from localStorage on mount / account change
+  // Load from storage
   useEffect(() => {
     const stored = getPendingTransactions();
     const userTransactions = accountId
@@ -32,20 +39,20 @@ export const usePendingTransactions = (accountId?: string) => {
     setPending(userTransactions);
   }, [accountId]);
 
-  // Add a new pending transaction
+  // Add pending transaction
   const addPendingTransaction = useCallback(
     (transaction: Omit<PendingTransaction, 'timestamp' | 'attemptCount'>) => {
-      const fullTransaction: PendingTransaction = {
+      const full: PendingTransaction = {
         ...transaction,
         timestamp: Date.now(),
         attemptCount: 0,
       };
 
-      savePendingTransaction(fullTransaction);
+      savePendingTransaction(full);
 
       setPending(prev => [
         ...prev.filter(t => t.domain !== transaction.domain),
-        fullTransaction,
+        full,
       ]);
 
       setConfirmedDomains(prev =>
@@ -55,15 +62,14 @@ export const usePendingTransactions = (accountId?: string) => {
     []
   );
 
-  // Remove a pending transaction
+  // Remove pending
   const removePending = useCallback((domain: string) => {
     removePendingTransaction(domain);
     setPending(prev => prev.filter(t => t.domain !== domain));
   }, []);
 
-  // Check confirmation state
   const isDomainConfirmed = useCallback(
-    (domain: string): boolean => confirmedDomains.get(domain) === true,
+    (domain: string) => confirmedDomains.get(domain) === true,
     [confirmedDomains]
   );
 
@@ -82,43 +88,29 @@ export const usePendingTransactions = (accountId?: string) => {
 
       const results: TransactionResult[] = [];
 
-      for (const transaction of pending) {
+      for (const tx of pending) {
         if (!isActive) break;
 
-        const domain = transaction.domain;
+        const domain = tx.domain;
 
-        // ✅ HARD DEDUP GUARD
-        if (processedDomainsRef.current.has(domain)) {
+        if (
+          inFlightDomainsRef.current.has(domain) ||
+          completedDomainsRef.current.has(domain)
+        ) {
           continue;
         }
+
+        inFlightDomainsRef.current.add(domain);
 
         try {
           const isRegistered = await hasRegisteredDomain(domain);
 
-          if (isRegistered) {
-            // 🔒 LOCK domain IMMEDIATELY
-            processedDomainsRef.current.add(domain);
+          if (!isRegistered) {
+            inFlightDomainsRef.current.delete(domain);
 
-            // Update UI state
-            setConfirmedDomains(prev =>
-              new Map(prev).set(domain, true)
-            );
+            const nextAttempt = tx.attemptCount + 1;
 
-            // Backend call (idempotency-safe)
-            await createDomainMetadata({
-              domain,
-              account_id: transaction.accountId,
-              bech32: transaction.bech32,
-              created_block: transaction.blockNumber,
-              updated_block: transaction.blockNumber,
-            });
-
-            removePending(domain);
-            results.push({ success: true, domain });
-          } else {
-            const newAttemptCount = transaction.attemptCount + 1;
-
-            if (newAttemptCount >= MAX_ATTEMPTS) {
+            if (nextAttempt >= MAX_ATTEMPTS) {
               removePending(domain);
               results.push({
                 success: false,
@@ -126,32 +118,60 @@ export const usePendingTransactions = (accountId?: string) => {
                 error: 'timeout',
               });
             } else {
-              const updated = {
-                ...transaction,
-                attemptCount: newAttemptCount,
-              };
-
+              const updated = { ...tx, attemptCount: nextAttempt };
               savePendingTransaction(updated);
 
               setPending(prev =>
                 prev.map(t => (t.domain === domain ? updated : t))
               );
             }
+
+            continue;
           }
-        } catch (error) {
-          console.error(
-            `[usePendingTransactions] Error monitoring ${domain}:`,
-            error
+
+          /**
+           * ✅ DOMAIN REGISTERED
+           */
+          setConfirmedDomains(prev =>
+            new Map(prev).set(domain, true)
           );
-          // retry on next interval
+
+          try {
+            await createDomainMetadata({
+              domain,
+              account_id: tx.accountId,
+              bech32: tx.bech32,
+              created_block: tx.blockNumber,
+              updated_block: tx.blockNumber,
+            });
+          } catch (err: any) {
+            // 409 = already exists → SUCCESS
+            if (err?.response?.status !== 409) {
+              throw err;
+            }
+          }
+
+          // ✅ MARK COMPLETED
+          completedDomainsRef.current.add(domain);
+
+          removePending(domain);
+          results.push({ success: true, domain });
+        } catch (err) {
+          console.error(
+            `[usePendingTransactions] Error processing ${domain}:`,
+            err
+          );
+          // retry on next poll
+        } finally {
+          // 🔓 UNLOCK (completed olanlar artık completed guard'da)
+          inFlightDomainsRef.current.delete(domain);
         }
       }
     };
 
-    // Initial run
+    // initial run
     monitorTransactions();
 
-    // Polling
     const intervalId = setInterval(
       monitorTransactions,
       POLLING_INTERVAL
@@ -160,7 +180,6 @@ export const usePendingTransactions = (accountId?: string) => {
     return () => {
       isActive = false;
       clearInterval(intervalId);
-      // ❌ NO setState here
     };
   }, [pending, removePending]);
 
