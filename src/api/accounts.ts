@@ -8,7 +8,7 @@ import type {
   BatchAccountToDomainRequest,
   BatchAccountToDomainResponse,
   ApiResponse,
-} from './types';
+} from '@/types/api';
 import { API_BASE } from '@/shared/constants';
 
 /**

@@ -5,7 +5,7 @@
 import type {
   EnrichedDomainResponse,
   ApiResponse,
-} from './types';
+} from '@/types/api';
 import { API_BASE } from '@/shared/constants';
 
 /**

@@ -1,8 +1,8 @@
-import { createContext, useContext, type ReactNode } from 'react';
-
-interface DomainRegistrationContextType {
-  onRegistrationComplete: () => void;
-}
+import { createContext, useContext } from 'react';
+import type {
+  DomainRegistrationContextType,
+  DomainRegistrationProviderProps
+} from '@/types/context';
 
 const DomainRegistrationContext = createContext<DomainRegistrationContextType | undefined>(undefined);
 
@@ -12,11 +12,6 @@ export function useDomainRegistration() {
     throw new Error('useDomainRegistration must be used within DomainRegistrationProvider');
   }
   return context;
-}
-
-interface DomainRegistrationProviderProps {
-  children: ReactNode;
-  onRegistrationComplete: () => void;
 }
 
 export function DomainRegistrationProvider({

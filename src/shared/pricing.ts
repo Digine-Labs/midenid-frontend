@@ -24,16 +24,9 @@ export function getDomainPricePerYear(domainLength: number): number {
   return DOMAIN_PRICING_USD[5]; // 5 or more characters
 }
 
-/**
- * Pricing tier configuration with discount rules
- */
-export interface PricingTier {
-  years: number;        // Actual registration period
-  displayYears: number; // What the user pays for (discounted)
-  savings: string;      // Discount description
-  popular?: boolean;
-  recommended?: boolean;
-}
+// Re-export types from centralized types folder
+export type { PricingTier, PricingTierWithPrice } from '@/types/pricing';
+import type { PricingTier } from '@/types/pricing';
 
 /**
  * Available pricing tiers with discount rules:

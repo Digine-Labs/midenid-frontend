@@ -23,14 +23,26 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RegistrationStep } from "./register-modal/registration-step";
 import { ProcessingStep } from "./register-modal/processing-step";
 import { ConfirmedStep } from "./register-modal/confirmed-step";
-import { hasRegisteredDomain, instantiateClient } from "@/lib/midenClient";
+import { instantiateClient } from "@/lib/midenClient";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
 import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
-import { createDomainMetadata } from "@/api";
 import { useDomainRegistration } from "@/contexts/DomainRegistrationContext";
 
+// Transaction failure reason type
+export const TransactionFailureReason = {
+  INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
+  TRANSACTION_ERROR: 'TRANSACTION_ERROR',
+} as const;
+
+export type TransactionFailureReason = typeof TransactionFailureReason[keyof typeof TransactionFailureReason];
+
+// Transaction failure state with unique ID
+export interface TransactionFailure {
+  reason: TransactionFailureReason;
+  id: number;
+}
 
 interface RegisterModalProps {
   domain: string;
@@ -62,11 +74,11 @@ function RegisterModalContent({
   domain: string;
 }) {
   const { connected, requestTransaction } = useWallet();
-  const { refetch: refetchWalletAccount, accountId, bech32 } = useWalletAccount();
+  const { refetch: refetchWalletAccount, accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
   const { onRegistrationComplete } = useDomainRegistration();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
-  const [transactionFailed, setTransactionFailed] = useState(false);
+  const [transactionFailure, setTransactionFailure] = useState<TransactionFailure | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
@@ -86,9 +98,32 @@ function RegisterModalContent({
   // Track if registration was successful
   const [registrationSuccessful, setRegistrationSuccessful] = useState(false);
 
+  // Track timeout ID for cleanup
+  const [confirmationTimeoutId, setConfirmationTimeoutId] = useState<number | null>(null);
+
+  // Watch for domain confirmation from background monitor
+  useEffect(() => {
+    if (currentStep === "processing" && confirmedDomains.get(domain) === true) {
+      // Clear timeout since we got confirmation
+      if (confirmationTimeoutId) {
+        clearTimeout(confirmationTimeoutId);
+        setConfirmationTimeoutId(null);
+      }
+
+      setCurrentStep("confirmed");
+      setRegistrationSuccessful(true);
+    }
+  }, [confirmedDomains, domain, currentStep, confirmationTimeoutId]);
+
   // Reset to registration step when modal is closed or domain changes
   useEffect(() => {
     if (!open) {
+      // Clear confirmation timeout if modal closes
+      if (confirmationTimeoutId) {
+        clearTimeout(confirmationTimeoutId);
+        setConfirmationTimeoutId(null);
+      }
+
       // Wait for modal close animation to complete (300ms) before clearing states
       const timer = setTimeout(() => {
         // If registration was successful, clear the home page input
@@ -100,20 +135,20 @@ function RegisterModalContent({
         // Reset all states when modal closes
         setCurrentStep("registration");
         setTransactionSubmitted(false);
-        setTransactionFailed(false);
+        setTransactionFailure(null);
         setIsPurchasing(false);
         setSelectedTier(null);
       }, 280);
 
       return () => clearTimeout(timer);
     }
-  }, [open, registrationSuccessful, onRegistrationComplete]);
+  }, [open, registrationSuccessful, onRegistrationComplete, confirmationTimeoutId]);
 
   // Reset when domain changes
   useEffect(() => {
     setCurrentStep("registration");
     setTransactionSubmitted(false);
-    setTransactionFailed(false);
+    setTransactionFailure(null);
     setIsPurchasing(false);
     setSelectedTier(null);
   }, [domain]);
@@ -121,7 +156,7 @@ function RegisterModalContent({
   const handlePurchase = async (tier: PricingTier) => {
     if (connected && accountId && requestTransaction) {
       setTransactionSubmitted(false);
-      setTransactionFailed(false);
+      setTransactionFailure(null);
       setIsPurchasing(true);
       setSelectedTier(tier);
 
@@ -160,30 +195,39 @@ function RegisterModalContent({
 
         client.terminate()
 
-        console.log("noteId:", noteId);
-
         // Transaction approved by wallet, show processing step
         setTransactionSubmitted(true);
         setCurrentStep("processing");
 
-        // check if domain is registered. If not registered in 150 seconds, show error
-        if (await hasRegisteredDomain(domain)) {
-          setCurrentStep("confirmed");
-          setRegistrationSuccessful(true);
-          createDomainMetadata({
-            domain: domain,
-            account_id: accountId.toString(),
-            bech32: bech32!,
-            created_block: blockNumber!,
-            updated_block: blockNumber!,
+        // Add to background monitoring queue (will handle metadata creation AND confirmation tracking)
+        addPendingTransaction({
+          domain: domain,
+          noteId: noteId,
+          accountId: accountId.toString(),
+          bech32: bech32!,
+          blockNumber: blockNumber || 0,
+        });
+
+        // Set timeout for registration confirmation (80 seconds)
+        // The actual confirmation is handled by useEffect watching confirmedDomains
+        const maxWaitTime = 80000;
+        const timeoutId = window.setTimeout(() => {
+          setTransactionFailure({
+            reason: TransactionFailureReason.TRANSACTION_ERROR,
+            id: Date.now()
           });
-        } else {
-          setTransactionFailed(true);
           setCurrentStep("registration");
-        }
+          setConfirmationTimeoutId(null);
+        }, maxWaitTime);
+
+        setConfirmationTimeoutId(timeoutId);
 
       } catch (error) {
-        setTransactionFailed(true);
+        console.error("Transaction error:", error);
+        setTransactionFailure({
+          reason: TransactionFailureReason.TRANSACTION_ERROR,
+          id: Date.now()
+        });
         setCurrentStep("registration");
       } finally {
         setIsPurchasing(false);
@@ -250,7 +294,7 @@ function RegisterModalContent({
       </ModalBody>
       <TransactionStatusAlerts
         transactionSubmitted={transactionSubmitted}
-        transactionFailed={transactionFailed}
+        transactionFailure={transactionFailure}
       />
       <TermsModal open={termsOpen} onOpenChange={setTermsOpen} />
     </>

@@ -8,14 +8,9 @@ import {
   SigningInputs,
 } from '@demox-labs/miden-sdk';
 import { hasStorageValue, encodeDomain, uint8ArrayToHex, createMessage } from '@/utils';
-import type { CreateMessageParams } from '@/utils';
+import type { CreateMessageParams } from '@/types/profile';
+import type { SignedData } from '@/types/auth';
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
-
-export interface SignedData {
-  message_hex: string;
-  pubkey_hex: string;
-  signature_hex: string;
-}
 
 
 // Helper to clear IndexedDB if schema is incompatible
@@ -118,6 +113,7 @@ export async function hasRegisteredDomain(domain: string): Promise<boolean> {
     const hasDomain = hasStorageValue(domainWord);
 
     if (hasDomain) {
+      client.terminate()
       return true
     }
 

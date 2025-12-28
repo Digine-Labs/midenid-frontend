@@ -1,15 +1,17 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Wallet } from "lucide-react";
+import { TransactionFailureReason } from "@/components/register-modal";
+import type { TransactionFailure } from "@/components/register-modal";
 
 interface TransactionStatusAlertsProps {
   transactionSubmitted: boolean;
-  transactionFailed: boolean;
+  transactionFailure: TransactionFailure | null;
 }
 
 export function TransactionStatusAlerts({
   transactionSubmitted,
-  transactionFailed,
+  transactionFailure,
 }: TransactionStatusAlertsProps) {
   useEffect(() => {
     if (transactionSubmitted) {
@@ -31,9 +33,22 @@ export function TransactionStatusAlerts({
   }, [transactionSubmitted]);
 
   useEffect(() => {
-    if (transactionFailed) {
-      toast.error("Transaction Failed", {
-        description: "Transaction could not be created. Please contact the project telegram/discord for assistance.",
+    if (transactionFailure) {
+      const messages = {
+        [TransactionFailureReason.INSUFFICIENT_BALANCE]: {
+          title: "Insufficient Balance",
+          description: "You do not have enough tokens to complete this registration. Please acquire more tokens from the MIDEN faucet.",
+        },
+        [TransactionFailureReason.TRANSACTION_ERROR]: {
+          title: "Transaction Failed",
+          description: "The transaction could not be completed. Please try again or contact support if the issue persists.",
+        },
+      };
+
+      const message = messages[transactionFailure.reason];
+
+      toast.error(message.title, {
+        description: message.description,
         icon: <AlertTriangle className="h-5 w-5" />,
         duration: 5000,
         style: {
@@ -47,7 +62,7 @@ export function TransactionStatusAlerts({
         },
       });
     }
-  }, [transactionFailed]);
+  }, [transactionFailure]);
 
   return null;
 }

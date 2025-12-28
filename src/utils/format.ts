@@ -50,15 +50,7 @@ export const uint8ArrayToHex = (arr: Uint8Array): string => {
     .join('');
 };
 
-export interface CreateMessageParams {
-  domain: string;
-  bio: string;
-  twitter: string;
-  github: string;
-  discord: string;
-  telegram: string;
-  image_url: string;
-}
+import type { CreateMessageParams } from '@/types/profile';
 
 /**
  * Create a JSON message for signing profile data
@@ -71,12 +63,12 @@ export interface CreateMessageParams {
 export const createMessage = (params: CreateMessageParams): string => {
   return JSON.stringify({
     domain: params.domain,
-    bio: params.bio.trim(),
-    twitter: params.twitter.trim(),
-    github: params.github.trim(),
-    discord: params.discord.trim(),
-    telegram: params.telegram.trim(),
-    image_url: params.image_url.trim(),
+    bio: params.bio?.trim() || '',
+    twitter: params.twitter?.trim() || '',
+    github: params.github?.trim() || '',
+    discord: params.discord?.trim() || '',
+    telegram: params.telegram?.trim() || '',
+    image_url: params.image_url?.trim() || '',
     timestamp: Date.now()
   });
 };

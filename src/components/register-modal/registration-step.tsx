@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 // import { Zap } from "lucide-react";
 import { PRICING_TIERS, calculateDomainPrice, TOKEN_SYMBOL, type PricingTier as PricingTierBase } from "@/shared/pricing";
+import { useWalletAccount } from "@/contexts/WalletAccountContext";
 
 interface PricingTier extends PricingTierBase {
   price: number;
@@ -27,6 +28,7 @@ export function RegistrationStep({
   onPurchase,
   onTermsClick
 }: RegistrationStepProps) {
+  const { balance } = useWalletAccount()
   // Calculate pricing tiers based on domain length
   const pricingTiers: PricingTier[] = useMemo(
     () => {
@@ -38,6 +40,13 @@ export function RegistrationStep({
     },
     [domain]
   );
+
+  // Check if balance is insufficient for the first tier
+  const hasInsufficientBalance = useMemo(() => {
+    if (balance === null) return false; // Balance not loaded yet, don't disable
+    const requiredAmount = BigInt(pricingTiers[0]?.price * 1000000);
+    return balance < requiredAmount;
+  }, [balance, pricingTiers]);
 
   // Fun title options
   const funTitles = useMemo(
@@ -102,12 +111,18 @@ export function RegistrationStep({
                 </div>} */}
               <Button
                 onClick={() => onPurchase(pricingTiers[0])}
-                disabled={isPurchasing}
+                disabled={isPurchasing || hasInsufficientBalance}
                 className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
                 size="lg"
               >
-                {isPurchasing && selectedTier?.years === 5 ? (
+                {isPurchasing && selectedTier?.years === 1 ? (
                   "Processing..."
+                ) : hasInsufficientBalance ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-md xs:text-xl font-bold">Insufficient Balance</span>
+                    <span className="opacity-90">•</span>
+                    <span className="text-md xs:text-xl">{pricingTiers[0]?.price} {TOKEN_SYMBOL}</span>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <span className="text-md xs:text-xl font-bold">Claim</span>

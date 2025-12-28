@@ -21,7 +21,7 @@ import {
 import { fetchProfile, saveProfile } from "@/api/profile";
 import type { ProfilePayload } from "@/api/profile";
 import { signProfileData } from "@/lib/midenClient";
-import type { SignedData } from "@/lib/midenClient";
+import type { SignedData } from "@/types/auth";
 import { useTheme } from "@/components/theme-provider";
 
 const formSchema = z.object({

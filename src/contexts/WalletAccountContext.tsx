@@ -1,18 +1,12 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react';
 import { AccountId } from '@demox-labs/miden-sdk';
 import { bech32ToAccountId } from '@/lib/midenClient';
 import { getAccountAllDomains } from '@/api/accounts';
-
-interface WalletAccountContextValue {
-  accountId: AccountId | undefined;
-  bech32: string | null;
-  hasRegisteredDomain: boolean;
-  activeDomain: string | null;
-  allDomains: string[] | null;
-  isLoading: boolean;
-  refetch: () => void;
-}
+import { useBalance } from '@/hooks/useBalance';
+import { MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
+import { usePendingTransactions } from '@/hooks/usePendingTransactions';
+import type { WalletAccountContextValue } from '@/types/wallet';
 
 const WalletAccountContext = createContext<WalletAccountContextValue | undefined>(undefined);
 
@@ -25,6 +19,24 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
   const [allDomains, setAllDomains] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+
+  // Faucet ID for balance queries
+  const faucetId = useMemo(
+    () => AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string),
+    []
+  );
+
+  // Get user balance with automatic polling
+  const balance = useBalance({ accountId, faucetId });
+
+  // Monitor pending transactions
+  const {
+    pending: pendingTransactions,
+    isMonitoring: isMonitoringTransactions,
+    addPendingTransaction,
+    isDomainConfirmed,
+    confirmedDomains
+  } = usePendingTransactions(accountId?.toString());
 
   // Convert Bech32 accountId to AccountId when wallet connects
   useEffect(() => {
@@ -99,11 +111,18 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
       value={{
         accountId,
         bech32,
+        balance,
         hasRegisteredDomain,
         activeDomain,
         allDomains,
         isLoading,
         refetch,
+        // Transaction monitoring
+        pendingTransactions,
+        isMonitoringTransactions,
+        addPendingTransaction,
+        isDomainConfirmed,
+        confirmedDomains,
       }}
     >
       {children}
