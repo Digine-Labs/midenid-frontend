@@ -19,19 +19,36 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { fetchProfile, saveProfile } from "@/api/profile";
+import { getBlockNumber } from "@/api/metadata";
 import type { ProfilePayload } from "@/api/profile";
-import { signProfileData } from "@/lib/midenClient";
-import type { SignedData } from "@/types/auth";
 import { useTheme } from "@/components/theme-provider";
+import { useWalletAccount } from "@/contexts/WalletAccountContext";
+
+// Field length limits
+const FIELD_LIMITS = {
+  bio: 500,
+  twitter: 50,
+  github: 50,
+  discord: 50,
+  telegram: 50,
+} as const;
 
 const formSchema = z.object({
   bio: z.string()
-    .max(280, "Bio must be 280 characters or less")
+    .max(FIELD_LIMITS.bio, `Bio must be ${FIELD_LIMITS.bio} characters or less`)
     .optional(),
-  twitter: z.string().optional(),
-  github: z.string().optional(),
-  discord: z.string().optional(),
-  telegram: z.string().optional(),
+  twitter: z.string()
+    .max(FIELD_LIMITS.twitter, `Twitter handle must be ${FIELD_LIMITS.twitter} characters or less`)
+    .optional(),
+  github: z.string()
+    .max(FIELD_LIMITS.github, `GitHub username must be ${FIELD_LIMITS.github} characters or less`)
+    .optional(),
+  discord: z.string()
+    .max(FIELD_LIMITS.discord, `Discord username must be ${FIELD_LIMITS.discord} characters or less`)
+    .optional(),
+  telegram: z.string()
+    .max(FIELD_LIMITS.telegram, `Telegram handle must be ${FIELD_LIMITS.telegram} characters or less`)
+    .optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -47,7 +64,8 @@ export function IdentityProfile({
 }: IdentityProfileProps) {
   const { resolvedTheme } = useTheme()
   // Wallet integration
-  const { signBytes, connected, publicKey } = useWallet();
+  const { connected } = useWallet();
+  const { isAuthenticated } = useWalletAccount();
 
   // Loading & error states
   const [isLoading, setIsLoading] = useState(false);
@@ -75,37 +93,6 @@ export function IdentityProfile({
       telegram: "",
     },
   });
-
-  // Sign profile data with wallet
-  const signData = async (
-    profileData: FormValues,
-    imageUrlString: string
-  ): Promise<SignedData | null> => {
-    if (!connected || !signBytes || !publicKey) {
-      toast.error("Please connect your wallet first");
-      return null;
-    }
-
-    try {
-      const signed = await signProfileData(
-        {
-          domain: domainName || "",
-          bio: profileData.bio?.trim() || "",
-          twitter: profileData.twitter?.trim() || "",
-          github: profileData.github?.trim() || "",
-          discord: profileData.discord?.trim() || "",
-          telegram: profileData.telegram?.trim() || "",
-          image_url: imageUrlString.trim(),
-        },
-        signBytes,
-        publicKey
-      );
-      return signed;
-    } catch (error) {
-      console.error('Signing failed:', error);
-      throw error;
-    }
-  };
 
   // Fetch existing profile from API
   const fetchExistingProfile = useCallback(async (domain: string) => {
@@ -150,32 +137,33 @@ export function IdentityProfile({
       return;
     }
 
+    if (!isAuthenticated) {
+      toast.error("Please wait for authentication to complete");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setSubmissionResult(null);
 
+      // Get current block number
+      const blockNumberResult = await getBlockNumber();
+      if (!blockNumberResult.success || blockNumberResult.data === undefined) {
+        throw new Error(blockNumberResult.error || "Failed to get block number");
+      }
+
       // Determine final image URL
       const finalImageUrl = imageUrl || "";
 
-      // Sign the data
-      const signed = await signData(data, finalImageUrl);
-      if (!signed) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Submit to API
+      // Submit to API (session cookie handles authentication)
       const payload: ProfilePayload = {
-        message_hex: signed.message_hex,
-        pubkey_hex: signed.pubkey_hex,
-        signature_hex: signed.signature_hex,
         bio: data.bio?.trim() || "",
         twitter: data.twitter?.trim() || "",
         github: data.github?.trim() || "",
         discord: data.discord?.trim() || "",
         telegram: data.telegram?.trim() || "",
         image_url: finalImageUrl,
-        block_number: Date.now()
+        block_number: blockNumberResult.data,
       };
 
       const result = await saveProfile(domainName, payload);
@@ -209,12 +197,12 @@ export function IdentityProfile({
     }
   };
 
-  // Fetch profile when component mounts or domain changes
+  // Fetch profile when component mounts or domain changes (after authentication)
   useEffect(() => {
-    if (domainName && connected) {
+    if (domainName && connected && isAuthenticated) {
       fetchExistingProfile(domainName);
     }
-  }, [domainName, connected, fetchExistingProfile]);
+  }, [domainName, connected, isAuthenticated, fetchExistingProfile]);
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
@@ -300,11 +288,11 @@ export function IdentityProfile({
                       placeholder="Tell us about yourself..."
                       {...field}
                       disabled={isLoading}
-                      maxLength={280}
+                      maxLength={FIELD_LIMITS.bio}
                     />
                   </FormControl>
                   <FormDescription>
-                    {(field.value?.length || 0)}/280 characters
+                    {(field.value?.length || 0)}/{FIELD_LIMITS.bio} characters
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -347,8 +335,16 @@ export function IdentityProfile({
                       Twitter
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="@username" {...field} disabled={isLoading} />
+                      <Input
+                        placeholder="@username"
+                        {...field}
+                        disabled={isLoading}
+                        maxLength={FIELD_LIMITS.twitter}
+                      />
                     </FormControl>
+                    <FormDescription>
+                      {(field.value?.length || 0)}/{FIELD_LIMITS.twitter} characters
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -364,8 +360,16 @@ export function IdentityProfile({
                       GitHub
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="username" {...field} disabled={isLoading} />
+                      <Input
+                        placeholder="username"
+                        {...field}
+                        disabled={isLoading}
+                        maxLength={FIELD_LIMITS.github}
+                      />
                     </FormControl>
+                    <FormDescription>
+                      {(field.value?.length || 0)}/{FIELD_LIMITS.github} characters
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -381,8 +385,16 @@ export function IdentityProfile({
                       Discord
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="username#0000" {...field} disabled={isLoading} />
+                      <Input
+                        placeholder="username#0000"
+                        {...field}
+                        disabled={isLoading}
+                        maxLength={FIELD_LIMITS.discord}
+                      />
                     </FormControl>
+                    <FormDescription>
+                      {(field.value?.length || 0)}/{FIELD_LIMITS.discord} characters
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -398,8 +410,16 @@ export function IdentityProfile({
                       Telegram
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="@username" {...field} disabled={isLoading} />
+                      <Input
+                        placeholder="@username"
+                        {...field}
+                        disabled={isLoading}
+                        maxLength={FIELD_LIMITS.telegram}
+                      />
                     </FormControl>
+                    <FormDescription>
+                      {(field.value?.length || 0)}/{FIELD_LIMITS.telegram} characters
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

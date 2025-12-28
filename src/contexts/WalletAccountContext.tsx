@@ -1,8 +1,10 @@
-import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useRef, type ReactNode } from 'react';
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react';
 import { AccountId } from '@demox-labs/miden-sdk';
 import { bech32ToAccountId } from '@/lib/midenClient';
+import { authenticate } from '@/lib/auth';
 import { getAccountAllDomains } from '@/api/accounts';
+import { logout } from '@/api/auth';
 import { useBalance } from '@/hooks/useBalance';
 import { MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
 import { usePendingTransactions } from '@/hooks/usePendingTransactions';
@@ -11,14 +13,16 @@ import type { WalletAccountContextValue } from '@/types/wallet';
 const WalletAccountContext = createContext<WalletAccountContextValue | undefined>(undefined);
 
 export function WalletAccountProvider({ children }: { children: ReactNode }) {
-  const { connected, address: rawAccountId } = useWallet();
+  const { connected, address: rawAccountId, signBytes, publicKey } = useWallet();
   const [accountId, setAccountId] = useState<AccountId | undefined>(undefined);
   const bech32 = rawAccountId;
   const [hasRegisteredDomain, setHasRegisteredDomain] = useState(false);
   const [activeDomain, setActiveDomain] = useState<string | null>(null);
   const [allDomains, setAllDomains] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const prevConnectedRef = useRef<boolean>(false);
 
   // Faucet ID for balance queries
   const faucetId = useMemo(
@@ -38,8 +42,24 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     confirmedDomains
   } = usePendingTransactions(accountId?.toString());
 
-  // Convert Bech32 accountId to AccountId when wallet connects
+  // Handle wallet disconnection - logout from backend
   useEffect(() => {
+    const wasConnected = prevConnectedRef.current;
+    prevConnectedRef.current = connected;
+
+    // Wallet disconnected
+    if (wasConnected && !connected) {
+      logout().catch(err => console.error('Logout failed:', err));
+      setIsAuthenticated(false);
+      setAccountId(undefined);
+      setHasRegisteredDomain(false);
+      setActiveDomain(null);
+      setAllDomains(null);
+      setIsLoading(false);
+      return;
+    }
+
+    // Wallet not connected
     if (!connected || !rawAccountId) {
       setAccountId(undefined);
       setHasRegisteredDomain(false);
@@ -60,9 +80,34 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     }
   }, [connected, rawAccountId]);
 
-  // Fetch wallet data when accountId changes
+  // Authenticate with backend after wallet connects
   useEffect(() => {
-    if (!accountId || !connected) {
+    if (!connected || !signBytes || !publicKey || isAuthenticated) {
+      return;
+    }
+
+    let isActive = true;
+
+    const doAuth = async () => {
+      const result = await authenticate({ signBytes, publicKey });
+      if (isActive && result.success) {
+        setIsAuthenticated(true);
+      } else if (isActive && result.error) {
+        console.error('[Auth] Authentication failed:', result.error);
+      }
+    };
+
+    doAuth();
+
+    return () => {
+      isActive = false;
+    };
+  }, [connected, signBytes, publicKey, isAuthenticated]);
+
+  // Fetch wallet data when authenticated
+  useEffect(() => {
+    // Wait for authentication before fetching domains
+    if (!accountId || !connected || !isAuthenticated) {
       // Only reset loading if we're not connected (disconnected case)
       if (!connected) {
         setIsLoading(false);
@@ -100,7 +145,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     return () => {
       isActive = false;
     };
-  }, [accountId, connected, refetchTrigger]);
+  }, [accountId, connected, isAuthenticated, refetchTrigger]);
 
   const refetch = () => {
     setRefetchTrigger(prev => prev + 1);
@@ -116,6 +161,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
         activeDomain,
         allDomains,
         isLoading,
+        isAuthenticated,
         refetch,
         // Transaction monitoring
         pendingTransactions,

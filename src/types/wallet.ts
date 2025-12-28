@@ -10,6 +10,7 @@ export interface WalletAccountContextValue {
   activeDomain: string | null;
   allDomains: string[] | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
   refetch: () => void;
   // Transaction monitoring
   pendingTransactions: PendingTransaction[];

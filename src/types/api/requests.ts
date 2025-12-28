@@ -26,15 +26,15 @@ export interface UpdateDomainMetadataRequest {
   updated_block: number;
 }
 
-// Profile Management
-export interface UpsertProfileRequest extends SignatureAuth {
+// Profile Management (uses session cookie auth, no signature needed in body)
+export interface UpsertProfileRequest {
   bio?: string;
   twitter?: string;
   github?: string;
   discord?: string;
   telegram?: string;
   image_url?: string;
-  block_number: number;
+  block_number?: number;
 }
 
 // Batch Operations

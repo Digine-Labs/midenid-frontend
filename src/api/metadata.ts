@@ -7,8 +7,41 @@ import type {
   CreateDomainMetadataRequest,
   UpdateDomainMetadataRequest,
   ApiResponse,
+  BlockNumberResponse,
 } from '@/types/api';
 import { API_BASE } from '@/shared/constants';
+
+/**
+ * Get current block number from the backend
+ * @returns Current block number
+ */
+export async function getBlockNumber(): Promise<ApiResponse<number>> {
+  try {
+    const response = await fetch(`${API_BASE}/miden/block_number`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        error: `HTTP ${response.status}: ${errorText}`,
+      };
+    }
+
+    const data: BlockNumberResponse = await response.json();
+    return {
+      success: true,
+      data: data.block_number,
+    };
+  } catch (error) {
+    console.error('Failed to get block number:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
 
 /**
  * Get domain metadata
@@ -27,7 +60,8 @@ export async function getDomainMetadata(
 
   try {
     const response = await fetch(
-      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}`
+      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}`,
+      { credentials: 'include' }
     );
 
     if (!response.ok) {
@@ -73,6 +107,7 @@ export async function createDomainMetadata(
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(request),
     });
 
@@ -124,6 +159,7 @@ export async function updateDomainMetadata(
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(request),
       }
     );
@@ -171,6 +207,7 @@ export async function deleteDomainMetadata(
       `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}`,
       {
         method: 'DELETE',
+        credentials: 'include',
       }
     );
 

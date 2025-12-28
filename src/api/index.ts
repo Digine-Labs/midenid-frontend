@@ -6,6 +6,7 @@
 export * from '@/types/api';
 
 // API modules
+export * from './auth';
 export * from './profile';
 export * from './domains';
 export * from './accounts';

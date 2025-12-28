@@ -28,7 +28,8 @@ export async function getAccountActiveDomain(
 
   try {
     const response = await fetch(
-      `${API_BASE}/accounts/${encodeURIComponent(identifier)}`
+      `${API_BASE}/accounts/${encodeURIComponent(identifier)}`,
+      { credentials: 'include' }
     );
 
     if (!response.ok) {
@@ -70,7 +71,8 @@ export async function getAccountAllDomains(
 
   try {
     const response = await fetch(
-      `${API_BASE}/accounts/${encodeURIComponent(identifier)}/domains`
+      `${API_BASE}/accounts/${encodeURIComponent(identifier)}/domains`,
+      { credentials: 'include' }
     );
 
     if (!response.ok) {
@@ -120,6 +122,7 @@ export async function batchGetAccountDomains(
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(payload),
     });
 

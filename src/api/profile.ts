@@ -25,7 +25,8 @@ export async function fetchProfile(domain: string): Promise<ProfileData | null> 
 
   try {
     const response = await fetch(
-      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/profile`
+      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/profile`,
+      { credentials: 'include' }
     );
 
     if (response.ok) {
@@ -65,6 +66,7 @@ export async function saveProfile(
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(payload)
     });
 
@@ -122,6 +124,7 @@ export async function deleteProfile(domain: string): Promise<ApiResponse<void>> 
       `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/profile`,
       {
         method: 'DELETE',
+        credentials: 'include',
       }
     );
 
@@ -168,6 +171,7 @@ export async function batchGetProfiles(
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ domains } as BatchGetProfilesRequest),
       }
     );
