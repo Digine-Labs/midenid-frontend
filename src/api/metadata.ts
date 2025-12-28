@@ -27,7 +27,8 @@ export async function getDomainMetadata(
 
   try {
     const response = await fetch(
-      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}`
+      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}`,
+      { credentials: 'include' }
     );
 
     if (!response.ok) {
@@ -67,12 +68,15 @@ export async function createDomainMetadata(
     };
   }
 
+  console.log('[API] POST', `${API_BASE}/metadata/domains`, 'payload:', request);
+
   try {
     const response = await fetch(`${API_BASE}/metadata/domains`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(request),
     });
 
@@ -124,6 +128,7 @@ export async function updateDomainMetadata(
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(request),
       }
     );
@@ -171,6 +176,7 @@ export async function deleteDomainMetadata(
       `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}`,
       {
         method: 'DELETE',
+        credentials: 'include',
       }
     );
 

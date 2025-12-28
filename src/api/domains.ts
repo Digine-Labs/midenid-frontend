@@ -25,7 +25,8 @@ export async function getDomainEnriched(
 
   try {
     const response = await fetch(
-      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/enriched`
+      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/enriched`,
+      { credentials: 'include' }
     );
 
     if (!response.ok) {
@@ -67,7 +68,8 @@ export async function resolveDomain(
 
   try {
     const response = await fetch(
-      `${API_BASE}/domains/${encodeURIComponent(domain)}`
+      `${API_BASE}/domains/${encodeURIComponent(domain)}`,
+      { credentials: 'include' }
     );
 
     if (!response.ok) {
@@ -109,7 +111,8 @@ export async function checkDomainAvailability(
 
   try {
     const response = await fetch(
-      `${API_BASE}/domains/${encodeURIComponent(domain)}`
+      `${API_BASE}/domains/${encodeURIComponent(domain)}`,
+      { credentials: 'include' }
     );
 
     if (response.status === 404) {

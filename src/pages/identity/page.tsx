@@ -8,7 +8,7 @@ import { IdentityProfile } from "./components/IdentityProfile";
 
 export default function Identity() {
   const { connected } = useWallet();
-  const { hasRegisteredDomain, isLoading } = useWalletAccount();
+  const { hasRegisteredDomain, isLoading, isAuthenticated } = useWalletAccount();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -17,19 +17,19 @@ export default function Identity() {
 
   // Redirect to my-domains if no domain is provided in state
   useEffect(() => {
-    console.log(domain)
     if (!domain) {
-      navigate("/my-domains");
+      navigate("/my-domains", { replace: true });
     }
-  }, [domain]);
+  }, [domain, navigate]);
 
   // Show wallet connection prompt if not connected
   if (!connected) {
     return <NoWalletConnected />;
   }
 
-  // Show loading state while checking for domain
-  if (isLoading) {
+  // Show loading state while authenticating or loading data
+  const showLoading = isLoading || !isAuthenticated;
+  if (showLoading) {
     return (
       <main
         className="relative flex items-center justify-center pt-20 px-4 sm:px-6 lg:px-8 bg-background min-h-screen"
@@ -37,7 +37,9 @@ export default function Identity() {
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading your identity...</p>
+          <p className="mt-4 text-muted-foreground">
+            {!isAuthenticated ? "Authenticating..." : "Loading your identity..."}
+          </p>
         </div>
       </main>
     );

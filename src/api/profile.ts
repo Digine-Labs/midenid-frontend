@@ -27,7 +27,8 @@ export async function fetchProfile(domain: string): Promise<ProfileData | null> 
 
   try {
     const response = await fetch(
-      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/profile`
+      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/profile`,
+      { credentials: 'include' }
     );
 
     if (response.ok) {
@@ -47,8 +48,9 @@ export async function fetchProfile(domain: string): Promise<ProfileData | null> 
 
 /**
  * Create or update a profile
+ * Authentication is handled via session cookie
  * @param domain - The domain name
- * @param payload - The profile payload with signature
+ * @param payload - The profile data
  * @returns API response with success/error message
  */
 export async function saveProfile(
@@ -61,12 +63,15 @@ export async function saveProfile(
 
   const apiUrl = `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/profile`;
 
+  console.log('[API] POST', apiUrl, 'payload:', payload);
+
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(payload)
     });
 
@@ -124,6 +129,7 @@ export async function deleteProfile(domain: string): Promise<ApiResponse<void>> 
       `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/profile`,
       {
         method: 'DELETE',
+        credentials: 'include',
       }
     );
 
@@ -170,6 +176,7 @@ export async function batchGetProfiles(
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ domains } as BatchGetProfilesRequest),
       }
     );

@@ -1,8 +1,11 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react';
-import { AccountId } from '@demox-labs/miden-sdk';
+import { AccountId, Felt, SigningInputs } from '@demox-labs/miden-sdk';
 import { bech32ToAccountId } from '@/lib/midenClient';
 import { getAccountAllDomains } from '@/api/accounts';
+import { getBlockNumber } from '@/api/miden';
+import { login, logout } from '@/api/auth';
+import { uint8ArrayToHex } from '@/utils';
 
 interface WalletAccountContextValue {
   accountId: AccountId | undefined;
@@ -11,23 +14,45 @@ interface WalletAccountContextValue {
   activeDomain: string | null;
   allDomains: string[] | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  blockNumber: number | null;
   refetch: () => void;
 }
 
 const WalletAccountContext = createContext<WalletAccountContextValue | undefined>(undefined);
 
 export function WalletAccountProvider({ children }: { children: ReactNode }) {
-  const { connected, address: rawAccountId } = useWallet();
+  const { connected, address: rawAccountId, signBytes, publicKey } = useWallet();
   const [accountId, setAccountId] = useState<AccountId | undefined>(undefined);
   const bech32 = rawAccountId;
   const [hasRegisteredDomain, setHasRegisteredDomain] = useState(false);
   const [activeDomain, setActiveDomain] = useState<string | null>(null);
   const [allDomains, setAllDomains] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [blockNumber, setBlockNumber] = useState<number | null>(null);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const prevConnectedRef = useRef<boolean>(false);
 
-  // Convert Bech32 accountId to AccountId when wallet connects
+  // Handle wallet disconnection - logout from backend
   useEffect(() => {
+    const wasConnected = prevConnectedRef.current;
+    prevConnectedRef.current = connected;
+
+    // Wallet disconnected
+    if (wasConnected && !connected) {
+      logout().catch(err => console.error('Logout failed:', err));
+      setIsAuthenticated(false);
+      setAccountId(undefined);
+      setHasRegisteredDomain(false);
+      setActiveDomain(null);
+      setAllDomains(null);
+      setBlockNumber(null);
+      setIsLoading(false);
+      return;
+    }
+
+    // Wallet not connected
     if (!connected || !rawAccountId) {
       setAccountId(undefined);
       setHasRegisteredDomain(false);
@@ -48,9 +73,78 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     }
   }, [connected, rawAccountId]);
 
-  // Fetch wallet data when accountId changes
+  // Authenticate with backend after wallet connects
   useEffect(() => {
-    if (!accountId || !connected) {
+    if (!connected || !signBytes || !publicKey || isAuthenticated) {
+      return;
+    }
+
+    let isActive = true;
+
+    const authenticate = async () => {
+      try {
+        // Create a simple auth message
+        const authMessage = JSON.stringify({
+          action: 'authenticate',
+          timestamp: Date.now(),
+        });
+        const messageBytes = new TextEncoder().encode(authMessage);
+
+        // Convert message to Felt array (8-byte chunks)
+        const felts: Felt[] = [];
+        for (let i = 0; i < messageBytes.length; i += 8) {
+          const chunk = messageBytes.slice(i, i + 8);
+          let value = 0n;
+          for (let j = 0; j < chunk.length; j++) {
+            value |= BigInt(chunk[j]) << BigInt(j * 8);
+          }
+          felts.push(new Felt(value));
+        }
+
+        // Create SigningInputs and get commitment
+        const signingInputs = SigningInputs.newArbitrary(felts);
+        const commitment = signingInputs.toCommitment();
+        const commitmentBytes = commitment.serialize();
+
+        // Sign with wallet
+        const signatureBytes = await signBytes(commitmentBytes, "word");
+
+        // Call login API
+        const result = await login({
+          message_hex: uint8ArrayToHex(commitmentBytes),
+          pubkey_hex: uint8ArrayToHex(publicKey),
+          signature_hex: uint8ArrayToHex(signatureBytes),
+        });
+
+        // Clean up WASM memory
+        try {
+          signingInputs.free();
+        } catch {
+          // Already freed
+        }
+
+        if (isActive && result.success) {
+          setIsAuthenticated(true);
+          console.log('[Auth] Session established successfully');
+        } else if (isActive) {
+          console.error('[Auth] Authentication failed:', result.error);
+        }
+      } catch (error) {
+        console.error('[Auth] Authentication error:', error);
+      }
+    };
+
+    authenticate();
+
+    return () => {
+      isActive = false;
+    };
+  }, [connected, signBytes, publicKey, isAuthenticated]);
+
+  // Fetch wallet data when authenticated
+  useEffect(() => {
+    // Wait for authentication before fetching domains
+    if (!accountId || !connected || !isAuthenticated) {
       // Only reset loading if we're not connected (disconnected case)
       if (!connected) {
         setIsLoading(false);
@@ -62,11 +156,20 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
 
     const fetchWalletData = async () => {
       try {
-        const allDomainsResponse = await getAccountAllDomains(accountId.toString());
+        // Fetch domains and block number in parallel
+        const [allDomainsResponse, blockNumberResponse] = await Promise.all([
+          getAccountAllDomains(accountId.toString()),
+          getBlockNumber(),
+        ]);
+
         if (allDomainsResponse.success && allDomainsResponse.data) {
           setAllDomains(allDomainsResponse.data.domains);
           setHasRegisteredDomain(allDomainsResponse.data.domains.length > 0);
           setActiveDomain(allDomainsResponse.data.active_domain || null);
+        }
+
+        if (blockNumberResponse.success && blockNumberResponse.data) {
+          setBlockNumber(blockNumberResponse.data.block_number);
         }
 
       } catch (error) {
@@ -88,7 +191,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     return () => {
       isActive = false;
     };
-  }, [accountId, connected, refetchTrigger]);
+  }, [accountId, connected, isAuthenticated, refetchTrigger]);
 
   const refetch = () => {
     setRefetchTrigger(prev => prev + 1);
@@ -103,6 +206,8 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
         activeDomain,
         allDomains,
         isLoading,
+        isAuthenticated,
+        blockNumber,
         refetch,
       }}
     >

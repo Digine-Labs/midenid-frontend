@@ -167,15 +167,16 @@ export interface UpdateDomainMetadataRequest {
 
 /**
  * Upsert profile request
+ * Authentication is now handled via session cookie, no signature needed in body
  */
-export interface UpsertProfileRequest extends SignatureAuth {
+export interface UpsertProfileRequest {
   bio?: string | null;
   twitter?: string | null;
   github?: string | null;
   discord?: string | null;
   telegram?: string | null;
   image_url?: string | null;
-  block_number: number;
+  block_number?: number;
 }
 
 /**

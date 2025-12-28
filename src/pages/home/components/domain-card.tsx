@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { checkDomainAvailability } from '@/api'
 import { RegisterModal } from '@/components/register-modal'
 import { useWallet, useWalletModal } from '@demox-labs/miden-wallet-adapter'
+import { VALIDATION } from '@/shared/constants'
 
 interface DomainCardProps {
   domain: string
@@ -12,7 +13,7 @@ interface DomainCardProps {
 
 // Domain validation helper
 const isValidDomain = (domain: string): boolean => {
-  if (!domain || domain.length < 1 || domain.length > 20) return false;
+  if (!domain || domain.length < 1 || domain.length > VALIDATION.DOMAIN_MAX) return false;
   return /^[a-z0-9]+$/i.test(domain);
 }
 

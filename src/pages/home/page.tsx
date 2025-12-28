@@ -6,6 +6,7 @@ import { TestnetWarningModal } from '@/components/testnet-warning-modal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/theme-provider'
 import { DomainRegistrationProvider } from '@/contexts/DomainRegistrationContext'
+import { VALIDATION } from '@/shared/constants'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
@@ -27,12 +28,13 @@ export default function Home() {
     // Check if there are any invalid characters
     const hasInvalidChars = /[^a-zA-Z0-9]/.test(value)
 
-    // Extract only valid characters and limit to 20 characters using regex
-    const match = value.match(/[a-zA-Z0-9]{0,20}/)
+    // Extract only valid characters and limit to max domain length
+    const regex = new RegExp(`[a-zA-Z0-9]{0,${VALIDATION.DOMAIN_MAX}}`)
+    const match = value.match(regex)
     const filteredValue = match ? match[0] : ''
 
     // Check if length was exceeded
-    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > 20
+    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > VALIDATION.DOMAIN_MAX
 
     setInputValue(filteredValue)
 
@@ -105,7 +107,7 @@ export default function Home() {
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="bg-red-600 text-white">
-                    <p>Maximum 20 characters and only English letters and numbers are allowed</p>
+                    <p>Maximum {VALIDATION.DOMAIN_MAX} characters and only English letters and numbers are allowed</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

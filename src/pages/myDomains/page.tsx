@@ -19,7 +19,7 @@ interface DomainInfo {
 export default function MyDomains() {
   const navigate = useNavigate()
   const { connected, address } = useWallet()
-  const { isLoading: isWalletLoading } = useWalletAccount()
+  const { isLoading: isWalletLoading, isAuthenticated } = useWalletAccount()
   const { resolvedTheme } = useTheme()
   const [domains, setDomains] = useState<DomainInfo[]>([])
   const [activeDomain, setActiveDomain] = useState<string | null>(null)
@@ -96,12 +96,13 @@ export default function MyDomains() {
   }
 
   useEffect(() => {
-    if (connected && address && !isWalletLoading) {
+    // Wait for authentication before fetching domains
+    if (connected && address && !isWalletLoading && isAuthenticated) {
       fetchDomains()
     } else if (!connected) {
       setDomains([])
     }
-  }, [connected, address, isWalletLoading])
+  }, [connected, address, isWalletLoading, isAuthenticated])
 
   const handleAddDomain = () => {
     // Navigate to home page for domain registration
@@ -113,7 +114,8 @@ export default function MyDomains() {
     navigate('/identity', { state: { domain: domainName } })
   }
 
-  const isLoading = isWalletLoading || isLoadingDomains
+  // Show loading while wallet is loading, authenticating, or fetching domains
+  const isLoading = isWalletLoading || isLoadingDomains || (connected && !isAuthenticated)
 
   // Page wrapper component to reduce duplication
   const PageWrapper = ({ children, centered = true }: { children: React.ReactNode, centered?: boolean }) => (
