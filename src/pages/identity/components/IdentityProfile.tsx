@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Form,
@@ -59,11 +60,6 @@ export function IdentityProfile({
   const [domainPurchaseDate, setDomainPurchaseDate] = useState<Date>(new Date());
   const [lastModifiedDate, setLastModifiedDate] = useState<Date>(new Date());
 
-  // API result
-  const [submissionResult, setSubmissionResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -152,7 +148,6 @@ export function IdentityProfile({
 
     try {
       setIsLoading(true);
-      setSubmissionResult(null);
 
       // Determine final image URL
       const finalImageUrl = imageUrl || "";
@@ -184,7 +179,6 @@ export function IdentityProfile({
         const successMessage = isEditMode
           ? "Profile updated successfully!"
           : "Profile created successfully!";
-        setSubmissionResult({ success: true, message: result.message || successMessage });
         toast.success(successMessage);
 
         // Mark as edit mode for future updates
@@ -197,12 +191,10 @@ export function IdentityProfile({
         onProfileUpdate?.();
       } else {
         const errorMsg = result.error || "Unknown error";
-        setSubmissionResult({ success: false, message: errorMsg });
         toast.error(`${isEditMode ? "Update" : "Creation"} failed: ${errorMsg}`);
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      setSubmissionResult({ success: false, message: errorMsg });
       toast.error(`Failed to submit: ${errorMsg}`);
     } finally {
       setIsLoading(false);
@@ -245,45 +237,79 @@ export function IdentityProfile({
 
         {/* Loading Profile Indicator */}
         {isFetchingProfile && (
-          <div className="flex items-center justify-center py-4 mb-4">
-            <Loader2 className="h-6 w-6 animate-spin mr-2" />
-            <span className="text-muted-foreground">Loading profile...</span>
-          </div>
-        )}
-
-        {/* Edit Mode Indicator */}
-        {isEditMode && (
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Editing existing profile</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => domainName && fetchExistingProfile(domainName)}
-              disabled={isFetchingProfile}
-            >
-              <RefreshCw className={`h-4 w-4 ${isFetchingProfile ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-        )}
-
-        {/* Submission Result */}
-        {submissionResult && (
-          <Alert variant={submissionResult.success ? "default" : "destructive"} className="mb-4">
-            {submissionResult.success ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
+          <div className="space-y-6">
+            {/* Edit Mode Indicator Skeleton */}
+            {isEditMode && (
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-4">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded-full" />
+                  <Skeleton className="h-4 w-40" />
+                </div>
+                <Skeleton className="h-8 w-8" />
+              </div>
             )}
-            <AlertDescription>
-              {submissionResult.message}
-            </AlertDescription>
-          </Alert>
+
+            {/* Bio Field Skeleton */}
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+
+            {/* Social Media Section Skeleton */}
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-40" />
+
+              {/* 4 Social Fields */}
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              ))}
+            </div>
+
+            {/* Domain Information Skeleton */}
+            <div className="space-y-2 pt-4 border-t">
+              <Skeleton className="h-4 w-36" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-background rounded-md p-3 space-y-2">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
+                <div className="bg-background rounded-md p-3 space-y-2">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button Skeleton */}
+            <Skeleton className="h-10 w-full" />
+          </div>
         )}
 
-        <Form {...form}>
+        {!isFetchingProfile && (
+          <>
+            {/* Edit Mode Indicator */}
+            {isEditMode && (
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Editing existing profile</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => domainName && fetchExistingProfile(domainName)}
+                  disabled={isFetchingProfile}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isFetchingProfile ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+            )}
+
+            <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Bio Field */}
             <FormField
@@ -438,6 +464,8 @@ export function IdentityProfile({
             </Button>
           </form>
         </Form>
+          </>
+        )}
       </Card>
     </div>
   );

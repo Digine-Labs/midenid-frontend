@@ -74,7 +74,7 @@ function RegisterModalContent({
   domain: string;
 }) {
   const { connected, requestTransaction } = useWallet();
-  const { refetch: refetchWalletAccount, accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
+  const { accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
   const { onRegistrationComplete } = useDomainRegistration();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
@@ -233,8 +233,6 @@ function RegisterModalContent({
         setCurrentStep("registration");
       } finally {
         setIsPurchasing(false);
-        // Refetch wallet account data to update hasRegisteredDomain
-        refetchWalletAccount();
       }
     }
   };

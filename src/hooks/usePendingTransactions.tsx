@@ -11,7 +11,10 @@ import type { PendingTransaction, TransactionResult } from '@/types/transaction'
 const POLLING_INTERVAL = 10_000; // 10s
 const MAX_ATTEMPTS = 8;
 
-export const usePendingTransactions = (accountId?: string) => {
+export const usePendingTransactions = (
+  accountId?: string,
+  onTransactionConfirmed?: () => void
+) => {
   const [pending, setPending] = useState<PendingTransaction[]>([]);
   const [isMonitoring, setIsMonitoring] = useState(false);
 
@@ -153,6 +156,9 @@ export const usePendingTransactions = (accountId?: string) => {
 
           // ✅ MARK COMPLETED
           completedDomainsRef.current.add(domain);
+
+          // Refetch wallet account data
+          onTransactionConfirmed?.();
 
           removePending(domain);
           results.push({ success: true, domain });

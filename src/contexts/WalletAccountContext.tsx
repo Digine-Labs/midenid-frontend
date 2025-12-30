@@ -29,6 +29,10 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
   // Get user balance with automatic polling
   const balance = useBalance({ accountId, faucetId });
 
+  const refetch = () => {
+    setRefetchTrigger(prev => prev + 1);
+  };
+
   // Monitor pending transactions
   const {
     pending: pendingTransactions,
@@ -36,7 +40,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     addPendingTransaction,
     isDomainConfirmed,
     confirmedDomains
-  } = usePendingTransactions(accountId?.toString());
+  } = usePendingTransactions(accountId?.toString(), refetch);
 
   // Convert Bech32 accountId to AccountId when wallet connects
   useEffect(() => {
@@ -101,10 +105,6 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
       isActive = false;
     };
   }, [accountId, connected, refetchTrigger]);
-
-  const refetch = () => {
-    setRefetchTrigger(prev => prev + 1);
-  };
 
   return (
     <WalletAccountContext.Provider

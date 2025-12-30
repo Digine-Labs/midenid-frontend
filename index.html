@@ -8,10 +8,10 @@
   <meta name="theme-color" content="#0FE046" />
   <title>Miden Name</title>
   <script>
-    // Initialize theme from localStorage or default to light
+    // Initialize theme from localStorage or default to dark
     (function () {
       try {
-        const theme = localStorage.getItem('vite-ui-theme') || 'light'
+        const theme = localStorage.getItem('vite-ui-theme') || 'dark'
         if (theme === 'dark') {
           document.documentElement.classList.add('dark')
         } else {
