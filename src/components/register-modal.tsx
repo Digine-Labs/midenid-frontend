@@ -193,6 +193,8 @@ function RegisterModalContent({
           requestTransaction: requestTransaction,
         })
 
+        console.log("note_id:", noteId)
+
         client.terminate()
 
         // Transaction approved by wallet, show processing step

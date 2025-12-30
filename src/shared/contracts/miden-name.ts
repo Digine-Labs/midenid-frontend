@@ -88,10 +88,9 @@ export.register
     exec._assert_domain_available
     exec._assert_domain_rules
     exec._assert_payment_token
-    
-    exec._calculate_domain_price
-    # [price]
-    exec._receive_payment
+
+    # []
+    exec._unsafe_receive_asset
     # []
     # Update domain owner
     push.0 exec.input_note::get_sender
@@ -103,9 +102,10 @@ export.register
     #exec._update_domain_map
     exec._clear_domain_mapping
 
-    exec._calculate_domain_price
+    #exec._calculate_domain_price
+    debug.stack.4
     # [price]
-    exec._increase_total_revenue
+    #exec._increase_total_revenue
     
 
     # []
@@ -368,6 +368,10 @@ proc._receive_payment
     swap u32overflowing_sub assertz.err=ERR_VALIDATE_PAYMENT_SUB_OVERFLOW
     lte assert.err=ERR_INSUFFICIENT_AMOUNT_PAID
     # []
+end
+
+proc._unsafe_receive_asset
+    exec.active_note::add_assets_to_account
 end
 
 # Input: [] Memory [PAYMENT_TOKEN]
