@@ -48,6 +48,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
       setAccountId(undefined);
       setHasRegisteredDomain(false);
       setActiveDomain(null);
+      setAllDomains(null);
       setIsLoading(false);
       return;
     }

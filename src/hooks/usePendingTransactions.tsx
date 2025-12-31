@@ -5,7 +5,7 @@ import {
   getPendingTransactions,
   savePendingTransaction,
   removePendingTransaction
-} from '@/utils/transactionStorage';
+} from '@/utils/transaction-storage';
 import type { PendingTransaction, TransactionResult } from '@/types/transaction';
 
 const POLLING_INTERVAL = 10_000; // 10s
@@ -34,10 +34,17 @@ export const usePendingTransactions = (
 
   // Load from storage
   useEffect(() => {
+    if (!accountId) {
+      // Clear all state when wallet disconnects
+      setPending([]);
+      setConfirmedDomains(new Map());
+      inFlightDomainsRef.current.clear();
+      completedDomainsRef.current.clear();
+      return;
+    }
+
     const stored = getPendingTransactions();
-    const userTransactions = accountId
-      ? stored.filter(t => t.accountId === accountId)
-      : stored;
+    const userTransactions = stored.filter(t => t.accountId === accountId);
 
     setPending(userTransactions);
   }, [accountId]);

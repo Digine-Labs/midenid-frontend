@@ -65,25 +65,6 @@ export interface BatchGetProfilesResponse {
   results: ProfileResult[];
 }
 
-// System Responses
-export interface HealthResponse {
-  status: string;
-  version?: string;
-}
-
-export interface HomeResponse {
-  message: string;
-}
-
-export interface AccountExistsResponse {
-  account_id: string;
-  exists: boolean;
-}
-
-export interface BlockNumberResponse {
-  block_number: number;
-}
-
 export interface VerifySignatureResponse {
   valid: boolean;
   message?: string;

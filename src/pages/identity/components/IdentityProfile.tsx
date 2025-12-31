@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/useToast";
+import { ToastCause } from "@/types/toast";
 import {
   Form,
   FormControl,
@@ -23,7 +24,7 @@ import { fetchProfile, saveProfile } from "@/api/profile";
 import type { ProfilePayload } from "@/api/profile";
 import { signProfileData } from "@/lib/midenClient";
 import type { SignedData } from "@/types/auth";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/ThemeProvider";
 
 const formSchema = z.object({
   bio: z.string()
@@ -60,6 +61,8 @@ export function IdentityProfile({
   const [domainPurchaseDate, setDomainPurchaseDate] = useState<Date>(new Date());
   const [lastModifiedDate, setLastModifiedDate] = useState<Date>(new Date());
 
+  // Toast hook
+  const showToast = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,7 +81,7 @@ export function IdentityProfile({
     imageUrlString: string
   ): Promise<SignedData | null> => {
     if (!connected || !signBytes || !publicKey) {
-      toast.error("Please connect your wallet first");
+      showToast(ToastCause.WALLET_NOT_CONNECTED);
       return null;
     }
 
@@ -142,7 +145,7 @@ export function IdentityProfile({
   // Submit profile data
   const onSubmit = async (data: FormValues) => {
     if (!domainName) {
-      toast.error("Domain name is required");
+      showToast(ToastCause.DOMAIN_REQUIRED);
       return;
     }
 
@@ -176,10 +179,7 @@ export function IdentityProfile({
       const result = await saveProfile(domainName, payload);
 
       if (result.success) {
-        const successMessage = isEditMode
-          ? "Profile updated successfully!"
-          : "Profile created successfully!";
-        toast.success(successMessage);
+        showToast(isEditMode ? ToastCause.PROFILE_UPDATED : ToastCause.PROFILE_CREATED);
 
         // Mark as edit mode for future updates
         setIsEditMode(true);
@@ -190,12 +190,10 @@ export function IdentityProfile({
         // Call optional callback
         onProfileUpdate?.();
       } else {
-        const errorMsg = result.error || "Unknown error";
-        toast.error(`${isEditMode ? "Update" : "Creation"} failed: ${errorMsg}`);
+        showToast(isEditMode ? ToastCause.PROFILE_UPDATE_FAILED : ToastCause.PROFILE_CREATE_FAILED);
       }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`Failed to submit: ${errorMsg}`);
+      showToast(ToastCause.PROFILE_SUBMIT_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -310,35 +308,35 @@ export function IdentityProfile({
             )}
 
             <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Bio Field */}
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Bio
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Tell us about yourself..."
-                      {...field}
-                      disabled={isLoading}
-                      maxLength={280}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {(field.value?.length || 0)}/280 characters
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Bio Field */}
+                <FormField
+                  control={form.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Bio
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Tell us about yourself..."
+                          {...field}
+                          disabled={isLoading}
+                          maxLength={280}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {(field.value?.length || 0)}/280 characters
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Image URL Input */}
-            {/* <FormItem>
+                {/* Image URL Input */}
+                {/* <FormItem>
               <FormLabel>Profile Image URL</FormLabel>
               <FormControl>
                 <Input
@@ -354,116 +352,116 @@ export function IdentityProfile({
               </FormDescription>
             </FormItem> */}
 
-            {/* Social Media Fields */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Social Media Accounts</h3>
+                {/* Social Media Fields */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium">Social Media Accounts</h3>
 
-              <FormField
-                control={form.control}
-                name="twitter"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <img
-                        src="/icons/twitter.png"
-                        alt="Twitter"
-                        className="h-4 w-4"
-                        style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }}
-                      />
-                      Twitter
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="@username" {...field} disabled={isLoading} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="twitter"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <img
+                            src="/icons/twitter.png"
+                            alt="Twitter"
+                            className="h-4 w-4"
+                            style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }}
+                          />
+                          Twitter
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="@username" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="github"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <GithubIcon className="h-4 w-4" />
-                      GitHub
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="username" {...field} disabled={isLoading} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="github"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <GithubIcon className="h-4 w-4" />
+                          GitHub
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="username" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="discord"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <MessageCircle className="h-4 w-4" />
-                      Discord
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="username#0000" {...field} disabled={isLoading} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="discord"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <MessageCircle className="h-4 w-4" />
+                          Discord
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="username#0000" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="telegram"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Send className="h-4 w-4" />
-                      Telegram
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="@username" {...field} disabled={isLoading} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Domain Info */}
-            <div className="space-y-2 pt-4 border-t">
-              <h3 className="text-sm font-medium">Domain Information</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div className="bg-background rounded-md p-3">
-                  <p className="text-muted-foreground text-xs mb-1">Purchase Date</p>
-                  <p className="font-medium">{domainPurchaseDate.toLocaleDateString("fr-FR")}</p>
+                  <FormField
+                    control={form.control}
+                    name="telegram"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Send className="h-4 w-4" />
+                          Telegram
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="@username" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <div className="bg-background rounded-md p-3">
-                  <p className="text-muted-foreground text-xs mb-1">Last Modified</p>
-                  <p className="font-medium">{lastModifiedDate.toLocaleDateString("fr-FR")}</p>
-                </div>
-              </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || isFetchingProfile || !connected}
-              size="lg"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditMode ? "Updating..." : "Saving..."}
-                </>
-              ) : (
-                isEditMode ? "Update Profile" : "Save Profile"
-              )}
-            </Button>
-          </form>
-        </Form>
+                {/* Domain Info */}
+                <div className="space-y-2 pt-4 border-t">
+                  <h3 className="text-sm font-medium">Domain Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="bg-background rounded-md p-3">
+                      <p className="text-muted-foreground text-xs mb-1">Purchase Date</p>
+                      <p className="font-medium">{domainPurchaseDate.toLocaleDateString("fr-FR")}</p>
+                    </div>
+                    <div className="bg-background rounded-md p-3">
+                      <p className="text-muted-foreground text-xs mb-1">Last Modified</p>
+                      <p className="font-medium">{lastModifiedDate.toLocaleDateString("fr-FR")}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || isFetchingProfile || !connected}
+                  size="lg"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isEditMode ? "Updating..." : "Saving..."}
+                    </>
+                  ) : (
+                    isEditMode ? "Update Profile" : "Save Profile"
+                  )}
+                </Button>
+              </form>
+            </Form>
           </>
         )}
       </Card>

@@ -1,7 +1,7 @@
 import { Menubar } from '@/components/ui/menubar'
 import { Separator } from '@/components/ui/separator'
 import { Link } from 'react-router'
-import { MobileSidebar } from './mobile-sidebar'
+import { MobileSidebar } from './MobileSidebar'
 import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter-reactui'
 import {
   DropdownMenu,
@@ -10,8 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Github, Send } from 'lucide-react'
-import { ThemeToggle } from './theme-toggle'
-import { useTheme } from './theme-provider'
+import { ThemeToggle } from './ThemeToggle'
+import { useTheme } from './ThemeProvider'
 
 export function SiteHeader() {
   const { resolvedTheme } = useTheme()
