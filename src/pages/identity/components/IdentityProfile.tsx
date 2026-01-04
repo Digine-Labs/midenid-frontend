@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Github as GithubIcon, FileText, CheckCircle2, AlertCircle, RefreshCw, MessageCircle, Send } from "lucide-react";
+import { Loader2, Github, FileText, CheckCircle2, AlertCircle, RefreshCw, MessageCircle, Send, Upload, User } from "lucide-react";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,11 +18,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { fetchProfile, saveProfile } from "@/api/profile";
+import { fetchProfile, saveProfile, uploadProfilePicture } from "@/api/profile";
 import { getBlockNumber } from "@/api/metadata";
 import type { ProfilePayload } from "@/api/profile";
 import { useTheme } from "@/components/theme-provider";
 import { useWalletAccount } from "@/contexts/WalletAccountContext";
+import { ImageCropper } from "@/components/ImageCropper";
 
 // Field length limits
 const FIELD_LIMITS = {
@@ -71,11 +72,17 @@ export function IdentityProfile({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Profile data
   const [imageUrl, setImageUrl] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [domainPurchaseDate, setDomainPurchaseDate] = useState<Date>(new Date());
   const [lastModifiedDate, setLastModifiedDate] = useState<Date>(new Date());
+
+  // Image cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>("");
 
   // API result
   const [submissionResult, setSubmissionResult] = useState<{
@@ -118,6 +125,7 @@ export function IdentityProfile({
 
         // Set image URL separately (string vs File)
         setImageUrl(data.image_url || "");
+        setImagePreview(""); // Clear any local preview
       } else {
         // No profile exists yet
         setIsEditMode(false);
@@ -197,6 +205,70 @@ export function IdentityProfile({
     }
   };
 
+  // Handle image file selection - opens cropper
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !domainName) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    // Create URL for cropper
+    const imageUrl = URL.createObjectURL(file);
+    setImageToCrop(imageUrl);
+    setCropperOpen(true);
+
+    // Reset input so same file can be selected again
+    event.target.value = '';
+  };
+
+  // Handle cropped image upload
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!domainName) return;
+
+    // Create a File from the Blob for upload
+    const croppedFile = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
+
+    // Show preview immediately
+    const previewUrl = URL.createObjectURL(croppedBlob);
+    setImagePreview(previewUrl);
+
+    try {
+      setIsUploadingImage(true);
+      const result = await uploadProfilePicture(domainName, croppedFile);
+
+      if (result.success && result.data) {
+        setImageUrl(result.data.image_url);
+        setCropperOpen(false);
+        setImageToCrop('');
+        toast.success("Profile picture uploaded successfully");
+      } else {
+        toast.error(result.error || "Failed to upload image");
+        setImagePreview(""); // Clear preview on error
+      }
+    } catch {
+      toast.error("Failed to upload image");
+      setImagePreview(""); // Clear preview on error
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // Handle cropper close
+  const handleCropperClose = () => {
+    setCropperOpen(false);
+    setImageToCrop('');
+  };
+
   // Fetch profile when component mounts or domain changes (after authentication)
   useEffect(() => {
     if (domainName && connected && isAuthenticated) {
@@ -273,6 +345,60 @@ export function IdentityProfile({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Profile Picture Upload - Centered at top */}
+            <FormItem className="flex flex-col items-center">
+              <div className="relative h-32 w-32 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2">
+                {(imagePreview || imageUrl) ? (
+                  <img
+                    src={imagePreview || imageUrl}
+                    alt="Profile"
+                    className="h-full w-full object-cover object-center"
+                  />
+                ) : (
+                  <User className="h-12 w-12 text-muted-foreground" />
+                )}
+                {isUploadingImage && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 flex flex-col items-center">
+                <label htmlFor="profile-picture-upload">
+                  <Input
+                    id="profile-picture-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    disabled={isLoading || isUploadingImage || !isAuthenticated}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isLoading || isUploadingImage || !isAuthenticated}
+                    onClick={() => document.getElementById('profile-picture-upload')?.click()}
+                  >
+                    {isUploadingImage ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Change Picture
+                      </>
+                    )}
+                  </Button>
+                </label>
+                <FormDescription className="mt-2 text-center">
+                  Output: 512x512px. Max 5MB.
+                </FormDescription>
+              </div>
+            </FormItem>
+
             {/* Bio Field */}
             <FormField
               control={form.control}
@@ -298,23 +424,6 @@ export function IdentityProfile({
                 </FormItem>
               )}
             />
-
-            {/* Image URL Input */}
-            {/* <FormItem>
-              <FormLabel>Profile Image URL</FormLabel>
-              <FormControl>
-                <Input
-                  type="url"
-                  placeholder="https://example.com/avatar.png"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormDescription>
-                Direct URL to your profile image
-              </FormDescription>
-            </FormItem> */}
 
             {/* Social Media Fields */}
             <div className="space-y-4">
@@ -356,7 +465,7 @@ export function IdentityProfile({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <GithubIcon className="h-4 w-4" />
+                      <Github className="h-4 w-4" />
                       GitHub
                     </FormLabel>
                     <FormControl>
@@ -459,6 +568,15 @@ export function IdentityProfile({
           </form>
         </Form>
       </Card>
+
+      {/* Image Cropper Dialog */}
+      <ImageCropper
+        imageSrc={imageToCrop}
+        open={cropperOpen}
+        onClose={handleCropperClose}
+        onCropComplete={handleCropComplete}
+        isUploading={isUploadingImage}
+      />
     </div>
   );
 }

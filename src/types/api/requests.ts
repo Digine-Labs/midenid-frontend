@@ -3,12 +3,14 @@ export interface SignatureAuth {
   message_hex: string;
   pubkey_hex: string;
   signature_hex: string;
+  account_id: string;
 }
 
 export interface VerifySignatureRequest {
   message_hex: string;
   pubkey_hex: string;
   signature_hex: string;
+  account_id: string;
 }
 
 // Domain Management

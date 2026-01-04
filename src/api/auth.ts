@@ -9,6 +9,7 @@ export interface AuthVerifyRequest {
   message_hex: string;
   pubkey_hex: string;
   signature_hex: string;
+  account_id: string;
 }
 
 export interface AuthVerifyResponse {

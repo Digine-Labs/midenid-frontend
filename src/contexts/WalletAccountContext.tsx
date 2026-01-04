@@ -82,18 +82,24 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
 
   // Authenticate with backend after wallet connects
   useEffect(() => {
-    if (!connected || !signBytes || !publicKey || isAuthenticated) {
+    if (!connected || !signBytes || !publicKey || !rawAccountId || isAuthenticated) {
       return;
     }
 
     let isActive = true;
 
     const doAuth = async () => {
-      const result = await authenticate({ signBytes, publicKey });
-      if (isActive && result.success) {
-        setIsAuthenticated(true);
-      } else if (isActive && result.error) {
-        console.error('[Auth] Authentication failed:', result.error);
+      try {
+        // Convert bech32 to hex account ID for auth request
+        const id = bech32ToAccountId(rawAccountId);
+        const result = await authenticate({ signBytes, publicKey, accountId: id.toString() });
+        if (isActive && result.success) {
+          setIsAuthenticated(true);
+        } else if (isActive && result.error) {
+          console.error('[Auth] Authentication failed:', result.error);
+        }
+      } catch (error) {
+        console.error('[Auth] Failed to convert account ID:', error);
       }
     };
 
@@ -102,7 +108,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     return () => {
       isActive = false;
     };
-  }, [connected, signBytes, publicKey, isAuthenticated]);
+  }, [connected, signBytes, publicKey, rawAccountId, isAuthenticated]);
 
   // Fetch wallet data when authenticated
   useEffect(() => {

@@ -10,6 +10,7 @@ import { uint8ArrayToHex } from '@/utils';
 export interface AuthenticateParams {
   signBytes: (data: Uint8Array, kind: SignKind) => Promise<Uint8Array>;
   publicKey: Uint8Array;
+  accountId: string;
 }
 
 export interface AuthenticateResult {
@@ -24,6 +25,7 @@ export interface AuthenticateResult {
 export async function authenticate({
   signBytes,
   publicKey,
+  accountId,
 }: AuthenticateParams): Promise<AuthenticateResult> {
   try {
     // Create a simple auth message
@@ -57,6 +59,7 @@ export async function authenticate({
       message_hex: uint8ArrayToHex(commitmentBytes),
       pubkey_hex: uint8ArrayToHex(publicKey),
       signature_hex: uint8ArrayToHex(signatureBytes),
+      account_id: accountId,
     });
 
     // Clean up WASM memory
