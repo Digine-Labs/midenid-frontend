@@ -30,10 +30,10 @@ const formSchema = z.object({
   bio: z.string()
     .max(280, "Bio must be 280 characters or less")
     .optional(),
-  twitter: z.string().optional(),
-  github: z.string().optional(),
-  discord: z.string().optional(),
-  telegram: z.string().optional(),
+  twitter: z.string().max(20, "Maximum 20 characters").optional(),
+  github: z.string().max(20, "Maximum 20 characters").optional(),
+  discord: z.string().max(20, "Maximum 20 characters").optional(),
+  telegram: z.string().max(20, "Maximum 20 characters").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
