@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Globe, Github, User, Pencil, RefreshCw } from 'lucide-react'
 import { getAccountAllDomains, batchGetProfiles } from '@/api'
 import type { ProfileData } from '@/api'
-import { useTheme } from '@/components/theme-provider'
+import { useTheme } from '@/components/ThemeProvider'
 
 interface DomainInfo {
   domain: string

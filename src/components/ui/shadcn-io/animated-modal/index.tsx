@@ -10,7 +10,7 @@ import React, {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { useOnClickOutside } from "@/hooks/use-on-click-outside";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { BackgroundGradient } from "@/components/ui/shadcn-io/background-gradient";
 
 interface ModalContextType {

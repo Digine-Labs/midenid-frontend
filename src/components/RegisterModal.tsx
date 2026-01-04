@@ -16,13 +16,14 @@ import {
 } from "@/shared/constants";
 import { AccountId, Felt } from "@demox-labs/miden-sdk";
 import { useNavigate } from "react-router";
-import { TransactionStatusAlerts } from "@/components/transaction-status-alerts";
-import { TermsModal } from "@/components/terms-modal";
+import { useToast } from "@/hooks/useToast";
+import { ToastCause } from "@/types/toast";
+import { TermsModal } from "@/components/TermsModal";
 import { type PricingTier as PricingTierBase } from "@/shared/pricing";
 import { AnimatePresence, motion } from "framer-motion";
-import { RegistrationStep } from "./register-modal/registration-step";
-import { ProcessingStep } from "./register-modal/processing-step";
-import { ConfirmedStep } from "./register-modal/confirmed-step";
+import { RegistrationStep } from "./register-modal/RegistrationStep";
+import { ProcessingStep } from "./register-modal/ProcessingStep";
+import { ConfirmedStep } from "./register-modal/ConfirmedStep";
 import { instantiateClient } from "@/lib/midenClient";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
@@ -74,8 +75,9 @@ function RegisterModalContent({
   domain: string;
 }) {
   const { connected, requestTransaction } = useWallet();
-  const { refetch: refetchWalletAccount, accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
+  const { accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
   const { onRegistrationComplete } = useDomainRegistration();
+  const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailure, setTransactionFailure] = useState<TransactionFailure | null>(null);
@@ -153,6 +155,24 @@ function RegisterModalContent({
     setSelectedTier(null);
   }, [domain]);
 
+  // Show toast when transaction is submitted
+  useEffect(() => {
+    if (transactionSubmitted) {
+      showToast(ToastCause.TRANSACTION_SUBMITTED);
+    }
+  }, [transactionSubmitted, showToast]);
+
+  // Show toast when transaction fails
+  useEffect(() => {
+    if (transactionFailure) {
+      const causeMap = {
+        [TransactionFailureReason.INSUFFICIENT_BALANCE]: ToastCause.INSUFFICIENT_BALANCE,
+        [TransactionFailureReason.TRANSACTION_ERROR]: ToastCause.TRANSACTION_ERROR,
+      };
+      showToast(causeMap[transactionFailure.reason]);
+    }
+  }, [transactionFailure, showToast]);
+
   const handlePurchase = async (tier: PricingTier) => {
     if (connected && accountId && requestTransaction) {
       setTransactionSubmitted(false);
@@ -193,6 +213,8 @@ function RegisterModalContent({
           requestTransaction: requestTransaction,
         })
 
+        console.log("note_id:", noteId)
+
         client.terminate()
 
         // Transaction approved by wallet, show processing step
@@ -231,8 +253,6 @@ function RegisterModalContent({
         setCurrentStep("registration");
       } finally {
         setIsPurchasing(false);
-        // Refetch wallet account data to update hasRegisteredDomain
-        refetchWalletAccount();
       }
     }
   };
@@ -292,10 +312,6 @@ function RegisterModalContent({
           </AnimatePresence>
         </ModalContent>
       </ModalBody>
-      <TransactionStatusAlerts
-        transactionSubmitted={transactionSubmitted}
-        transactionFailure={transactionFailure}
-      />
       <TermsModal open={termsOpen} onOpenChange={setTermsOpen} />
     </>
   );

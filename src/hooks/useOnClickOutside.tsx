@@ -1,7 +1,7 @@
 "use client";
 
 import type { RefObject } from 'react';
-import { useEventListener } from './use-event-listener';
+import { useEventListener } from './useEventListener';
 
 type EventType =
   | 'mousedown'
@@ -29,8 +29,8 @@ export function useOnClickOutside<T extends HTMLElement = HTMLElement>(
 
       const isOutside = Array.isArray(ref)
         ? ref
-            .filter(r => Boolean(r.current))
-            .every(r => r.current && !r.current.contains(target))
+          .filter(r => Boolean(r.current))
+          .every(r => r.current && !r.current.contains(target))
         : ref.current && !ref.current.contains(target);
 
       if (isOutside) {

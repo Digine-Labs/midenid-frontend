@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
@@ -6,8 +6,10 @@ import { encodeDomain, hasStorageValue } from '@/utils'
 import { AccountId } from '@demox-labs/miden-sdk'
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
 import { useStorage } from '@/hooks/useStorage'
-import { RegisterModal } from '@/components/register-modal'
+import { RegisterModal } from '@/components/RegisterModal'
 import { useWallet, useWalletModal } from '@demox-labs/miden-wallet-adapter'
+import { useToast } from '@/hooks/useToast'
+import { ToastCause } from '@/types/toast'
 
 interface DomainCardProps {
   domain: string
@@ -15,9 +17,11 @@ interface DomainCardProps {
 
 export function DomainCard({ domain }: DomainCardProps) {
   const [loading, setLoading] = useState(true)
-  const [domainAvailable, setDomainAvailable] = useState(false)
+  const [domainAvailable, setDomainAvailable] = useState<boolean | null>(null)
   const { connected } = useWallet();
   const walletModal = useWalletModal();
+  const showToast = useToast();
+  const warningShownRef = useRef(false);
 
   const contractId = useMemo(
     () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
@@ -49,7 +53,7 @@ export function DomainCard({ domain }: DomainCardProps) {
   // Update domain availability based on storage check
   useEffect(() => {
     if (!domain || !storageKey) {
-      setDomainAvailable(false);
+      setDomainAvailable(null);
       setLoading(false);
       return;
     }
@@ -65,16 +69,35 @@ export function DomainCard({ domain }: DomainCardProps) {
     setLoading(false);
   }, [domain, storageKey, isCheckingStorage, isRegistered])
 
+  // Show warning toast if loading takes too long
+  useEffect(() => {
+    // Reset warning flag when domain changes or loading stops
+    if (!loading || !domain) {
+      warningShownRef.current = false;
+      return;
+    }
+
+    // Set timer to show warning after 3500ms
+    const timer = setTimeout(() => {
+      if (loading && !warningShownRef.current) {
+        showToast(ToastCause.DOMAIN_CHECK_SLOW);
+        warningShownRef.current = true;
+      }
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [loading, domain, showToast]);
+
   // Handle card click - open wallet modal if not connected
   const handleCardClick = () => {
-    if (!loading && domainAvailable && !connected) {
+    if (!loading && domainAvailable === true && !connected) {
       walletModal.setVisible(true);
     }
   };
 
   const cardContent = (
     <Card
-      className={`cursor-pointer hover:shadow transition-all duration-200 border bg-card ${!loading && !domainAvailable
+      className={`cursor-pointer hover:shadow transition-all duration-200 border bg-card ${!loading && domainAvailable === false
         ? 'hover:border-destructive/50'
         : 'hover:border-primary/50'
         }`}
@@ -85,9 +108,9 @@ export function DomainCard({ domain }: DomainCardProps) {
           <CardTitle className="text-lg font-semibold break-all min-w-0 flex-1 text-left">
             {domain}<span className="whitespace-nowrap">.miden</span>
           </CardTitle>
-          {loading ? (
+          {loading || domainAvailable === null ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary flex-shrink-0" />
-          ) : domainAvailable ? (
+          ) : domainAvailable === true ? (
             <Badge variant="secondary" className="bg-primary text-green-800 flex-shrink-0">
               Available
             </Badge>
@@ -102,7 +125,7 @@ export function DomainCard({ domain }: DomainCardProps) {
   );
 
   // If domain is available and not loading, wrap in RegisterModal
-  if (!loading && domainAvailable && connected) {
+  if (!loading && domainAvailable === true && connected) {
     return <RegisterModal domain={domain} trigger={cardContent} />;
   }
 

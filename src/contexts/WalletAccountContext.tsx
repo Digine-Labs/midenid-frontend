@@ -33,6 +33,10 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
   // Get user balance with automatic polling
   const balance = useBalance({ accountId, faucetId });
 
+  const refetch = () => {
+    setRefetchTrigger(prev => prev + 1);
+  };
+
   // Monitor pending transactions
   const {
     pending: pendingTransactions,
@@ -40,7 +44,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
     addPendingTransaction,
     isDomainConfirmed,
     confirmedDomains
-  } = usePendingTransactions(accountId?.toString());
+  } = usePendingTransactions(accountId?.toString(), refetch);
 
   // Handle wallet disconnection - logout from backend
   useEffect(() => {
@@ -64,6 +68,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
       setAccountId(undefined);
       setHasRegisteredDomain(false);
       setActiveDomain(null);
+      setAllDomains(null);
       setIsLoading(false);
       return;
     }
@@ -152,10 +157,6 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
       isActive = false;
     };
   }, [accountId, connected, isAuthenticated, refetchTrigger]);
-
-  const refetch = () => {
-    setRefetchTrigger(prev => prev + 1);
-  };
 
   return (
     <WalletAccountContext.Provider

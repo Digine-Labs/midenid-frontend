@@ -24,7 +24,10 @@ export const useBalance = (
         let isActive = true;
 
         const initAndRefresh = async () => {
-            if (!accountId || !faucetId) return;
+            if (!accountId || !faucetId) {
+                setBalance(null);
+                return;
+            }
 
             const client = await instantiateClient({ accountsToImport: [accountId] })
 

@@ -5,13 +5,16 @@ import {
   getPendingTransactions,
   savePendingTransaction,
   removePendingTransaction
-} from '@/utils/transactionStorage';
+} from '@/utils/transaction-storage';
 import type { PendingTransaction, TransactionResult } from '@/types/transaction';
 
 const POLLING_INTERVAL = 10_000; // 10s
 const MAX_ATTEMPTS = 8;
 
-export const usePendingTransactions = (accountId?: string) => {
+export const usePendingTransactions = (
+  accountId?: string,
+  onTransactionConfirmed?: () => void
+) => {
   const [pending, setPending] = useState<PendingTransaction[]>([]);
   const [isMonitoring, setIsMonitoring] = useState(false);
 
@@ -31,10 +34,17 @@ export const usePendingTransactions = (accountId?: string) => {
 
   // Load from storage
   useEffect(() => {
+    if (!accountId) {
+      // Clear all state when wallet disconnects
+      setPending([]);
+      setConfirmedDomains(new Map());
+      inFlightDomainsRef.current.clear();
+      completedDomainsRef.current.clear();
+      return;
+    }
+
     const stored = getPendingTransactions();
-    const userTransactions = accountId
-      ? stored.filter(t => t.accountId === accountId)
-      : stored;
+    const userTransactions = stored.filter(t => t.accountId === accountId);
 
     setPending(userTransactions);
   }, [accountId]);
@@ -153,6 +163,9 @@ export const usePendingTransactions = (accountId?: string) => {
 
           // ✅ MARK COMPLETED
           completedDomainsRef.current.add(domain);
+
+          // Refetch wallet account data
+          onTransactionConfirmed?.();
 
           removePending(domain);
           results.push({ success: true, domain });

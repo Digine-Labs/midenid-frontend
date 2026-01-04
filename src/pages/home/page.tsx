@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DomainCard } from './components/domain-card'
-import { TestnetWarningModal } from '@/components/testnet-warning-modal'
+import { TestnetWarningModal } from '@/components/TestnetWarningModal'
 import { RoughNotation } from 'react-rough-notation'
-import { useTheme } from '@/components/theme-provider'
+import { useTheme } from '@/components/ThemeProvider'
 import { DomainRegistrationProvider } from '@/contexts/DomainRegistrationContext'
 
 export default function Home() {

@@ -2,7 +2,7 @@ import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { ThemeProvider } from '@/components/theme-provider'
+import { ThemeProvider } from '@/components/ThemeProvider.tsx'
 import { WalletProvider } from '@demox-labs/miden-wallet-adapter-react'
 import { MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter-miden'
 import { WalletModalProvider } from '@demox-labs/miden-wallet-adapter-reactui'
@@ -11,8 +11,7 @@ import { WalletAccountProvider } from '@/contexts/WalletAccountContext'
 
 const Home = lazy(() => import('@/pages/home/page'))
 const Identity = lazy(() => import('./pages/identity/page.tsx'))
-const IdentityDemo = lazy(() => import('./pages/identity-demo/page.tsx'))
-const MyDomains = lazy(() => import('./pages/myDomains/page.tsx'))
+const MyDomains = lazy(() => import('./pages/my-domains/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
 const PageLoader = () => (
@@ -45,14 +44,6 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Identity />
-          </Suspense>
-        )
-      },
-      {
-        path: "identity-demo",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <IdentityDemo />
           </Suspense>
         )
       },
