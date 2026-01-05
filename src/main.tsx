@@ -9,8 +9,8 @@ import { WalletModalProvider } from '@demox-labs/miden-wallet-adapter-reactui'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 
 const Home = lazy(() => import('@/pages/home/page'))
-const Identity = lazy(() => import('./pages/identity/page.tsx'))
-const MyDomains = lazy(() => import('./pages/my-domains/page.tsx'))
+// const Identity = lazy(() => import('./pages/identity/page.tsx'))
+// const MyDomains = lazy(() => import('./pages/my-domains/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
 const PageLoader = () => (
@@ -38,22 +38,22 @@ const router = createBrowserRouter([
           </Suspense>
         )
       },
-      {
-        path: "identity",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <Identity />
-          </Suspense>
-        )
-      },
-      {
-        path: "my-domains",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <MyDomains />
-          </Suspense>
-        )
-      },
+      // {
+      //   path: "identity",
+      //   element: (
+      //     <Suspense fallback={<PageLoader />}>
+      //       <Identity />
+      //     </Suspense>
+      //   )
+      // },
+      // {
+      //   path: "my-domains",
+      //   element: (
+      //     <Suspense fallback={<PageLoader />}>
+      //       <MyDomains />
+      //     </Suspense>
+      //   )
+      // },
       {
         path: "*",
         element: (
@@ -72,9 +72,9 @@ createRoot(document.getElementById('root')!).render(
       wallets={wallets}
     >
       <WalletModalProvider>
-          <ThemeProvider>
-            <RouterProvider router={router} />
-          </ThemeProvider>
+        <ThemeProvider>
+          <RouterProvider router={router} />
+        </ThemeProvider>
       </WalletModalProvider>
     </WalletProvider>
   </StrictMode>,
