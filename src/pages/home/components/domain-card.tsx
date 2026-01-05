@@ -64,8 +64,8 @@ export function DomainCard({ domain }: DomainCardProps) {
   // Update domain availability based on storage check
   useEffect(() => {
     if (!domain || !storageKey) {
-      setDomainAvailable(null);
-      setLoading(false);
+      setDomainAvailable(prev => prev !== null ? null : prev);
+      setLoading(prev => prev !== false ? false : prev);
       return;
     }
 
@@ -88,13 +88,13 @@ export function DomainCard({ domain }: DomainCardProps) {
       return;
     }
 
-    // Set timer to show warning after 3500ms
+    // Set timer to show warning after 5500ms
     const timer = setTimeout(() => {
       if (loading && !warningShownRef.current) {
         showToast(ToastCause.DOMAIN_CHECK_SLOW);
         warningShownRef.current = true;
       }
-    }, 4000);
+    }, 5500);
 
     return () => clearTimeout(timer);
   }, [loading, domain, showToast]);

@@ -24,7 +24,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RegistrationStep } from "./register-modal/RegistrationStep";
 import { ProcessingStep } from "./register-modal/ProcessingStep";
 import { ConfirmedStep } from "./register-modal/ConfirmedStep";
-import { instantiateClient } from "@/lib/midenClient";
+import { getMidenClient } from "@/lib/MidenClientSingleton";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
@@ -181,11 +181,17 @@ function RegisterModalContent({
       setSelectedTier(tier);
 
       try {
+        const clientSingleton = getMidenClient();
+
+        // Import accounts (lazy init if needed)
+        await clientSingleton.importAccount(accountId);
+        await clientSingleton.importAccount(destinationAccountId);
+
+        const client = await clientSingleton.getClient();
+
         const buyAmount = BigInt(tier.price * 1000000);
 
         const domainWord = encodeDomain(domain);
-
-        const client = await instantiateClient({ accountsToImport: [accountId, destinationAccountId] })
 
         const noteInputs = new NoteInputs(
           new MidenArrays.FeltArray([
@@ -214,8 +220,6 @@ function RegisterModalContent({
         })
 
         console.log("note_id:", noteId)
-
-        client.terminate()
 
         // Transaction approved by wallet, show processing step
         setTransactionSubmitted(true);

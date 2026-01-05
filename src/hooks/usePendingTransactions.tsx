@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { AccountId } from '@demox-labs/miden-sdk';
 import { hasRegisteredDomain } from '@/lib/midenClient';
+import { getMidenClient } from '@/lib/MidenClientSingleton';
 import { createDomainMetadata } from '@/api';
+import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
 import {
   getPendingTransactions,
   savePendingTransaction,
@@ -31,6 +34,19 @@ export const usePendingTransactions = (
    */
   const inFlightDomainsRef = useRef<Set<string>>(new Set());
   const completedDomainsRef = useRef<Set<string>>(new Set());
+
+  // Import contract account once when needed
+  useEffect(() => {
+    if (!accountId) return;
+
+    const importContract = async () => {
+      const clientSingleton = getMidenClient();
+      const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
+      await clientSingleton.importAccount(contractId);
+    };
+
+    importContract();
+  }, [accountId]);
 
   // Load from storage
   useEffect(() => {
@@ -96,6 +112,10 @@ export const usePendingTransactions = (
     const monitorTransactions = async () => {
       if (!isActive) return;
 
+      const clientSingleton = getMidenClient();
+      const client = await clientSingleton.getClient().catch(() => null);
+      if (!client) return;
+
       const results: TransactionResult[] = [];
 
       for (const tx of pending) {
@@ -113,7 +133,7 @@ export const usePendingTransactions = (
         inFlightDomainsRef.current.add(domain);
 
         try {
-          const isRegistered = await hasRegisteredDomain(domain);
+          const isRegistered = await hasRegisteredDomain(client, domain);
 
           if (!isRegistered) {
             inFlightDomainsRef.current.delete(domain);

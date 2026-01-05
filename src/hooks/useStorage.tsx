@@ -1,6 +1,6 @@
-import { type AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
+import { type AccountId, type WebClient, Word } from '@demox-labs/miden-sdk';
 import { useEffect, useState, useMemo } from 'react';
-import { instantiateClient } from '@/lib/midenClient';
+import { getMidenClient } from '@/lib/MidenClientSingleton';
 import type { StorageParams } from '@/types/hooks';
 
 const getStorageItemFromClient = async (client: WebClient, accountId: AccountId, index: number) => {
@@ -87,13 +87,15 @@ export const useStorage = (
                 return;
             }
 
-            let client: WebClient | null = null;
-
             try {
-                client = await instantiateClient({ accountsToImport: [accountId] });
+                const clientSingleton = getMidenClient();
 
-                if (!client || isCancelled) return;
+                // Import account (lazy init if needed)
+                await clientSingleton.importAccount(accountId);
 
+                if (isCancelled) return;
+
+                const client = await clientSingleton.getClient();
                 await client.syncState();
 
                 let item;
@@ -128,11 +130,6 @@ export const useStorage = (
                 if (!isCancelled) {
                     setIsLoading(false);
                 }
-                if (client) {
-                    client.terminate();
-                }
-
-                client?.terminate()
             }
         };
 
@@ -141,7 +138,7 @@ export const useStorage = (
         return () => {
             isCancelled = true;
         };
-    }, [accountId, index, keyHex]); // Include keyHex so effect reruns when key changes
+    }, [accountId, index, keyHex]);
 
     return {
         storageItem,      // Raw Word object
