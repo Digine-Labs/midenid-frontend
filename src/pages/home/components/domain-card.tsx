@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
 import { encodeDomain, hasStorageValue } from '@/utils'
-import { AccountId } from '@demox-labs/miden-sdk'
+import { AccountId, type Word } from '@demox-labs/miden-sdk'
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
 import { useStorage } from '@/hooks/useStorage'
 import { RegisterModal } from '@/components/RegisterModal'
@@ -18,6 +18,7 @@ interface DomainCardProps {
 export function DomainCard({ domain }: DomainCardProps) {
   const [loading, setLoading] = useState(true)
   const [domainAvailable, setDomainAvailable] = useState<boolean | null>(null)
+  const [debouncedStorageKey, setDebouncedStorageKey] = useState<Word | undefined>(undefined)
   const { connected } = useWallet();
   const walletModal = useWalletModal();
   const showToast = useToast();
@@ -39,11 +40,21 @@ export function DomainCard({ domain }: DomainCardProps) {
     }
   }, [domain]);
 
+  // Debounce storageKey updates (500ms delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedStorageKey(storageKey)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [storageKey])
+
   // Check if domain is registered by querying storage slot 5 (Name -> ID mapping)
+  // Uses debounced storageKey to avoid excessive lookups while typing
   const { storageItem, isLoading: isCheckingStorage } = useStorage({
     accountId: contractId,
     index: 5,
-    key: storageKey
+    key: debouncedStorageKey
   });
 
   // Check registration status

@@ -105,9 +105,6 @@ export async function transactionCreator({
 
         let script = builder.compileNoteScript(noteScript)
 
-        // Sync state to get latest blockchain data
-        await client.syncState();
-
         // Create a new serial number for the note
         const serialNumber = generateRandomSerialNumber();
 
@@ -139,7 +136,7 @@ export async function transactionCreator({
             .withOwnOutputNotes(noteArray)
             .build();
 
-        await client.syncState();
+        const state = await client.syncState();
 
         const tx = new CustomTransaction(
             accountIdToBech32(senderAccountId), // from
@@ -153,8 +150,6 @@ export async function transactionCreator({
             type: TransactionType.Custom,
             payload: tx,
         });
-
-        const state = await client.syncState();
 
         const blockNumber = state.blockNum()
 
