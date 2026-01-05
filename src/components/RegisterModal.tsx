@@ -157,12 +157,7 @@ function RegisterModalContent({
       setCurrentStep("processing");
       try {
         const client = await instantiateClient({ accountsToImport: []});
-
-        // Import accounts (lazy init if needed)
-        await client.importAccountById(accountId);
-        await client.importAccountById(destinationAccountId);
-
-        //const client = await clientSingleton.getClient();
+        // We dont need to sync client we just create note and let wallet sync and broadcasts it
 
         const buyAmount = BigInt(domainPrice * 1000000);
 
