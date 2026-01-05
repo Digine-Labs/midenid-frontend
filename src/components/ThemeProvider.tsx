@@ -21,16 +21,16 @@ function applyDocumentClass(mode: "light" | "dark") {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof localStorage === "undefined") return "light"
+    if (typeof localStorage === "undefined") return "dark"
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
       if (stored === "light" || stored === "dark" || stored === "system") return stored
-    } catch {}
-    return "light"
+    } catch { }
+    return "dark"
   })
 
   const systemTheme = useMemo(() => {
-    if (typeof window === "undefined") return "light"
+    if (typeof window === "undefined") return "dark"
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
   }, [])
 
@@ -43,7 +43,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(next)
     try {
       localStorage.setItem(STORAGE_KEY, next)
-    } catch {}
+    } catch { }
   }, [])
 
   useEffect(() => {
