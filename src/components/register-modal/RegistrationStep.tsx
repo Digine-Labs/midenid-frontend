@@ -40,7 +40,7 @@ export function RegistrationStep({
   onTermsClick,
 }: RegistrationStepProps) {
   const balance = useBalance({ accountId: buyer, faucetId: paymentFaucet });
-  console.log(`Bakance at reg step ${balance}`)
+  console.log(`Balance at reg step ${balance}`)
   
   const domainPrice = getDomainPrice(domain.length);
 

@@ -26,7 +26,6 @@ import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
 import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
-import { useDomainRegistration } from "@/contexts/DomainRegistrationContext";
 import { getDomainPrice } from "@/shared/pricing";
 import { bech32ToAccountId, instantiateClient } from "@/lib/midenClient";
 
@@ -73,10 +72,8 @@ function RegisterModalContent({
   // MESS
   const { connected, requestTransaction, address } = useWallet();
   //const { accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
-  const { onRegistrationComplete } = useDomainRegistration();
   const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
-  const [transactionSubmitted, setTransactionSubmitted] = useState(false);
   const [transactionFailure, setTransactionFailure] = useState<TransactionFailure | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
@@ -121,35 +118,25 @@ function RegisterModalContent({
       const timer = setTimeout(() => {
         // If registration was successful, clear the home page input
         if (registrationSuccessful) {
-          onRegistrationComplete();
           setRegistrationSuccessful(false);
         }
 
         // Reset all states when modal closes
         setCurrentStep("registration");
-        setTransactionSubmitted(false);
         setTransactionFailure(null);
         setIsPurchasing(false);
       }, 280);
 
       return () => clearTimeout(timer);
     }
-  }, [open, registrationSuccessful, onRegistrationComplete, confirmationTimeoutId]);
+  }, [open, registrationSuccessful, confirmationTimeoutId]);
 
   // Reset when domain changes
   useEffect(() => {
     setCurrentStep("registration");
-    setTransactionSubmitted(false);
     setTransactionFailure(null);
     setIsPurchasing(false);
   }, [domain]);
-
-  // Show toast when transaction is submitted
-  useEffect(() => {
-    if (transactionSubmitted) {
-      showToast(ToastCause.TRANSACTION_SUBMITTED);
-    }
-  }, [transactionSubmitted, showToast]);
 
   // Show toast when transaction fails
   useEffect(() => {
@@ -165,7 +152,6 @@ function RegisterModalContent({
   if (!accountId) return null;
   const handlePurchase = async () => {
     if (connected && accountId && requestTransaction) {
-      setTransactionSubmitted(false);
       setTransactionFailure(null);
       setIsPurchasing(true);
       setCurrentStep("processing");
@@ -212,24 +198,7 @@ function RegisterModalContent({
         console.log("note_id:", noteId)
         setNoteId(noteId);
         setCurrentStep("confirmed");
-        // Transaction approved by wallet, show processing step
-        setTransactionSubmitted(true);
-
-
-        // Set timeout for registration confirmation (80 seconds)
-        // The actual confirmation is handled by useEffect watching confirmedDomains
-        const maxWaitTime = 80000;
-        const timeoutId = window.setTimeout(() => {
-          setTransactionFailure({
-            reason: TransactionFailureReason.TRANSACTION_ERROR,
-            id: Date.now()
-          });
-          setCurrentStep("registration");
-          setConfirmationTimeoutId(null);
-        }, maxWaitTime);
-
-        setConfirmationTimeoutId(timeoutId);
-
+        // Transaction approved by wallet
       } catch (error) {
         console.error("Transaction error:", error);
         setTransactionFailure({
