@@ -17,3 +17,6 @@ export * from './decode';
 
 // Domain registry utilities
 export * from './domain-registry';
+
+// Theme utilities
+export * from './theme';

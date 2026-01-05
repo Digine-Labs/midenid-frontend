@@ -77,16 +77,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="w-full space-y-4 ">
-              {/*<Card className="bg-yellow-100 border-green-500 rounded-md">
-                <CardContent className="flex items-start gap-3 p-4">
-                  <Info className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-green-900 text-left">
-                    <strong>Testing Mode:</strong> For mocking purposes, even-length domain names are shown as available, while odd-length domain names are shown as unavailable.
-                  </p>
-                </CardContent>
-              </Card>*/}
-
+            <div className="w-full space-y-4">
               <TooltipProvider>
                 <Tooltip open={showTooltip}>
                   <TooltipTrigger asChild>

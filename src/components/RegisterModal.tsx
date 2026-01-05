@@ -6,60 +6,23 @@ import {
   ModalContent,
   useModal,
 } from "@/components/ui/shadcn-io/animated-modal";
-import { type ReactNode, useState, useEffect } from "react";
-import { cloneElement, isValidElement, useMemo } from "react";
-import { useWallet } from "@demox-labs/miden-wallet-adapter";
-import { useWalletAccount } from "@/contexts/WalletAccountContext";
-import {
-  MIDEN_FAUCET_CONTRACT_ADDRESS,
-  MIDEN_ID_CONTRACT_ADDRESS,
-} from "@/shared/constants";
-import { AccountId, Felt } from "@demox-labs/miden-sdk";
-import { useNavigate } from "react-router";
-import { useToast } from "@/hooks/useToast";
-import { ToastCause } from "@/types/toast";
+import { type ReactNode, useState } from "react";
+import { cloneElement, isValidElement } from "react";
 import { TermsModal } from "@/components/TermsModal";
-import { type PricingTier as PricingTierBase } from "@/shared/pricing";
 import { AnimatePresence, motion } from "framer-motion";
 import { RegistrationStep } from "./register-modal/RegistrationStep";
 import { ProcessingStep } from "./register-modal/ProcessingStep";
 import { ConfirmedStep } from "./register-modal/ConfirmedStep";
-import { getMidenClient } from "@/lib/MidenClientSingleton";
-import { transactionCreator } from "@/lib/transactionCreator";
-import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
-import { encodeDomain } from "@/utils/encode";
-import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
-import { useDomainRegistration } from "@/contexts/DomainRegistrationContext";
-
-// Transaction failure reason type
-export const TransactionFailureReason = {
-  INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
-  TRANSACTION_ERROR: 'TRANSACTION_ERROR',
-} as const;
-
-export type TransactionFailureReason = typeof TransactionFailureReason[keyof typeof TransactionFailureReason];
-
-// Transaction failure state with unique ID
-export interface TransactionFailure {
-  reason: TransactionFailureReason;
-  id: number;
-}
+import { useRegistration } from "@/hooks/useRegistration";
 
 interface RegisterModalProps {
   domain: string;
   trigger: ReactNode;
 }
 
-interface PricingTier extends PricingTierBase {
-  price: number;
-}
-
-type ModalStep = "registration" | "processing" | "confirmed";
-
 function RegisterModalTrigger({ children }: { children: ReactNode }) {
   const { setOpen } = useModal();
 
-  // Clone the trigger element and add onClick handler
   if (isValidElement(children)) {
     return cloneElement(children as React.ReactElement<any>, {
       onClick: () => setOpen(true),
@@ -69,202 +32,17 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
   return <div onClick={() => setOpen(true)}>{children}</div>;
 }
 
-function RegisterModalContent({
-  domain,
-}: {
-  domain: string;
-}) {
-  const { connected, requestTransaction } = useWallet();
-  const { accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
-  const { onRegistrationComplete } = useDomainRegistration();
-  const showToast = useToast();
-  const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
-  const [transactionSubmitted, setTransactionSubmitted] = useState(false);
-  const [transactionFailure, setTransactionFailure] = useState<TransactionFailure | null>(null);
-  const [isPurchasing, setIsPurchasing] = useState(false);
-  const [termsOpen, setTermsOpen] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
-  const navigate = useNavigate();
+function RegisterModalContent({ domain }: { domain: string }) {
   const { open, setOpen } = useModal();
+  const [termsOpen, setTermsOpen] = useState(false);
 
-  const faucetId = useMemo(
-    () => AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string),
-    []
-  );
-
-  const destinationAccountId = useMemo(
-    () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
-    []
-  );
-
-  // Track if registration was successful
-  const [registrationSuccessful, setRegistrationSuccessful] = useState(false);
-
-  // Track timeout ID for cleanup
-  const [confirmationTimeoutId, setConfirmationTimeoutId] = useState<number | null>(null);
-
-  // Watch for domain confirmation from background monitor
-  useEffect(() => {
-    if (currentStep === "processing" && confirmedDomains.get(domain) === true) {
-      // Clear timeout since we got confirmation
-      if (confirmationTimeoutId) {
-        clearTimeout(confirmationTimeoutId);
-        setConfirmationTimeoutId(null);
-      }
-
-      setCurrentStep("confirmed");
-      setRegistrationSuccessful(true);
-    }
-  }, [confirmedDomains, domain, currentStep, confirmationTimeoutId]);
-
-  // Reset to registration step when modal is closed or domain changes
-  useEffect(() => {
-    if (!open) {
-      // Clear confirmation timeout if modal closes
-      if (confirmationTimeoutId) {
-        clearTimeout(confirmationTimeoutId);
-        setConfirmationTimeoutId(null);
-      }
-
-      // Wait for modal close animation to complete (300ms) before clearing states
-      const timer = setTimeout(() => {
-        // If registration was successful, clear the home page input
-        if (registrationSuccessful) {
-          onRegistrationComplete();
-          setRegistrationSuccessful(false);
-        }
-
-        // Reset all states when modal closes
-        setCurrentStep("registration");
-        setTransactionSubmitted(false);
-        setTransactionFailure(null);
-        setIsPurchasing(false);
-        setSelectedTier(null);
-      }, 280);
-
-      return () => clearTimeout(timer);
-    }
-  }, [open, registrationSuccessful, onRegistrationComplete, confirmationTimeoutId]);
-
-  // Reset when domain changes
-  useEffect(() => {
-    setCurrentStep("registration");
-    setTransactionSubmitted(false);
-    setTransactionFailure(null);
-    setIsPurchasing(false);
-    setSelectedTier(null);
-  }, [domain]);
-
-  // Show toast when transaction is submitted
-  useEffect(() => {
-    if (transactionSubmitted) {
-      showToast(ToastCause.TRANSACTION_SUBMITTED);
-    }
-  }, [transactionSubmitted, showToast]);
-
-  // Show toast when transaction fails
-  useEffect(() => {
-    if (transactionFailure) {
-      const causeMap = {
-        [TransactionFailureReason.INSUFFICIENT_BALANCE]: ToastCause.INSUFFICIENT_BALANCE,
-        [TransactionFailureReason.TRANSACTION_ERROR]: ToastCause.TRANSACTION_ERROR,
-      };
-      showToast(causeMap[transactionFailure.reason]);
-    }
-  }, [transactionFailure, showToast]);
-
-  const handlePurchase = async (tier: PricingTier) => {
-    if (connected && accountId && requestTransaction) {
-      setTransactionSubmitted(false);
-      setTransactionFailure(null);
-      setIsPurchasing(true);
-      setSelectedTier(tier);
-
-      try {
-        const clientSingleton = getMidenClient();
-
-        // Import accounts (lazy init if needed)
-        await clientSingleton.importAccount(accountId);
-        await clientSingleton.importAccount(destinationAccountId);
-
-        const client = await clientSingleton.getClient();
-
-        const buyAmount = BigInt(tier.price * 1000000);
-
-        const domainWord = encodeDomain(domain);
-
-        const noteInputs = new NoteInputs(
-          new MidenArrays.FeltArray([
-            new Felt(faucetId.suffix().asInt()),
-            new Felt(faucetId.prefix().asInt()),
-            new Felt(BigInt(0)),
-            new Felt(BigInt(0)),
-            domainWord.toFelts()[0],
-            domainWord.toFelts()[1],
-            domainWord.toFelts()[2],
-            domainWord.toFelts()[3],
-          ])
-        );
-
-        const { noteId, blockNumber } = await transactionCreator({
-          client,
-          senderAccountId: accountId,
-          destinationAccountId: destinationAccountId,
-          noteScript: REGISTER_NOTE_SCRIPT,
-          libraryScript: MIDEN_NAME_CONTRACT_CODE,
-          libraryName: "miden_name::naming",
-          noteInputs: noteInputs,
-          faucetId: faucetId,
-          amount: buyAmount,
-          requestTransaction: requestTransaction,
-        })
-
-        console.log("note_id:", noteId)
-
-        // Transaction approved by wallet, show processing step
-        setTransactionSubmitted(true);
-        setCurrentStep("processing");
-
-        // Add to background monitoring queue (will handle metadata creation AND confirmation tracking)
-        addPendingTransaction({
-          domain: domain,
-          noteId: noteId,
-          accountId: accountId.toString(),
-          bech32: bech32!,
-          blockNumber: blockNumber || 0,
-        });
-
-        // Set timeout for registration confirmation (80 seconds)
-        // The actual confirmation is handled by useEffect watching confirmedDomains
-        const maxWaitTime = 80000;
-        const timeoutId = window.setTimeout(() => {
-          setTransactionFailure({
-            reason: TransactionFailureReason.TRANSACTION_ERROR,
-            id: Date.now()
-          });
-          setCurrentStep("registration");
-          setConfirmationTimeoutId(null);
-        }, maxWaitTime);
-
-        setConfirmationTimeoutId(timeoutId);
-
-      } catch (error) {
-        console.error("Transaction error:", error);
-        setTransactionFailure({
-          reason: TransactionFailureReason.TRANSACTION_ERROR,
-          id: Date.now()
-        });
-        setCurrentStep("registration");
-      } finally {
-        setIsPurchasing(false);
-      }
-    }
-  };
-
-  const handleGoHome = () => {
-    setOpen(false);
-    navigate('/');
-  };
+  const {
+    currentStep,
+    isPurchasing,
+    selectedTier,
+    connected,
+    handlePurchase,
+  } = useRegistration({ domain, open, setOpen });
 
   return (
     <>
@@ -310,7 +88,7 @@ function RegisterModalContent({
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
               >
-                <ConfirmedStep domain={domain} onGoHome={handleGoHome} />
+                <ConfirmedStep domain={domain} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -321,16 +99,11 @@ function RegisterModalContent({
   );
 }
 
-export function RegisterModal({
-  domain,
-  trigger,
-}: RegisterModalProps) {
+export function RegisterModal({ domain, trigger }: RegisterModalProps) {
   return (
     <Modal>
       <RegisterModalTrigger>{trigger}</RegisterModalTrigger>
-      <RegisterModalContent
-        domain={domain}
-      />
+      <RegisterModalContent domain={domain} />
     </Modal>
   );
 }

@@ -1,63 +1,65 @@
 import { type AccountId, type WebClient } from '@demox-labs/miden-sdk';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getMidenClient } from '@/lib/MidenClientSingleton';
 import type { BalanceParams } from '@/types/hooks';
 
-const getBalanceFromClient = async (
-    client: WebClient,
-    accountId: AccountId,
-    faucetId: AccountId,
-) => {
-    const acc = await client.getAccount(accountId);
-    const balance = acc?.vault().getBalance(faucetId);
-    return balance;
-};
+const REFRESH_INTERVAL_MS = 15000;
 
-export const useBalance = (
-    { accountId, faucetId }: BalanceParams,
-) => {
-    const [balance, setBalance] = useState<bigint | null>(null);
+async function getBalanceFromClient(
+  client: WebClient,
+  accountId: AccountId,
+  faucetId: AccountId,
+): Promise<bigint | undefined> {
+  const acc = await client.getAccount(accountId);
+  return acc?.vault().getBalance(faucetId);
+}
 
-    useEffect(() => {
-        let clear: number;
-        let isActive = true;
+export function useBalance({ accountId, faucetId }: BalanceParams): bigint | null {
+  const [balance, setBalance] = useState<bigint | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-        const initAndRefresh = async () => {
-            if (!accountId || !faucetId) {
-                setBalance(null);
-                return;
-            }
+  useEffect(() => {
+    let isActive = true;
 
-            const clientSingleton = getMidenClient();
+    const cleanup = () => {
+      isActive = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
 
-            // Import account (lazy init happens here if needed)
-            await clientSingleton.importAccount(accountId);
+    if (!accountId || !faucetId) {
+      setBalance(null);
+      return cleanup;
+    }
 
-            const refreshBalance = async () => {
-                if (!isActive) return;
+    const initAndRefresh = async () => {
+      const clientSingleton = getMidenClient();
+      await clientSingleton.importAccount(accountId);
 
-                try {
-                    const client = await clientSingleton.getClient();
-                    await client.syncState();
-                    const newBalance = await getBalanceFromClient(client, accountId, faucetId);
-                    if (isActive) {
-                        setBalance(BigInt(newBalance ?? 0));
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch balance:', error);
-                }
-            };
+      const refreshBalance = async () => {
+        if (!isActive) return;
 
-            await refreshBalance();
-            clear = setInterval(refreshBalance, 15000);
-        };
+        try {
+          const client = await clientSingleton.getClient();
+          await client.syncState();
+          const newBalance = await getBalanceFromClient(client, accountId, faucetId);
+          if (isActive) {
+            setBalance(BigInt(newBalance ?? 0));
+          }
+        } catch {
+          // Silently ignore balance fetch errors
+        }
+      };
 
-        initAndRefresh();
-        return () => {
-            isActive = false;
-            clearInterval(clear);
-        };
-    }, [faucetId, accountId]);
+      await refreshBalance();
+      intervalRef.current = setInterval(refreshBalance, REFRESH_INTERVAL_MS);
+    };
 
-    return balance;
-};
+    initAndRefresh();
+    return cleanup;
+  }, [faucetId, accountId]);
+
+  return balance;
+}

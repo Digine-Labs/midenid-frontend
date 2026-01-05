@@ -12,6 +12,7 @@ import {
 import { Github, Send } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { useTheme } from './ThemeProvider'
+import { ThemedIcon } from '@/components/ui/themed-icon'
 
 export function SiteHeader() {
   const { resolvedTheme } = useTheme()
@@ -21,18 +22,12 @@ export function SiteHeader() {
     <header className="fixed top-0 left-0 w-full z-50 bg-background border-b">
       <Menubar className="h-14 w-full border-0 px-4 md:px-6">
         <div className="flex w-full items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center">
-              <img
-                src={logoSrc}
-                alt="Miden.name"
-                className="h-5 md:h-6"
-              />
+              <img src={logoSrc} alt="Miden.name" className="h-5 md:h-6" />
             </Link>
           </div>
 
-          {/* Desktop Navigation & Wallet */}
           <div className="hidden md:flex items-center gap-4">
             <nav className="flex items-center gap-6">
               <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
@@ -51,23 +46,13 @@ export function SiteHeader() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
                     <a href="https://x.com/midenname" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
-                      <img
-                        src="/icons/twitter.png"
-                        alt="Twitter"
-                        className="h-4 w-4"
-                        style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }}
-                      />
+                      <ThemedIcon src="/icons/twitter.png" alt="Twitter" />
                       <span>X / Twitter</span>
                     </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <a href="https://discord.gg/CfWvRh9xCe" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
-                      <img
-                        src="/icons/discord.png"
-                        alt="Discord"
-                        className="h-4 w-4"
-                        style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }}
-                      />
+                      <ThemedIcon src="/icons/discord.png" alt="Discord" />
                       <span>Discord</span>
                     </a>
                   </DropdownMenuItem>
@@ -85,10 +70,7 @@ export function SiteHeader() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
             </nav>
-
-
 
             <Separator orientation="vertical" className="h-6" />
             <WalletMultiButton />
@@ -98,14 +80,11 @@ export function SiteHeader() {
             </div>
           </div>
 
-          {/* Mobile Menu */}
           <MobileSidebar />
         </div>
       </Menubar>
-    </header >
+    </header>
   )
 }
 
 export default SiteHeader
-
-

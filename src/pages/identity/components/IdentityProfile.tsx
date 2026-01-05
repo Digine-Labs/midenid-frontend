@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Github as GithubIcon, FileText, CheckCircle2, AlertCircle, RefreshCw, MessageCircle, Send } from "lucide-react";
+import { Loader2, Github, FileText, CheckCircle2, AlertCircle, RefreshCw, MessageCircle, Send } from "lucide-react";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ import { fetchProfile, saveProfile } from "@/api/profile";
 import type { ProfilePayload } from "@/api/profile";
 import { signProfileData } from "@/lib/midenClient";
 import type { SignedData } from "@/types/auth";
-import { useTheme } from "@/components/ThemeProvider";
+import { ThemedIcon } from "@/components/ui/themed-icon";
 
 const formSchema = z.object({
   bio: z.string()
@@ -47,8 +47,6 @@ export function IdentityProfile({
   domainName,
   onProfileUpdate,
 }: IdentityProfileProps) {
-  const { resolvedTheme } = useTheme()
-  // Wallet integration
   const { signBytes, connected, publicKey } = useWallet();
 
   // Loading & error states
@@ -57,9 +55,9 @@ export function IdentityProfile({
   const [isEditMode, setIsEditMode] = useState(false);
 
   // Profile data
-  const [imageUrl, setImageUrl] = useState<string>("");
-  const [domainPurchaseDate, setDomainPurchaseDate] = useState<Date>(new Date());
-  const [lastModifiedDate, setLastModifiedDate] = useState<Date>(new Date());
+  const [imageUrl, setImageUrl] = useState("");
+  const [domainPurchaseDate, setDomainPurchaseDate] = useState<Date | null>(null);
+  const [lastModifiedDate, setLastModifiedDate] = useState<Date | null>(null);
 
   // Toast hook
   const showToast = useToast();
@@ -335,23 +333,6 @@ export function IdentityProfile({
                   )}
                 />
 
-                {/* Image URL Input */}
-                {/* <FormItem>
-              <FormLabel>Profile Image URL</FormLabel>
-              <FormControl>
-                <Input
-                  type="url"
-                  placeholder="https://example.com/avatar.png"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormDescription>
-                Direct URL to your profile image
-              </FormDescription>
-            </FormItem> */}
-
                 {/* Social Media Fields */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium">Social Media Accounts</h3>
@@ -362,12 +343,7 @@ export function IdentityProfile({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <img
-                            src="/icons/twitter.png"
-                            alt="Twitter"
-                            className="h-4 w-4"
-                            style={{ filter: resolvedTheme === 'dark' ? 'invert(1)' : 'none' }}
-                          />
+                          <ThemedIcon src="/icons/twitter.png" alt="Twitter" />
                           Twitter
                         </FormLabel>
                         <FormControl>
@@ -384,7 +360,7 @@ export function IdentityProfile({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <GithubIcon className="h-4 w-4" />
+                          <Github className="h-4 w-4" />
                           GitHub
                         </FormLabel>
                         <FormControl>
@@ -436,11 +412,11 @@ export function IdentityProfile({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div className="bg-background rounded-md p-3">
                       <p className="text-muted-foreground text-xs mb-1">Purchase Date</p>
-                      <p className="font-medium">{domainPurchaseDate.toLocaleDateString("fr-FR")}</p>
+                      <p className="font-medium">{domainPurchaseDate?.toLocaleDateString("fr-FR") ?? "-"}</p>
                     </div>
                     <div className="bg-background rounded-md p-3">
                       <p className="text-muted-foreground text-xs mb-1">Last Modified</p>
-                      <p className="font-medium">{lastModifiedDate.toLocaleDateString("fr-FR")}</p>
+                      <p className="font-medium">{lastModifiedDate?.toLocaleDateString("fr-FR") ?? "-"}</p>
                     </div>
                   </div>
                 </div>

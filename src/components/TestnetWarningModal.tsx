@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -10,25 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 
 export function TestnetWarningModal() {
-  const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    // Check if user chose to not show warning again
-    // const dontShowAgain = localStorage.getItem('testnetWarningDontShow')
-    // if (dontShowAgain !== 'true') {
-    //   setOpen(true)
-    // }
-    setOpen(true)
-  }, [])
-
-  const handleClose = () => {
-    setOpen(false)
-  }
-
-  // const handleDontShowAgain = () => {
-  //   localStorage.setItem('testnetWarningDontShow', 'true')
-  //   setOpen(false)
-  // }
+  const [open, setOpen] = useState(true)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -48,8 +30,7 @@ export function TestnetWarningModal() {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>Close</Button>
-          {/* <Button onClick={handleDontShowAgain}>Don't Show Again</Button> */}
+          <Button variant="outline" onClick={() => setOpen(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

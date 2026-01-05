@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 
 interface ConfirmedStepProps {
   domain: string;
-  onGoHome: () => void;
 }
 
 export function ConfirmedStep({ domain }: ConfirmedStepProps) {
