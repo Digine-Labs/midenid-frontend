@@ -27,6 +27,7 @@ const clearMidenIndexedDB = async () => {
 export const instantiateClient = async (
   { accountsToImport }: { accountsToImport: AccountId[] },
 ) => {
+  console.log('instantiateClient called from:', new Error().stack);
   const nodeEndpoint = 'https://rpc.testnet.miden.io';
 
   let client: WebClient;

@@ -5,10 +5,11 @@ import { motion } from "framer-motion";
 
 interface ConfirmedStepProps {
   domain: string;
+  noteId: string | null;
   onGoHome: () => void;
 }
 
-export function ConfirmedStep({ domain }: ConfirmedStepProps) {
+export function ConfirmedStep({ domain, noteId }: ConfirmedStepProps) {
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
       {/* Success Icon with Animation */}
@@ -32,7 +33,7 @@ export function ConfirmedStep({ domain }: ConfirmedStepProps) {
           transition={{ delay: 0.2 }}
           className="text-2xl md:text-3xl font-bold text-neutral-800 dark:text-neutral-200"
         >
-          Transaction Confirmed!
+          Transaction Sent!
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 10 }}
@@ -40,24 +41,28 @@ export function ConfirmedStep({ domain }: ConfirmedStepProps) {
           transition={{ delay: 0.3 }}
           className="text-muted-foreground text-sm md:text-base"
         >
-          Your domain has been successfully registered
+          Your domain will be registered once the transaction note is consumed
         </motion.p>
       </div>
 
-      {/* Domain Display */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="text-center"
-      >
-        <p className="text-sm text-muted-foreground mb-2">
-          Your new identity:
-        </p>
-        <div className="text-3xl md:text-4xl font-bold text-primary break-all">
-          {domain}<span className="whitespace-nowrap">.miden</span>
-        </div>
-      </motion.div>
+      {/* Transaction Status Link */}
+      {noteId && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center"
+        >
+          <a
+            href={`https://testnet.midenscan.com/note/${noteId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary hover:underline"
+          >
+            View transaction status on MidenScan →
+          </a>
+        </motion.div>
+      )}
     </div>
   );
 }

@@ -1,73 +1,51 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
-// import { Zap } from "lucide-react";
-import { PRICING_TIERS, calculateDomainPrice, TOKEN_SYMBOL, type PricingTier as PricingTierBase } from "@/shared/pricing";
-import { useWalletAccount } from "@/contexts/WalletAccountContext";
+import { TOKEN_SYMBOL, getDomainPrice } from "@/shared/pricing";
+import { useBalance } from "@/hooks/useBalance";
+import type { AccountId } from "@demox-labs/miden-sdk";
 
-interface PricingTier extends PricingTierBase {
-  price: number;
-}
+const FUN_TITLES = [
+  "Something new is cooking!",
+  "A newcomer is about to join!",
+  "Fresh arrival incoming!",
+  "New identity unlocking...",
+  "The adventure begins here!",
+  "Welcome to the neighborhood!",
+  "Your digital home awaits!",
+  "Ready to make history?",
+  "Claim your spot in the verse!",
+  "One step closer to greatness!",
+];
 
 interface RegistrationStepProps {
   domain: string;
+  buyer: AccountId;
+  paymentFaucet: AccountId;
   connected: boolean;
   isPurchasing: boolean;
-  selectedTier: PricingTier | null;
-  onPurchase: (tier: PricingTier) => void;
+  onPurchase: () => void;
   onTermsClick: () => void;
 }
 
 export function RegistrationStep({
   domain,
+  buyer,
+  paymentFaucet,
   connected,
   isPurchasing,
-  selectedTier,
   onPurchase,
-  onTermsClick
+  onTermsClick,
 }: RegistrationStepProps) {
-  const { balance } = useWalletAccount()
-  // Calculate pricing tiers based on domain length
-  const pricingTiers: PricingTier[] = useMemo(
-    () => {
-      const domainLength = domain.length;
-      return PRICING_TIERS.map(tier => ({
-        ...tier,
-        price: calculateDomainPrice(domainLength, tier.years, tier.displayYears),
-      }));
-    },
-    [domain]
-  );
+  const balance = useBalance({ accountId: buyer, faucetId: paymentFaucet });
+  console.log(`Bakance at reg step ${balance}`)
+  
+  const domainPrice = getDomainPrice(domain.length);
 
-  // Check if balance is insufficient for the first tier
-  const hasInsufficientBalance = useMemo(() => {
-    if (balance === null) return false; // Balance not loaded yet, don't disable
-    const requiredAmount = BigInt(pricingTiers[0]?.price * 1000000);
-    return balance < requiredAmount;
-  }, [balance, pricingTiers]);
-
-  // Fun title options
-  const funTitles = useMemo(
-    () => [
-      "Something new is cooking!",
-      "A newcomer is about to join!",
-      "Fresh arrival incoming!",
-      "New identity unlocking...",
-      "The adventure begins here!",
-      "Welcome to the neighborhood!",
-      "Your digital home awaits!",
-      "Ready to make history?",
-      "Claim your spot in the verse!",
-      "One step closer to greatness!",
-    ],
-    []
-  );
-
-  const randomTitle = useMemo(
-    () => funTitles[Math.floor(Math.random() * funTitles.length)],
-    [funTitles]
+  const [randomTitle] = useState(
+    () => FUN_TITLES[Math.floor(Math.random() * FUN_TITLES.length)]
   );
 
   return (
@@ -99,72 +77,10 @@ export function RegistrationStep({
           </div>
         ) : (
           <div className="space-y-3 px-4 ">
-            {/* Best Value - 5 Years */}
-
-            {/* THIS IS BUTTON FOR 5 YEARS TEMPORARILY DISABLED AND MADE IT 1 YEAR ONLY */}
 
             <div className="relative">
-              {/* {!walletHasDomain &&
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-0.5 rounded-full text-xs font-bold items-center gap-1 shadow-md z-10 flex" style={{ width: "190px" }}>
-                  <Zap className="w-3 h-3" />
-                  BEST VALUE - Save 40%
-                </div>} */}
-              <Button
-                onClick={() => onPurchase(pricingTiers[0])}
-                disabled={isPurchasing || hasInsufficientBalance}
-                className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
-                size="lg"
-              >
-                {isPurchasing && selectedTier?.years === 1 ? (
-                  "Processing..."
-                ) : hasInsufficientBalance ? (
-                  <div className="flex items-center gap-3">
-                    <span className="text-md xs:text-xl font-bold">Insufficient Balance</span>
-                    <span className="opacity-90">•</span>
-                    <span className="text-md xs:text-xl">{pricingTiers[0]?.price} {TOKEN_SYMBOL}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <span className="text-md xs:text-xl font-bold">Claim</span>
-                    <span className="opacity-90">•</span>
-                    <span className="text-md xs:text-xl">{pricingTiers[0]?.price} {TOKEN_SYMBOL}</span>
-                  </div>
-                )}
-              </Button>
+              {renderClaimButton(isPurchasing, balance, domainPrice, onPurchase)}
             </div>
-
-            {/* BUTTONS FOR 5 AND 3 YEARS TEMPORARILY DISABLED */}
-
-            {/* 3 Years Button and 1 Year Link on Same Line */}
-            {/* {!walletHasDomain &&
-              <div className="flex flex-col xs:flex-row items-center gap-3">
-                <Button
-                  onClick={() => onPurchase(pricingTiers[1])}
-                  disabled={isPurchasing || walletHasDomain}
-                  className="w-full xs:flex-1 px-4 py-6 bg-secondary text-accent-foreground hover:bg-accent/90"
-                  size="sm"
-                >
-                  {isPurchasing && selectedTier?.years === 3 ? (
-                    "Processing..."
-                  ) : (
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="font-semibold">3 Years</span>
-                      <span className="text-sm opacity-80">{pricingTiers[1]?.price} {TOKEN_SYMBOL}</span>
-                    </div>
-                  )}
-                </Button>
-                or */}
-            {/* 1 Year Text Link */}
-            {/* <button
-                  onClick={() => onPurchase(pricingTiers[0])}
-                  disabled={isPurchasing || walletHasDomain}
-                  className="text-sm text-muted-foreground hover:text-primary underline disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                >
-                  {isPurchasing && selectedTier?.years === 1
-                    ? "Processing..."
-                    : `1 year (${pricingTiers[0]?.price} ${TOKEN_SYMBOL})`}
-                </button>
-              </div>} */}
           </div>
         )}
 
@@ -181,4 +97,69 @@ export function RegistrationStep({
       </div>
     </>
   );
+}
+
+function renderClaimButton(isPurchasing: boolean, balance: bigint | null, domainPrice: number, onPurchase: () => void) {
+  // Loading state - balance not yet fetched
+  if (balance === null) {
+    return (
+      <Button
+        disabled={true}
+        className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
+        size="lg"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-md xs:text-xl font-bold">Loading balance...</span>
+        </div>
+      </Button>
+    );
+  }
+
+  const isBalanceEnough = balance >= BigInt(domainPrice * 1000000);
+
+  if (isBalanceEnough) {
+    if (isPurchasing) {
+      return (
+        <Button
+          onClick={onPurchase}
+          disabled={true}
+          className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
+          size="lg"
+        >
+          Processing...
+        </Button>
+      );
+    } else {
+      return (
+        <Button
+          onClick={onPurchase}
+          disabled={false}
+          className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
+          size="lg"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-md xs:text-xl font-bold">Claim</span>
+            <span className="opacity-90">•</span>
+            <span className="text-md xs:text-xl">{domainPrice} {TOKEN_SYMBOL}</span>
+          </div>
+        </Button>
+      );
+    }
+  } else {
+    // Balance not enough
+    return (
+      <Button
+        onClick={onPurchase}
+        disabled={true}
+        className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
+        size="lg"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-md xs:text-xl font-bold">Insufficient Balance</span>
+          <span className="opacity-90">•</span>
+          <span className="text-md xs:text-xl">{domainPrice} {TOKEN_SYMBOL}</span>
+        </div>
+      </Button>
+    );
+  }
 }

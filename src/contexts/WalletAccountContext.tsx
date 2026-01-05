@@ -5,7 +5,6 @@ import { bech32ToAccountId } from '@/lib/midenClient';
 import { getAccountAllDomains } from '@/api/accounts';
 import { useBalance } from '@/hooks/useBalance';
 import { MIDEN_FAUCET_CONTRACT_ADDRESS } from '@/shared/constants';
-import { usePendingTransactions } from '@/hooks/usePendingTransactions';
 import type { WalletAccountContextValue } from '@/types/wallet';
 
 const WalletAccountContext = createContext<WalletAccountContextValue | undefined>(undefined);
@@ -34,13 +33,7 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
   };
 
   // Monitor pending transactions
-  const {
-    pending: pendingTransactions,
-    isMonitoring: isMonitoringTransactions,
-    addPendingTransaction,
-    isDomainConfirmed,
-    confirmedDomains
-  } = usePendingTransactions(accountId?.toString(), refetch);
+
 
   // Convert Bech32 accountId to AccountId when wallet connects
   useEffect(() => {
@@ -119,11 +112,6 @@ export function WalletAccountProvider({ children }: { children: ReactNode }) {
         isLoading,
         refetch,
         // Transaction monitoring
-        pendingTransactions,
-        isMonitoringTransactions,
-        addPendingTransaction,
-        isDomainConfirmed,
-        confirmedDomains,
       }}
     >
       {children}

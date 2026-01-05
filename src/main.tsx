@@ -7,7 +7,6 @@ import { WalletProvider } from '@demox-labs/miden-wallet-adapter-react'
 import { MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter-miden'
 import { WalletModalProvider } from '@demox-labs/miden-wallet-adapter-reactui'
 import { createBrowserRouter, RouterProvider } from 'react-router'
-import { WalletAccountProvider } from '@/contexts/WalletAccountContext'
 
 const Home = lazy(() => import('@/pages/home/page'))
 const Identity = lazy(() => import('./pages/identity/page.tsx'))
@@ -73,11 +72,9 @@ createRoot(document.getElementById('root')!).render(
       wallets={wallets}
     >
       <WalletModalProvider>
-        <WalletAccountProvider>
           <ThemeProvider>
             <RouterProvider router={router} />
           </ThemeProvider>
-        </WalletAccountProvider>
       </WalletModalProvider>
     </WalletProvider>
   </StrictMode>,

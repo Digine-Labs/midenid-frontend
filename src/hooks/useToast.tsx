@@ -72,6 +72,12 @@ const toastConfig: Record<ToastCause, ToastConfig> = {
     description: 'Delays may occur due to testnet slowness. Please wait...',
     icon: <AlertTriangle className="h-5 w-5" />,
   },
+  [ToastCause.DOMAIN_CHECK_FAILED]: {
+    type: 'error',
+    title: 'Check Failed',
+    description: 'Failed to check domain availability. Please try again.',
+    icon: <AlertTriangle className="h-5 w-5" />,
+  },
   [ToastCause.PROFILE_CREATED]: {
     type: 'success',
     title: 'Success',
