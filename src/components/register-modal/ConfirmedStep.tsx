@@ -4,12 +4,11 @@ import { CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ConfirmedStepProps {
-  domain: string;
   noteId: string | null;
   onGoHome: () => void;
 }
 
-export function ConfirmedStep({ domain, noteId }: ConfirmedStepProps) {
+export function ConfirmedStep({ noteId }: ConfirmedStepProps) {
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
       {/* Success Icon with Animation */}

@@ -9,7 +9,6 @@ import {
 import { type ReactNode, useState, useEffect } from "react";
 import { cloneElement, isValidElement, useMemo } from "react";
 import { useWallet } from "@demox-labs/miden-wallet-adapter";
-import { useWalletAccount } from "@/contexts/WalletAccountContext";
 import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
@@ -294,7 +293,7 @@ function RegisterModalContent({
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
               >
-                <ConfirmedStep domain={domain} noteId={noteId} onGoHome={handleGoHome} />
+                <ConfirmedStep noteId={noteId} onGoHome={handleGoHome} />
               </motion.div>
             )}
           </AnimatePresence>
