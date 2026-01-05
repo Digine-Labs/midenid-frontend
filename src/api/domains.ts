@@ -5,6 +5,7 @@
 import type {
   EnrichedDomainResponse,
   ApiResponse,
+  DomainAvailabilityResponse
 } from '@/types/api';
 import { API_BASE } from '@/shared/constants';
 
@@ -94,12 +95,14 @@ export async function resolveDomain(
 
 /**
  * Check if a domain is available for registration
- * @param domain - Domain name to check
- * @returns Object with available boolean (true = domain is available, false = already taken)
+ * Uses /domains/{domain}/availability endpoint
+ * Returns availability status with block number for freshness indication
+ * @param domain - Domain name to check (without .miden suffix)
+ * @returns DomainAvailabilityResponse with available boolean and block_number
  */
 export async function checkDomainAvailability(
   domain: string
-): Promise<ApiResponse<{ available: boolean }>> {
+): Promise<ApiResponse<DomainAvailabilityResponse>> {
   if (!domain) {
     return {
       success: false,
@@ -109,22 +112,14 @@ export async function checkDomainAvailability(
 
   try {
     const response = await fetch(
-      `${API_BASE}/domains/${encodeURIComponent(domain)}`
+      `${API_BASE}/domains/${encodeURIComponent(domain)}/availability`
     );
 
-    if (response.status === 404) {
-      // 404 = Domain not found = Available for registration
-      return {
-        success: true,
-        data: { available: true },
-      };
-    }
-
     if (response.ok) {
-      // 200 = Domain found = Already taken
+      const data: DomainAvailabilityResponse = await response.json();
       return {
         success: true,
-        data: { available: false },
+        data,
       };
     }
 

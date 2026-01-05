@@ -3,13 +3,14 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
 import { encodeDomain, hasStorageValue } from '@/utils'
-import { AccountId, type Word } from '@demox-labs/miden-sdk'
+import { AccountId } from '@demox-labs/miden-sdk'
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
-import { useStorage } from '@/hooks/useStorage'
+import { getMidenClient } from '@/lib/MidenClientSingleton'
 import { RegisterModal } from '@/components/RegisterModal'
 import { useWallet, useWalletModal } from '@demox-labs/miden-wallet-adapter'
 import { useToast } from '@/hooks/useToast'
 import { ToastCause } from '@/types/toast'
+import { checkDomainAvailability } from '@/api'
 
 interface DomainCardProps {
   domain: string
@@ -18,67 +19,142 @@ interface DomainCardProps {
 export function DomainCard({ domain }: DomainCardProps) {
   const [loading, setLoading] = useState(true)
   const [domainAvailable, setDomainAvailable] = useState<boolean | null>(null)
-  const [debouncedStorageKey, setDebouncedStorageKey] = useState<Word | undefined>(undefined)
+  const [apiCheckComplete, setApiCheckComplete] = useState(false)
+  const [apiCheckFailed, setApiCheckFailed] = useState(false)
   const { connected } = useWallet();
   const walletModal = useWalletModal();
   const showToast = useToast();
   const warningShownRef = useRef(false);
+  const isCheckingRef = useRef(false);
 
   const contractId = useMemo(
     () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
     []
   );
 
-  // Encode domain name for storage lookup
-  const storageKey = useMemo(() => {
-    if (!domain) return undefined;
-    try {
-      return encodeDomain(domain);
-    } catch (error) {
-      console.error("Failed to encode domain:", error);
-      return undefined;
+  // PRIMARY: API check for domain availability
+  useEffect(() => {
+    if (!domain) {
+      setDomainAvailable(null);
+      setLoading(false);
+      setApiCheckComplete(false);
+      setApiCheckFailed(false);
+      isCheckingRef.current = false;
+      return;
     }
+
+    if (isCheckingRef.current) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const checkAvailabilityViaAPI = async () => {
+      isCheckingRef.current = true;
+      setLoading(true);
+      setApiCheckComplete(false);
+      setApiCheckFailed(false);
+
+      try {
+        const result = await checkDomainAvailability(domain);
+
+        if (isCancelled) return;
+
+        if (result.success && result.data) {
+          setDomainAvailable(result.data.available);
+          setApiCheckComplete(true);
+          setApiCheckFailed(false);
+          setLoading(false);
+          isCheckingRef.current = false;
+        } else {
+          console.warn('API check failed, falling back to storage:', result.error);
+          setApiCheckFailed(true);
+          setApiCheckComplete(true);
+          isCheckingRef.current = false;
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.warn('API check error, falling back to storage:', error);
+          setApiCheckFailed(true);
+          setApiCheckComplete(true);
+          isCheckingRef.current = false;
+        }
+      }
+    };
+
+    checkAvailabilityViaAPI();
+
+    return () => {
+      isCancelled = true;
+      isCheckingRef.current = false; // Reset on cleanup
+    };
   }, [domain]);
 
-  // Debounce storageKey updates (500ms delay)
+  // FALLBACK: Manual storage check (only runs if API fails)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedStorageKey(storageKey)
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [storageKey])
-
-  // Check if domain is registered by querying storage slot 5 (Name -> ID mapping)
-  // Uses debounced storageKey to avoid excessive lookups while typing
-  const { storageItem, isLoading: isCheckingStorage } = useStorage({
-    accountId: contractId,
-    index: 5,
-    key: debouncedStorageKey
-  });
-
-  // Check registration status
-  const isRegistered = useMemo(() => hasStorageValue(storageItem), [storageItem]);
-
-
-  // Update domain availability based on storage check
-  useEffect(() => {
-    if (!domain || !storageKey) {
-      setDomainAvailable(prev => prev !== null ? null : prev);
-      setLoading(prev => prev !== false ? false : prev);
+    // Only run if API check is complete and failed
+    if (!apiCheckComplete || !apiCheckFailed) {
       return;
     }
 
-    // Show loading while storage is being fetched
-    if (isCheckingStorage) {
+    if (!domain) {
+      setDomainAvailable(null);
+      setLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const checkStorageAvailability = async () => {
       setLoading(true);
-      return;
-    }
 
-    // Storage fetch completed, update availability
-    setDomainAvailable(!isRegistered);
-    setLoading(false);
-  }, [domain, storageKey, isCheckingStorage, isRegistered])
+      try {
+        // Encode domain for storage lookup
+        const storageKey = encodeDomain(domain);
+
+        // Get Miden client singleton and WebClient instance
+        const clientSingleton = getMidenClient();
+        const client = await clientSingleton.getClient();
+        await clientSingleton.importAccount(contractId)
+
+        // Sync state to get latest blockchain data
+        await client.syncState();
+
+        // Get contract account
+        const contractAccount = await client.getAccount(contractId);
+
+        if (isCancelled) return;
+
+        // Query storage slot 5 (Name -> ID mapping)
+        let domainWord;
+        try {
+          domainWord = contractAccount?.storage().getMapItem(5, storageKey);
+        } catch (error) {
+          console.warn('Failed to get domain from storage:', error);
+        }
+
+        // Check if domain is registered
+        const isRegistered = hasStorageValue(domainWord);
+
+        if (!isCancelled) {
+          setDomainAvailable(!isRegistered);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Storage check failed:', error);
+        if (!isCancelled) {
+          setDomainAvailable(null);
+          setLoading(false);
+        }
+      }
+    };
+
+    checkStorageAvailability();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [apiCheckComplete, apiCheckFailed, domain, contractId])
 
   // Show warning toast if loading takes too long
   useEffect(() => {
@@ -88,13 +164,13 @@ export function DomainCard({ domain }: DomainCardProps) {
       return;
     }
 
-    // Set timer to show warning after 5500ms
+    // Set timer to show warning after 5000ms
     const timer = setTimeout(() => {
       if (loading && !warningShownRef.current) {
         showToast(ToastCause.DOMAIN_CHECK_SLOW);
         warningShownRef.current = true;
       }
-    }, 5500);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, [loading, domain, showToast]);

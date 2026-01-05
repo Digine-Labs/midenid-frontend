@@ -35,6 +35,12 @@ export interface EnrichedDomainResponse {
   profile?: Profile | null;
 }
 
+export interface DomainAvailabilityResponse {
+  domain: string;
+  available: boolean;
+  block_number: number;
+}
+
 // Profile Responses
 export interface Profile {
   id: number;
