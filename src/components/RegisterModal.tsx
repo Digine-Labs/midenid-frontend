@@ -24,7 +24,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RegistrationStep } from "./register-modal/RegistrationStep";
 import { ProcessingStep } from "./register-modal/ProcessingStep";
 import { ConfirmedStep } from "./register-modal/ConfirmedStep";
-import { instantiateClient } from "@/lib/midenClient";
+import { useClient } from "@/contexts/ClientContext";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
@@ -77,6 +77,7 @@ function RegisterModalContent({
   const { connected, requestTransaction } = useWallet();
   const { accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
   const { onRegistrationComplete } = useDomainRegistration();
+  const { client, isReady, importAccounts } = useClient();
   const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionSubmitted, setTransactionSubmitted] = useState(false);
@@ -175,6 +176,15 @@ function RegisterModalContent({
 
   const handlePurchase = async (tier: PricingTier) => {
     if (connected && accountId && requestTransaction) {
+      // Check if client is ready
+      if (!client || !isReady) {
+        setTransactionFailure({
+          reason: TransactionFailureReason.TRANSACTION_ERROR,
+          id: Date.now()
+        });
+        return;
+      }
+
       setTransactionSubmitted(false);
       setTransactionFailure(null);
       setIsPurchasing(true);
@@ -185,7 +195,8 @@ function RegisterModalContent({
 
         const domainWord = encodeDomain(domain);
 
-        const client = await instantiateClient({ accountsToImport: [accountId, destinationAccountId] })
+        // Import accounts before transaction
+        await importAccounts([accountId, destinationAccountId]);
 
         const noteInputs = new NoteInputs(
           new MidenArrays.FeltArray([
@@ -214,8 +225,6 @@ function RegisterModalContent({
         })
 
         console.log("note_id:", noteId)
-
-        client.terminate()
 
         // Transaction approved by wallet, show processing step
         setTransactionSubmitted(true);

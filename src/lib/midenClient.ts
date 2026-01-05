@@ -88,14 +88,14 @@ export function generateRandomSerialNumber(): Word {
   ]);
 }
 
-export async function hasRegisteredDomain(domain: string): Promise<boolean> {
+export async function hasRegisteredDomain(
+  client: WebClient,
+  domain: string
+): Promise<boolean> {
   const maxAttempts = 15 // 15 attempts * 5 seconds = 75 seconds
   let attempts = 0
 
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
-
-  let client = await instantiateClient({ accountsToImport: [contractId] })
-
   const storageKey = encodeDomain(domain);
 
   while (attempts < maxAttempts) {
@@ -113,15 +113,12 @@ export async function hasRegisteredDomain(domain: string): Promise<boolean> {
     const hasDomain = hasStorageValue(domainWord);
 
     if (hasDomain) {
-      client.terminate()
       return true
     }
 
     await new Promise(resolve => setTimeout(resolve, 5000))
     attempts++
   }
-
-  client.terminate()
 
   return false
 }

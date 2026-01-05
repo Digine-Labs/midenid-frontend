@@ -1,6 +1,6 @@
 import { type AccountId, WebClient, Word } from '@demox-labs/miden-sdk';
 import { useEffect, useState, useMemo } from 'react';
-import { instantiateClient } from '@/lib/midenClient';
+import { useClient } from '@/contexts/ClientContext';
 import type { StorageParams } from '@/types/hooks';
 
 const getStorageItemFromClient = async (client: WebClient, accountId: AccountId, index: number) => {
@@ -52,6 +52,7 @@ export const useStorage = (
     const [storageHex, setStorageHex] = useState<string | undefined>(undefined);
     const [storageU64s, setStorageU64s] = useState<BigUint64Array | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
+    const { client, isReady, importAccounts } = useClient();
 
     // Safely serialize key to hex for stable dependency comparison
     const keyHex = useMemo(() => {
@@ -64,11 +65,15 @@ export const useStorage = (
         }
     }, [key]);
 
+    console.log("111")
+
     useEffect(() => {
         let isCancelled = false;
 
         const initAndFetch = async () => {
             setIsLoading(true);
+
+            console.log("222")
 
             // If key was provided but serialization failed, skip fetch
             if (key !== undefined && keyHex === undefined) {
@@ -82,17 +87,20 @@ export const useStorage = (
                 return;
             }
 
-            if (!accountId) {
+            console.log("333")
+
+            if (!accountId || !isReady || !client) {
                 setIsLoading(false);
                 return;
             }
 
-            let client: WebClient | null = null;
-
             try {
-                client = await instantiateClient({ accountsToImport: [accountId] });
+                // Import account before first use
+                await importAccounts([accountId]);
 
-                if (!client || isCancelled) return;
+                console.log("444")
+
+                if (isCancelled) return;
 
                 await client.syncState();
 
@@ -128,11 +136,6 @@ export const useStorage = (
                 if (!isCancelled) {
                     setIsLoading(false);
                 }
-                if (client) {
-                    client.terminate();
-                }
-
-                client?.terminate()
             }
         };
 
@@ -141,7 +144,7 @@ export const useStorage = (
         return () => {
             isCancelled = true;
         };
-    }, [accountId, index, keyHex]); // Include keyHex so effect reruns when key changes
+    }, [accountId, index, keyHex, client, isReady, importAccounts]);
 
     return {
         storageItem,      // Raw Word object

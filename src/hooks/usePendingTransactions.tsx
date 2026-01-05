@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { AccountId } from '@demox-labs/miden-sdk';
 import { hasRegisteredDomain } from '@/lib/midenClient';
+import { useClient } from '@/contexts/ClientContext';
 import { createDomainMetadata } from '@/api';
+import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared';
 import {
   getPendingTransactions,
   savePendingTransaction,
@@ -17,6 +20,7 @@ export const usePendingTransactions = (
 ) => {
   const [pending, setPending] = useState<PendingTransaction[]>([]);
   const [isMonitoring, setIsMonitoring] = useState(false);
+  const { client, isReady, importAccounts } = useClient();
 
   // UI state
   const [confirmedDomains, setConfirmedDomains] =
@@ -31,6 +35,14 @@ export const usePendingTransactions = (
    */
   const inFlightDomainsRef = useRef<Set<string>>(new Set());
   const completedDomainsRef = useRef<Set<string>>(new Set());
+
+  // Import contract account once when client is ready
+  useEffect(() => {
+    if (!client || !isReady || !accountId) return;
+
+    const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
+    importAccounts([contractId]);
+  }, [client, isReady, accountId, importAccounts]);
 
   // Load from storage
   useEffect(() => {
@@ -94,7 +106,7 @@ export const usePendingTransactions = (
     let isActive = true;
 
     const monitorTransactions = async () => {
-      if (!isActive) return;
+      if (!isActive || !client || !isReady) return;
 
       const results: TransactionResult[] = [];
 
@@ -113,7 +125,7 @@ export const usePendingTransactions = (
         inFlightDomainsRef.current.add(domain);
 
         try {
-          const isRegistered = await hasRegisteredDomain(domain);
+          const isRegistered = await hasRegisteredDomain(client, domain);
 
           if (!isRegistered) {
             inFlightDomainsRef.current.delete(domain);
@@ -194,7 +206,7 @@ export const usePendingTransactions = (
       isActive = false;
       clearInterval(intervalId);
     };
-  }, [pending, removePending]);
+  }, [pending, removePending, client, isReady]);
 
   return {
     pending,

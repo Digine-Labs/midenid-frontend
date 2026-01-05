@@ -53,8 +53,8 @@ export function DomainCard({ domain }: DomainCardProps) {
   // Update domain availability based on storage check
   useEffect(() => {
     if (!domain || !storageKey) {
-      setDomainAvailable(null);
-      setLoading(false);
+      setDomainAvailable(prev => prev !== null ? null : prev);
+      setLoading(prev => prev !== false ? false : prev);
       return;
     }
 
@@ -83,7 +83,7 @@ export function DomainCard({ domain }: DomainCardProps) {
         showToast(ToastCause.DOMAIN_CHECK_SLOW);
         warningShownRef.current = true;
       }
-    }, 4000);
+    }, 50000);
 
     return () => clearTimeout(timer);
   }, [loading, domain, showToast]);
