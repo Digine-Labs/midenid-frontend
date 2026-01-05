@@ -36,25 +36,27 @@ export function MobileSidebar() {
             <SheetClose asChild>
               <Link
                 to="/"
-                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
+                className="text-base font-medium transition-colors py-2 px-3 rounded-md hover:bg-accent"
               >
                 Home
               </Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link
-                to="/my-domains"
-                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
+              <div
+                className="relative text-base text-gray-300 dark:text-gray-500 font-medium transition-colors py-2 px-3 rounded-md hover:bg-accent"
               >
                 My Domains
-              </Link>
+                <span className="absolute -top-2 -right-1 text-[8px] font-semibold text-primary">
+                  SOON
+                </span>
+              </div>
             </SheetClose>
             <SheetClose asChild>
               <a
                 href="https://docs.miden.name/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-base font-medium hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-accent"
+                className="text-base font-medium transition-colors py-2 px-3 rounded-md hover:bg-accent"
               >
                 Docs
               </a>

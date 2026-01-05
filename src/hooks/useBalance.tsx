@@ -30,15 +30,15 @@ export const useBalance = (
                 return;
             }
             console.log('Refreshing balance')
-            const client = await instantiateClient({ accountsToImport: []});
-
-            // Import account (lazy init happens here if needed)
-            await client.importAccountById(accountId);
+            const client = await instantiateClient({ accountsToImport: [] });
 
             const refreshBalance = async () => {
                 if (!isActive) return;
 
                 try {
+                    // Import account (lazy init happens here if needed)
+                    await client.importAccountById(accountId);
+
                     await client.syncState();
                     const newBalance = await getBalanceFromClient(client, accountId, faucetId);
                     if (isActive) {
@@ -46,6 +46,7 @@ export const useBalance = (
                     }
                 } catch (error) {
                     console.error('Failed to fetch balance:', error);
+                    setBalance(BigInt(0))
                 }
             };
 
