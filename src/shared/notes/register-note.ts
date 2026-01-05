@@ -1,0 +1,17 @@
+export const REGISTER_NOTE_SCRIPT = `
+use.miden_name::naming
+use.miden::active_note
+use.std::sys
+
+const.TOKEN_PTR=0
+const.DOMAIN_PTR=4
+# Input (arguments): [TOKEN, DOMAIN]
+begin
+    push.0
+    exec.active_note::get_inputs
+    drop drop
+    padw mem_loadw_be.DOMAIN_PTR padw mem_loadw_be.TOKEN_PTR
+    # [TOKEN, DOMAIN, REG_LEN]
+    call.naming::register
+    exec.sys::truncate_stack
+end`;

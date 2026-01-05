@@ -1,0 +1,19 @@
+export const REGISTER_WITH_REFERRER = `
+use.miden_name::naming
+use.miden::active_note
+use.std::sys
+
+const.REFERRER_PTR=0
+const.TOKEN_PTR=4
+const.DOMAIN_PTR=8
+const.REG_LEN_PTR=12
+# Input (arguments): [REFERRER, TOKEN, DOMAIN, REG_LEN]
+begin
+    push.0
+    exec.active_note::get_inputs
+    drop drop
+    padw mem_loadw_be.REG_LEN_PTR padw mem_loadw_be.DOMAIN_PTR padw mem_loadw_be.TOKEN_PTR padw mem_loadw_be.REFERRER_PTR
+    # [REFERRER ,TOKEN, DOMAIN, REG_LEN]
+    call.naming::register_with_referrer
+    exec.sys::truncate_stack
+end`

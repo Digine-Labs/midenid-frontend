@@ -2,17 +2,17 @@ import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { ThemeProvider } from '@/components/theme-provider'
+import { ThemeProvider } from '@/components/ThemeProvider.tsx'
 import { WalletProvider } from '@demox-labs/miden-wallet-adapter-react'
-import { MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter'
+import { MidenWalletAdapter } from '@demox-labs/miden-wallet-adapter-miden'
 import { WalletModalProvider } from '@demox-labs/miden-wallet-adapter-reactui'
 import { createBrowserRouter, RouterProvider } from 'react-router'
-import { MidenClientProvider } from '@/contexts/MidenClientContext'
+import { ClientProvider } from '@/contexts/ClientContext'
 import { WalletAccountProvider } from '@/contexts/WalletAccountContext'
 
 const Home = lazy(() => import('@/pages/home/page'))
 const Identity = lazy(() => import('./pages/identity/page.tsx'))
-const MyDomains = lazy(() => import('./pages/myDomains/page.tsx'))
+const MyDomains = lazy(() => import('./pages/my-domains/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
 const PageLoader = () => (
@@ -74,13 +74,13 @@ createRoot(document.getElementById('root')!).render(
       wallets={wallets}
     >
       <WalletModalProvider>
-        <MidenClientProvider>
+        <ClientProvider>
           <WalletAccountProvider>
             <ThemeProvider>
               <RouterProvider router={router} />
             </ThemeProvider>
           </WalletAccountProvider>
-        </MidenClientProvider>
+        </ClientProvider>
       </WalletModalProvider>
     </WalletProvider>
   </StrictMode>,

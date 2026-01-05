@@ -12,16 +12,18 @@ import {
     NoteType,
     OutputNote,
     TransactionRequestBuilder,
-    MidenArrays
+    MidenArrays,
+    WebClient
 } from '@demox-labs/miden-sdk';
 import {
     CustomTransaction,
     type MidenTransaction,
     TransactionType,
-} from "@demox-labs/miden-wallet-adapter";
-import { generateRandomSerialNumber, accountIdToBech32, instantiateClient } from "./midenClient";
+} from "@demox-labs/miden-wallet-adapter-base";
+import { generateRandomSerialNumber, accountIdToBech32 } from "./midenClient";
 
 export interface NoteFromMasmParams {
+    client: WebClient
     senderAccountId: AccountId;
     destinationAccountId: AccountId;
     noteScript: string;
@@ -77,6 +79,7 @@ export interface NoteFromMasmParams {
  * 
  */
 export async function transactionCreator({
+    client,
     senderAccountId,
     destinationAccountId,
     noteScript,
@@ -86,14 +89,13 @@ export async function transactionCreator({
     faucetId,
     amount,
     requestTransaction,
-}: NoteFromMasmParams): Promise<{ txId: string; noteId: string }> {
+}: NoteFromMasmParams): Promise<{ txId: string; noteId: string, blockNumber?: number }> {
     if (typeof window === "undefined") {
         console.warn("webClient() can only run in the browser");
         return { txId: "N/A", noteId: "N/A" };
     }
 
     try {
-        const client = await instantiateClient({ accountsToImport: [senderAccountId, destinationAccountId] })
 
         const builder = client.createScriptBuilder();
 
@@ -131,7 +133,7 @@ export async function transactionCreator({
 
         const noteId = note.id().toString();
 
-        const noteArray = new MidenArrays().OutputNoteArray([OutputNote.full(note)]);
+        const noteArray = new MidenArrays.OutputNoteArray([OutputNote.full(note)]);
 
         let transactionRequest = new TransactionRequestBuilder()
             .withOwnOutputNotes(noteArray)
@@ -152,9 +154,11 @@ export async function transactionCreator({
             payload: tx,
         });
 
-        client.terminate()
+        const state = await client.syncState();
 
-        return { txId, noteId };
+        const blockNumber = state.blockNum()
+
+        return { txId, noteId, blockNumber };
     } catch (error) {
         console.error("Note transaction failed:", error);
         throw new Error("Note transaction failed");

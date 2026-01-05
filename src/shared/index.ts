@@ -6,7 +6,10 @@ export {
 } from './constants';
 
 // Contracts
-export { MIDEN_ID_CONTRACT_CODE } from './contracts/miden-contract';
+export { MIDEN_NAME_CONTRACT_CODE } from './contracts/miden-name';
 
 // Notes
-export { REGISTER_NOTE_SCRIPT } from './notes/miden-register-note';
+export { EXTEND_DOMAIN_SCRIPT } from './notes/extend-domain';
+export { REGISTER_WITH_REFERRER } from './notes/register-with-referrer';
+export { REGISTER_NOTE_SCRIPT } from './notes/register-note';
+export { ACTIVATE_DOMAIN } from './notes/activate-domain'

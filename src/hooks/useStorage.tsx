@@ -1,12 +1,7 @@
 import { type AccountId, type WebClient, Word } from '@demox-labs/miden-sdk';
 import { useEffect, useState, useMemo } from 'react';
-import { useMidenClient } from '@/contexts/MidenClientContext';
-
-interface StorageParams {
-    readonly accountId: AccountId;
-    readonly index: number;
-    readonly key?: Word;
-}
+import { useClient } from '@/contexts/ClientContext';
+import type { StorageParams } from '@/types/hooks';
 
 const getStorageItemFromClient = async (client: WebClient, accountId: AccountId, index: number) => {
     try {
@@ -57,7 +52,7 @@ export const useStorage = (
     const [storageHex, setStorageHex] = useState<string | undefined>(undefined);
     const [storageU64s, setStorageU64s] = useState<BigUint64Array | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
-    const { getClient } = useMidenClient();
+    const { client, isReady, importAccounts } = useClient();
 
     // Safely serialize key to hex for stable dependency comparison
     const keyHex = useMemo(() => {
@@ -70,11 +65,15 @@ export const useStorage = (
         }
     }, [key]);
 
+    console.log("111")
+
     useEffect(() => {
         let isCancelled = false;
 
         const initAndFetch = async () => {
             setIsLoading(true);
+
+            console.log("222")
 
             // If key was provided but serialization failed, skip fetch
             if (key !== undefined && keyHex === undefined) {
@@ -88,10 +87,22 @@ export const useStorage = (
                 return;
             }
 
-            try {
-                const client = await getClient();
+            console.log("333")
 
-                if (!client || !accountId || isCancelled) return;
+            if (!accountId || !isReady || !client) {
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                // Import account before first use
+                await importAccounts([accountId]);
+
+                console.log("444")
+
+                if (isCancelled) return;
+
+                await client.syncState();
 
                 let item;
                 if (key !== undefined) {
@@ -133,7 +144,7 @@ export const useStorage = (
         return () => {
             isCancelled = true;
         };
-    }, [accountId, index, keyHex, getClient]); // Include keyHex so effect reruns when key changes
+    }, [accountId, index, keyHex, client, isReady, importAccounts]);
 
     return {
         storageItem,      // Raw Word object

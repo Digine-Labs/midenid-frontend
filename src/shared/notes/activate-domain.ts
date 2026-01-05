@@ -1,0 +1,18 @@
+export const ACTIVATE_DOMAIN = `
+use.miden_name::naming
+use.miden::active_note
+use.std::sys
+
+const.DOMAIN=0
+
+# Input (arguments): [DOMAIN]
+begin
+    push.0
+    exec.active_note::get_inputs
+    drop drop
+    mem_loadw_be.DOMAIN
+    # [DOMAIN]
+    call.naming::activate_domain
+    exec.sys::truncate_stack
+end
+`

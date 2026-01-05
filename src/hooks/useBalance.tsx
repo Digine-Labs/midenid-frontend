@@ -1,12 +1,8 @@
 import { type AccountId, type WebClient } from '@demox-labs/miden-sdk';
 import { useEffect, useState } from 'react';
 import { safeAccountImport } from '@/lib/midenClient';
-import { useMidenClient } from '@/contexts/MidenClientContext';
-
-interface BalanceParams {
-    readonly accountId?: AccountId;
-    readonly faucetId?: AccountId;
-}
+import { useClient } from '@/contexts/ClientContext';
+import type { BalanceParams } from '@/types/hooks';
 
 const getBalanceFromClient = async (
     client: WebClient,
@@ -22,14 +18,20 @@ export const useBalance = (
     { accountId, faucetId }: BalanceParams,
 ) => {
     const [balance, setBalance] = useState<bigint | null>(null);
-    const { client, syncClient } = useMidenClient();
+    const { client, isReady, importAccounts } = useClient();
 
     useEffect(() => {
         let clear: number;
         let isActive = true;
 
         const initAndRefresh = async () => {
-            if (!accountId || !faucetId || !client) return;
+            if (!accountId || !faucetId || !isReady || !client) {
+                setBalance(null);
+                return;
+            }
+
+            // Import account before first use
+            await importAccounts([accountId]);
 
             const refreshBalance = async () => {
                 if (!isActive || !client) return;
@@ -46,7 +48,7 @@ export const useBalance = (
             };
 
             await refreshBalance();
-            clear = setInterval(refreshBalance, 10000);
+            clear = setInterval(refreshBalance, 15000);
         };
 
         initAndRefresh();
@@ -54,7 +56,7 @@ export const useBalance = (
             isActive = false;
             clearInterval(clear);
         };
-    }, [faucetId, accountId, client, syncClient]);
+    }, [faucetId, accountId, client, isReady, importAccounts]);
 
     return balance;
 };
