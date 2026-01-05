@@ -108,6 +108,30 @@ const toastConfig: Record<ToastCause, ToastConfig> = {
     description: 'Failed to submit profile. Please try again.',
     icon: <AlertTriangle className="h-5 w-5" />,
   },
+  [ToastCause.IMAGE_UPLOAD_SUCCESS]: {
+    type: 'success',
+    title: 'Success',
+    description: 'Profile picture uploaded successfully!',
+    icon: <CheckCircle className="h-5 w-5" />,
+  },
+  [ToastCause.IMAGE_UPLOAD_FAILED]: {
+    type: 'error',
+    title: 'Upload Failed',
+    description: 'Failed to upload profile picture. Please try again.',
+    icon: <AlertTriangle className="h-5 w-5" />,
+  },
+  [ToastCause.IMAGE_INVALID_TYPE]: {
+    type: 'error',
+    title: 'Invalid File',
+    description: 'Please select an image file.',
+    icon: <AlertTriangle className="h-5 w-5" />,
+  },
+  [ToastCause.IMAGE_TOO_LARGE]: {
+    type: 'error',
+    title: 'File Too Large',
+    description: 'Image must be less than 5MB.',
+    icon: <AlertTriangle className="h-5 w-5" />,
+  },
 };
 
 export function useToast() {

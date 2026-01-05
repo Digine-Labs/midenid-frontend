@@ -147,6 +147,73 @@ export async function deleteProfile(domain: string): Promise<ApiResponse<void>> 
 }
 
 /**
+ * Upload profile picture with signature authentication
+ * @param domain - The domain name
+ * @param file - The image file to upload
+ * @param signatureAuth - Signature authentication data
+ * @returns API response with the uploaded image URL
+ */
+export async function uploadProfilePicture(
+  domain: string,
+  file: File,
+  signatureAuth: {
+    message_hex: string;
+    pubkey_hex: string;
+    signature_hex: string;
+  }
+): Promise<ApiResponse<{ image_url: string }>> {
+  if (!domain) {
+    return {
+      success: false,
+      error: 'Domain name is required',
+    };
+  }
+
+  if (!file) {
+    return {
+      success: false,
+      error: 'File is required',
+    };
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('message_hex', signatureAuth.message_hex);
+    formData.append('pubkey_hex', signatureAuth.pubkey_hex);
+    formData.append('signature_hex', signatureAuth.signature_hex);
+
+    const response = await fetch(
+      `${API_BASE}/upload/profile-picture/${encodeURIComponent(domain)}`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        error: `HTTP ${response.status}: ${errorText}`,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data: { image_url: data.image_url },
+    };
+  } catch (error) {
+    console.error('Failed to upload profile picture:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * Batch get profiles for multiple domains
  * @param domains - Array of domain names to fetch profiles for
  * @returns Batch response with profile results

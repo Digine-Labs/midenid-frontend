@@ -12,8 +12,25 @@ import { useWallet } from "@demox-labs/miden-wallet-adapter";
 import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
-} from "@/shared/constants";
-import { AccountId, Felt } from "@demox-labs/miden-sdk";
+  REGISTER_NOTE_SCRIPT,
+  MIDEN_NAME_CONTRACT_CODE,
+} from "@/shared";
+import {
+  AccountId,
+  Felt,
+  FungibleAsset,
+  Note,
+  NoteAssets,
+  NoteExecutionHint,
+  NoteInputs,
+  NoteMetadata,
+  NoteRecipient,
+  NoteTag,
+  NoteType,
+  MidenArrays,
+  OutputNote,
+  TransactionRequestBuilder,
+} from "@demox-labs/miden-sdk";
 import { useNavigate } from "react-router";
 import { useToast } from "@/hooks/useToast";
 import { ToastCause } from "@/types/toast";
@@ -22,12 +39,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RegistrationStep } from "./register-modal/RegistrationStep";
 import { ProcessingStep } from "./register-modal/ProcessingStep";
 import { ConfirmedStep } from "./register-modal/ConfirmedStep";
-import { transactionCreator } from "@/lib/transactionCreator";
-import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
-import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
+import { bech32ToAccountId, accountIdToBech32, instantiateClient, generateRandomSerialNumber } from "@/lib/midenClient";
+import { createDomainMetadata, getBlockNumber } from "@/api/metadata";
 import { getDomainPrice } from "@/shared/pricing";
-import { bech32ToAccountId, instantiateClient } from "@/lib/midenClient";
+import {
+  CustomTransaction,
+  TransactionType,
+} from "@demox-labs/miden-wallet-adapter-base";
 
 // Transaction failure reason type
 export const TransactionFailureReason = {
@@ -68,8 +87,6 @@ function RegisterModalContent({
 }: {
   domain: string;
 }) {
-  const domainPrice = getDomainPrice(domain.length);
-  // MESS
   const { connected, requestTransaction, address } = useWallet();
   //const { accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
   const showToast = useToast();
@@ -151,49 +168,106 @@ function RegisterModalContent({
 
   if (!accountId) return null;
   const handlePurchase = async () => {
-    if (connected && accountId && requestTransaction) {
+    if (connected && accountId && requestTransaction && address) {
       setTransactionFailure(null);
       setIsPurchasing(true);
       setCurrentStep("processing");
       try {
-        const client = await instantiateClient({ accountsToImport: []});
-        // We dont need to sync client we just create note and let wallet sync and broadcasts it
+        // Initialize the Miden client to compile note script
+        const client = await instantiateClient({ accountsToImport: [] });
 
+        // Build the note script
+        const builder = client.createScriptBuilder();
+        const registerComponentLib = builder.buildLibrary("miden_name::naming", MIDEN_NAME_CONTRACT_CODE);
+        builder.linkDynamicLibrary(registerComponentLib);
+        const script = builder.compileNoteScript(REGISTER_NOTE_SCRIPT);
+
+        // Calculate price and create assets
+        const domainPrice = getDomainPrice(domain.length);
         const buyAmount = BigInt(domainPrice * 1000000);
+        const assets = new FungibleAsset(faucetId, buyAmount);
+        const noteAssets = new NoteAssets([assets]);
 
+        // Create note metadata
+        const noteTag = NoteTag.fromAccountId(destinationAccountId);
+        const noteMetadata = new NoteMetadata(
+          accountId,
+          NoteType.Public,
+          noteTag,
+          NoteExecutionHint.always(),
+          new Felt(BigInt(0))
+        );
+
+        // Build note inputs: [faucet_suffix, faucet_prefix, 0, 0, domain_felt1, domain_felt2, domain_felt3, domain_length]
         const domainWord = encodeDomain(domain);
-
+        const domainFelts = domainWord.toFelts();
         const noteInputs = new NoteInputs(
           new MidenArrays.FeltArray([
             new Felt(faucetId.suffix().asInt()),
             new Felt(faucetId.prefix().asInt()),
             new Felt(BigInt(0)),
             new Felt(BigInt(0)),
-            domainWord.toFelts()[0],
-            domainWord.toFelts()[1],
-            domainWord.toFelts()[2],
-            domainWord.toFelts()[3],
+            domainFelts[0],
+            domainFelts[1],
+            domainFelts[2],
+            domainFelts[3],
           ])
         );
 
-        
-        const { noteId } = await transactionCreator({
-          client,
-          senderAccountId: accountId,
-          destinationAccountId: destinationAccountId,
-          noteScript: REGISTER_NOTE_SCRIPT,
-          libraryScript: MIDEN_NAME_CONTRACT_CODE,
-          libraryName: "miden_name::naming",
-          noteInputs: noteInputs,
-          faucetId: faucetId,
-          amount: buyAmount,
-          requestTransaction: requestTransaction,
-        })
+        // Create note recipient with random serial number
+        const serialNumber = generateRandomSerialNumber();
+        const noteRecipient = new NoteRecipient(serialNumber, script, noteInputs);
 
-        console.log("note_id:", noteId)
-        setNoteId(noteId);
+        // Create the full Note
+        const note = new Note(noteAssets, noteMetadata, noteRecipient);
+
+        // Get the note ID for MidenScan link
+        const createdNoteId = note.id().toString();
+        console.log("note_id:", createdNoteId);
+
+        // Build TransactionRequest locally with the output note
+        const noteArray = new MidenArrays.OutputNoteArray([OutputNote.full(note)]);
+        const transactionRequest = new TransactionRequestBuilder()
+          .withOwnOutputNotes(noteArray)
+          .build();
+
+        // Create CustomTransaction for the wallet
+        const tx = new CustomTransaction(
+          address, // from (bech32)
+          accountIdToBech32(destinationAccountId), // to (bech32)
+          transactionRequest,
+          [],
+          [],
+        );
+
+        // Request wallet to sign and submit
+        const txId = await requestTransaction({
+          type: TransactionType.Custom,
+          payload: tx,
+        });
+
+        console.log("tx_id:", txId);
+
+        // After wallet confirms, save domain metadata to backend
+        const blockNumberResult = await getBlockNumber();
+        const blockNumber = blockNumberResult.success && blockNumberResult.data ? blockNumberResult.data : 0;
+
+        const metadataResult = await createDomainMetadata({
+          domain: domain,
+          account_id: accountId.toString(),
+          bech32: address,
+          created_block: blockNumber,
+          updated_block: blockNumber,
+        });
+
+        if (!metadataResult.success) {
+          console.warn("Failed to save domain metadata:", metadataResult.error);
+          // Don't fail the whole flow - tx is already submitted
+        }
+
+        // Use note ID for MidenScan link
+        setNoteId(createdNoteId);
         setCurrentStep("confirmed");
-        // Transaction approved by wallet
       } catch (error) {
         console.error("Transaction error:", error);
         setTransactionFailure({

@@ -76,3 +76,13 @@ export interface VerifySignatureResponse {
   message?: string;
   signature_length?: number;
 }
+
+// Block number response
+export interface BlockNumberResponse {
+  block_number: number;
+}
+
+// Domain registration response
+export interface RegisterDomainResponse {
+  transaction_request_hex: string;
+}

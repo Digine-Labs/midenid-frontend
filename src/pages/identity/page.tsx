@@ -7,9 +7,8 @@ import { IdentityProfile } from "./components/IdentityProfile";
 
 export default function Identity() {
   const { connected } = useWallet();
-  //const { hasRegisteredDomain, isLoading } = useWalletAccount();
-  const hasRegisteredDomain = true;
-  const isLoading = true;
+  const hasRegisteredDomain = true
+  const isLoading = false
   const location = useLocation();
   const navigate = useNavigate();
 

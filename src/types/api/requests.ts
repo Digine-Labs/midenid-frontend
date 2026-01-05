@@ -37,6 +37,11 @@ export interface UpsertProfileRequest extends SignatureAuth {
   block_number: number;
 }
 
+// Domain Registration
+export interface RegisterDomainRequest {
+  note_inputs_hex: string;
+}
+
 // Batch Operations
 export interface BatchAccountItem {
   account_id: string;
