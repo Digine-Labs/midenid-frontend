@@ -77,13 +77,13 @@ export function DomainCard({ domain }: DomainCardProps) {
       return;
     }
 
-    // Set timer to show warning after 3500ms
+    // Set timer to show warning after 5500ms
     const timer = setTimeout(() => {
       if (loading && !warningShownRef.current) {
         showToast(ToastCause.DOMAIN_CHECK_SLOW);
         warningShownRef.current = true;
       }
-    }, 50000);
+    }, 5500);
 
     return () => clearTimeout(timer);
   }, [loading, domain, showToast]);

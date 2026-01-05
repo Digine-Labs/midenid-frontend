@@ -1,7 +1,6 @@
 import { type AccountId, type WebClient } from '@demox-labs/miden-sdk';
 import { useEffect, useState } from 'react';
-import { safeAccountImport } from '@/lib/midenClient';
-import { useClient } from '@/contexts/ClientContext';
+import { getMidenClient } from '@/lib/MidenClientSingleton';
 import type { BalanceParams } from '@/types/hooks';
 
 const getBalanceFromClient = async (
@@ -9,7 +8,7 @@ const getBalanceFromClient = async (
     accountId: AccountId,
     faucetId: AccountId,
 ) => {
-    const acc = await safeAccountImport(client, accountId).then(() => client.getAccount(accountId));
+    const acc = await client.getAccount(accountId);
     const balance = acc?.vault().getBalance(faucetId);
     return balance;
 };
@@ -18,25 +17,27 @@ export const useBalance = (
     { accountId, faucetId }: BalanceParams,
 ) => {
     const [balance, setBalance] = useState<bigint | null>(null);
-    const { client, isReady, importAccounts } = useClient();
 
     useEffect(() => {
         let clear: number;
         let isActive = true;
 
         const initAndRefresh = async () => {
-            if (!accountId || !faucetId || !isReady || !client) {
+            if (!accountId || !faucetId) {
                 setBalance(null);
                 return;
             }
 
-            // Import account before first use
-            await importAccounts([accountId]);
+            const clientSingleton = getMidenClient();
+
+            // Import account (lazy init happens here if needed)
+            await clientSingleton.importAccount(accountId);
 
             const refreshBalance = async () => {
-                if (!isActive || !client) return;
+                if (!isActive) return;
 
                 try {
+                    const client = await clientSingleton.getClient();
                     await client.syncState();
                     const newBalance = await getBalanceFromClient(client, accountId, faucetId);
                     if (isActive) {
@@ -56,7 +57,7 @@ export const useBalance = (
             isActive = false;
             clearInterval(clear);
         };
-    }, [faucetId, accountId, client, isReady, importAccounts]);
+    }, [faucetId, accountId]);
 
     return balance;
 };
