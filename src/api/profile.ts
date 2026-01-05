@@ -3,17 +3,15 @@
  */
 
 import type {
-  Profile,
-  UpsertProfileRequest,
   ApiResponse,
   BatchGetProfilesRequest,
   BatchGetProfilesResponse,
-} from './types';
+} from '@/types/api';
+import type { ProfileData, ProfilePayload } from '@/types/profile';
 import { API_BASE } from '@/shared/constants';
 
 // Re-export types for backward compatibility
-export type ProfileData = Omit<Profile, 'id' | 'domain_id' | 'created_block' | 'updated_block'>;
-export type ProfilePayload = UpsertProfileRequest;
+export type { ProfileData, ProfilePayload };
 
 /**
  * Fetch existing profile for a domain

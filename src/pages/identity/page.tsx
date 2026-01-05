@@ -1,5 +1,4 @@
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { useWalletAccount } from "@/contexts/WalletAccountContext";
 import { useLocation, useNavigate } from "react-router";
 import { useEffect } from "react";
 import { NoWalletConnected } from "./components/NoWalletConnected";
@@ -8,7 +7,9 @@ import { IdentityProfile } from "./components/IdentityProfile";
 
 export default function Identity() {
   const { connected } = useWallet();
-  const { hasRegisteredDomain, isLoading } = useWalletAccount();
+  //const { hasRegisteredDomain, isLoading } = useWalletAccount();
+  const hasRegisteredDomain = true;
+  const isLoading = true;
   const location = useLocation();
   const navigate = useNavigate();
 

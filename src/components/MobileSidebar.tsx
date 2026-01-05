@@ -9,8 +9,8 @@ import {
 } from '@/components/ui/sheet'
 import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter-reactui'
 import { Separator } from '@/components/ui/separator'
-import { useTheme } from './theme-provider'
-import ThemeToggle from './theme-toggle'
+import { useTheme } from './ThemeProvider'
+import ThemeToggle from './ThemeToggle'
 
 export function MobileSidebar() {
   const { resolvedTheme } = useTheme()

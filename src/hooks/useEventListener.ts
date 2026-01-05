@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 
 import type { RefObject } from "react"
 
-import { useIsomorphicLayoutEffect } from "./use-isomorphic-layout-effect"
+import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect"
 
 // MediaQueryList Event based useEventListener interface
 function useEventListener<K extends keyof MediaQueryListEventMap>(
@@ -24,8 +24,8 @@ function useEventListener<K extends keyof WindowEventMap>(
 function useEventListener<
   K extends keyof HTMLElementEventMap & keyof SVGElementEventMap,
   T extends Element = K extends keyof HTMLElementEventMap
-    ? HTMLDivElement
-    : SVGElement,
+  ? HTMLDivElement
+  : SVGElement,
 >(
   eventName: K,
   handler:

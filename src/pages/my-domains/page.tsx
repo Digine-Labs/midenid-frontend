@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { useWalletAccount } from '@/contexts/WalletAccountContext'
 import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter-reactui'
 import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Globe, Github, User, Pencil, RefreshCw } from 'lucide-react'
 import { getAccountAllDomains, batchGetProfiles } from '@/api'
 import type { ProfileData } from '@/api'
-import { useTheme } from '@/components/theme-provider'
+import { useTheme } from '@/components/ThemeProvider'
 
 interface DomainInfo {
   domain: string
@@ -19,7 +18,8 @@ interface DomainInfo {
 export default function MyDomains() {
   const navigate = useNavigate()
   const { connected, address } = useWallet()
-  const { isLoading: isWalletLoading } = useWalletAccount()
+  //const { isLoading: isWalletLoading } = useWalletAccount()
+  const isWalletLoading = true;
   const { resolvedTheme } = useTheme()
   const [domains, setDomains] = useState<DomainInfo[]>([])
   const [activeDomain, setActiveDomain] = useState<string | null>(null)

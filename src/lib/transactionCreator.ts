@@ -99,14 +99,11 @@ export async function transactionCreator({
 
         const builder = client.createScriptBuilder();
 
-        let registerComponentLib = builder.buildLibrary(libraryName, libraryScript)
+        const registerComponentLib = builder.buildLibrary(libraryName, libraryScript)
 
         builder.linkDynamicLibrary(registerComponentLib)
 
-        let script = builder.compileNoteScript(noteScript)
-
-        // Sync state to get latest blockchain data
-        await client.syncState();
+        const script = builder.compileNoteScript(noteScript)
 
         // Create a new serial number for the note
         const serialNumber = generateRandomSerialNumber();
@@ -135,11 +132,10 @@ export async function transactionCreator({
 
         const noteArray = new MidenArrays.OutputNoteArray([OutputNote.full(note)]);
 
-        let transactionRequest = new TransactionRequestBuilder()
+        const transactionRequest = new TransactionRequestBuilder()
             .withOwnOutputNotes(noteArray)
             .build();
 
-        await client.syncState();
 
         const tx = new CustomTransaction(
             accountIdToBech32(senderAccountId), // from
@@ -154,11 +150,9 @@ export async function transactionCreator({
             payload: tx,
         });
 
-        const state = await client.syncState();
+        //const blockNumber = state.blockNum()
 
-        const blockNumber = state.blockNum()
-
-        return { txId, noteId, blockNumber };
+        return { txId, noteId };
     } catch (error) {
         console.error("Note transaction failed:", error);
         throw new Error("Note transaction failed");
