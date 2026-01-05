@@ -65,15 +65,11 @@ export const useStorage = (
         }
     }, [key]);
 
-    console.log("111")
-
     useEffect(() => {
         let isCancelled = false;
 
         const initAndFetch = async () => {
             setIsLoading(true);
-
-            console.log("222")
 
             // If key was provided but serialization failed, skip fetch
             if (key !== undefined && keyHex === undefined) {
@@ -87,8 +83,6 @@ export const useStorage = (
                 return;
             }
 
-            console.log("333")
-
             if (!accountId || !isReady || !client) {
                 setIsLoading(false);
                 return;
@@ -97,8 +91,6 @@ export const useStorage = (
             try {
                 // Import account before first use
                 await importAccounts([accountId]);
-
-                console.log("444")
 
                 if (isCancelled) return;
 

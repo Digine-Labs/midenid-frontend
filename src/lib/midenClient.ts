@@ -98,31 +98,30 @@ export async function hasRegisteredDomain(
   const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
   const storageKey = encodeDomain(domain);
 
-  try {
-    while (attempts < maxAttempts) {
-      await client.syncState()
+  while (attempts < maxAttempts) {
+    await client.syncState()
 
-      const contractAccount = await client.getAccount(contractId);
-      let domainWord: Word | undefined;
+    const contractAccount = await client.getAccount(contractId);
+    let domainWord: Word | undefined;
 
-      try {
-        domainWord = contractAccount?.storage().getMapItem(5, storageKey);
-      } catch (error) {
-        console.warn('Failed to get domain from storage:', error);
-      }
-
-      const hasDomain = hasStorageValue(domainWord);
-
-      if (hasDomain) {
-        return true
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 5000))
-      attempts++
+    try {
+      domainWord = contractAccount?.storage().getMapItem(5, storageKey);
+    } catch (error) {
+      console.warn('Failed to get domain from storage:', error);
     }
 
-    return false
+    const hasDomain = hasStorageValue(domainWord);
+
+    if (hasDomain) {
+      return true
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 5000))
+    attempts++
   }
+
+  return false
+}
 
 /**
  * Sign profile data with Miden wallet

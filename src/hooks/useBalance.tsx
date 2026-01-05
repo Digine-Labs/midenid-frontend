@@ -37,7 +37,7 @@ export const useBalance = (
                 if (!isActive || !client) return;
 
                 try {
-                    await syncClient();
+                    await client.syncState();
                     const newBalance = await getBalanceFromClient(client, accountId, faucetId);
                     if (isActive) {
                         setBalance(BigInt(newBalance ?? 0));
