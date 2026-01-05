@@ -1,7 +1,7 @@
 import { type AccountId, type WebClient } from '@demox-labs/miden-sdk';
 import { useEffect, useState } from 'react';
-import { getMidenClient } from '@/lib/MidenClientSingleton';
 import type { BalanceParams } from '@/types/hooks';
+import { instantiateClient } from '@/lib/midenClient';
 
 const getBalanceFromClient = async (
     client: WebClient,
@@ -23,21 +23,22 @@ export const useBalance = (
         let isActive = true;
 
         const initAndRefresh = async () => {
+            console.log('useBalance effect triggered', { accountId: accountId?.toString(), faucetId: faucetId?.toString() });
             if (!accountId || !faucetId) {
+                console.log('useBalance: Missing accountId or faucetId, skipping');
                 setBalance(null);
                 return;
             }
-
-            const clientSingleton = getMidenClient();
-
-            // Import account (lazy init happens here if needed)
-            await clientSingleton.importAccount(accountId);
+            console.log('Refreshing balance')
+            const client = await instantiateClient({ accountsToImport: [] });
 
             const refreshBalance = async () => {
                 if (!isActive) return;
 
                 try {
-                    const client = await clientSingleton.getClient();
+                    // Import account (lazy init happens here if needed)
+                    await client.importAccountById(accountId);
+
                     await client.syncState();
                     const newBalance = await getBalanceFromClient(client, accountId, faucetId);
                     if (isActive) {
@@ -45,15 +46,21 @@ export const useBalance = (
                     }
                 } catch (error) {
                     console.error('Failed to fetch balance:', error);
+                    setBalance(BigInt(0))
                 }
             };
 
             await refreshBalance();
-            clear = setInterval(refreshBalance, 15000);
+            console.log('Setting up 15s interval for balance refresh');
+            clear = setInterval(() => {
+                console.log('Interval tick - refreshing balance');
+                refreshBalance();
+            }, 15000);
         };
 
         initAndRefresh();
         return () => {
+            console.log('useBalance cleanup - clearing interval');
             isActive = false;
             clearInterval(clear);
         };

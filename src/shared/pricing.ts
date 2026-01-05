@@ -13,66 +13,10 @@ export const DOMAIN_PRICING_USD = {
   5: 20,   // 5+ letter domains
 } as const;
 
-/**
- * Get the annual price in USD for a domain based on its length
- */
-export function getDomainPricePerYear(domainLength: number): number {
+export function getDomainPrice(domainLength: number): number {
   if (domainLength === 1) return DOMAIN_PRICING_USD[1];
   if (domainLength === 2) return DOMAIN_PRICING_USD[2];
   if (domainLength === 3) return DOMAIN_PRICING_USD[3];
   if (domainLength === 4) return DOMAIN_PRICING_USD[4];
   return DOMAIN_PRICING_USD[5]; // 5 or more characters
-}
-
-// Re-export types from centralized types folder
-export type { PricingTier, PricingTierWithPrice } from '@/types/pricing';
-import type { PricingTier } from '@/types/pricing';
-
-/**
- * Available pricing tiers with discount rules:
- * - 5 years registration = pay for 3 years (40% savings)
- * - 3 years registration = pay for 2 years (33% savings)
- * - 1 year registration = pay for 1 year (standard)
- */
-export const PRICING_TIERS: PricingTier[] = [
-  {
-    years: 1,
-    displayYears: 1,
-    savings: "Standard",
-  },
-  {
-    years: 3,
-    displayYears: 2,
-    savings: "Save 33%",
-  },
-  {
-    years: 5,
-    displayYears: 3,
-    savings: "Save 40%",
-    popular: true,
-    recommended: true,
-  },
-];
-
-/**
- * Calculate the total price for a domain registration
- * @param domainLength - Length of the domain name (without .miden)
- * @param _years - Number of years to register
- * @param displayYears - Number of years the user actually pays for (with discount)
- * @returns Total price in USD
- */
-export function calculateDomainPrice(
-  domainLength: number,
-  _years: number,
-  displayYears: number
-): number {
-  const pricePerYear = getDomainPricePerYear(domainLength);
-  return pricePerYear * displayYears;
-}
-
-/**
- * Get pricing tier by years
- */
-export function getPricingTier(years: number): PricingTier | undefined {
-  return PRICING_TIERS.find(tier => tier.years === years);
 }

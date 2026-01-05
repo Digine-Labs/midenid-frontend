@@ -13,22 +13,12 @@ export function TestnetWarningModal() {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    // Check if user chose to not show warning again
-    // const dontShowAgain = localStorage.getItem('testnetWarningDontShow')
-    // if (dontShowAgain !== 'true') {
-    //   setOpen(true)
-    // }
     setOpen(true)
   }, [])
 
   const handleClose = () => {
     setOpen(false)
   }
-
-  // const handleDontShowAgain = () => {
-  //   localStorage.setItem('testnetWarningDontShow', 'true')
-  //   setOpen(false)
-  // }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

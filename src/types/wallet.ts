@@ -1,5 +1,4 @@
 import type { AccountId } from '@demox-labs/miden-sdk';
-import type { PendingTransaction } from './transaction';
 
 // Wallet account context value (from contexts/WalletAccountContext.tsx)
 export interface WalletAccountContextValue {
@@ -12,9 +11,4 @@ export interface WalletAccountContextValue {
   isLoading: boolean;
   refetch: () => void;
   // Transaction monitoring
-  pendingTransactions: PendingTransaction[];
-  isMonitoringTransactions: boolean;
-  addPendingTransaction: (transaction: Omit<PendingTransaction, 'timestamp' | 'attemptCount'>) => void;
-  isDomainConfirmed: (domain: string) => boolean;
-  confirmedDomains: Map<string, boolean>;
 }

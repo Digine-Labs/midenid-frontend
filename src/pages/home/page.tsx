@@ -5,7 +5,6 @@ import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/TestnetWarningModal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/ThemeProvider'
-import { DomainRegistrationProvider } from '@/contexts/DomainRegistrationContext'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
@@ -13,11 +12,6 @@ export default function Home() {
   const [showTooltip, setShowTooltip] = useState(false)
   const { resolvedTheme } = useTheme()
 
-  // Clear input after successful registration
-  const handleRegistrationComplete = () => {
-    setInputValue('')
-    setDebouncedValue('')
-  }
 
   // Use darker green for identity highlight only in dark mode
   const identityColor = resolvedTheme === 'dark' ? '#11B83D' : '#0FE046'
@@ -65,7 +59,6 @@ export default function Home() {
   return (
     <>
       <TestnetWarningModal />
-      <DomainRegistrationProvider onRegistrationComplete={handleRegistrationComplete}>
         <main className="relative flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
           <div className="relative z-10 w-full md:max-w-3xl text-center">
             <div className="space-y-2 mb-6">
@@ -78,15 +71,6 @@ export default function Home() {
             </div>
 
             <div className="w-full space-y-4 ">
-              {/*<Card className="bg-yellow-100 border-green-500 rounded-md">
-                <CardContent className="flex items-start gap-3 p-4">
-                  <Info className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-green-900 text-left">
-                    <strong>Testing Mode:</strong> For mocking purposes, even-length domain names are shown as available, while odd-length domain names are shown as unavailable.
-                  </p>
-                </CardContent>
-              </Card>*/}
-
               <TooltipProvider>
                 <Tooltip open={showTooltip}>
                   <TooltipTrigger asChild>
@@ -121,7 +105,6 @@ export default function Home() {
             </div>
           </div>
         </main>
-      </DomainRegistrationProvider>
     </>
   )
 }

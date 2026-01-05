@@ -109,7 +109,7 @@ export.register
     
 
     # []
-    exec._after_domain_register
+    #exec._after_domain_register
 end
 
 # Input: [DOMAIN]
