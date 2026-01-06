@@ -2,6 +2,7 @@ import { type AccountId, type WebClient } from '@demox-labs/miden-sdk';
 import { useEffect, useState } from 'react';
 import type { BalanceParams } from '@/types/hooks';
 import { instantiateClient } from '@/lib/midenClient';
+import { getMidenBalance } from '@/api';
 
 const getBalanceFromClient = async (
     client: WebClient,
@@ -23,7 +24,6 @@ export const useBalance = (
         let isActive = true;
 
         const initAndRefresh = async () => {
-            console.log('useBalance effect triggered', { accountId: accountId?.toString(), faucetId: faucetId?.toString() });
             if (!accountId || !faucetId) {
                 console.log('useBalance: Missing accountId or faucetId, skipping');
                 setBalance(null);
@@ -36,6 +36,20 @@ export const useBalance = (
                 if (!isActive) return;
 
                 try {
+                    // Try API endpoint first
+                    const apiResponse = await getMidenBalance(accountId.toString());
+
+                    if (apiResponse.success && apiResponse.data) {
+                        const apiBalance = BigInt(apiResponse.data.balance);
+                        if (isActive) {
+                            setBalance(apiBalance);
+                            return; // Success - skip blockchain fallback
+                        }
+                    }
+
+                    // API failed - fallback to blockchain
+                    console.warn('API balance fetch failed, falling back to blockchain:', apiResponse.error);
+
                     // Import account (lazy init happens here if needed)
                     await client.importAccountById(accountId);
 
@@ -51,7 +65,6 @@ export const useBalance = (
             };
 
             await refreshBalance();
-            console.log('Setting up 15s interval for balance refresh');
             clear = setInterval(() => {
                 console.log('Interval tick - refreshing balance');
                 refreshBalance();

@@ -11,16 +11,7 @@ export function ProcessingStep({ domain }: ProcessingStepProps) {
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-12">
       {/* Animated Loader */}
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      >
-        <Loader2 className="h-20 w-20 text-primary" />
-      </motion.div>
+      <Loader2 className="h-20 w-20 animate-spin text-primary" />
 
       {/* Title */}
       <div className="text-center space-y-3">

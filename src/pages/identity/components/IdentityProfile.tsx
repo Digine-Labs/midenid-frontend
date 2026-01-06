@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/useToast";
 import { ToastCause } from "@/types/toast";
 import {
@@ -26,6 +25,8 @@ import { signProfileData } from "@/lib/midenClient";
 import type { SignedData } from "@/types/auth";
 import { useTheme } from "@/components/ThemeProvider";
 import { ImageCropper } from "@/components/ImageCropper";
+import { MAX_FILE_SIZE } from "@/shared";
+import { ProfileSkeleton } from "./ProfileSkeleton";
 
 // Field length limits
 const FIELD_LIMITS = {
@@ -100,9 +101,15 @@ export function IdentityProfile({
   });
 
   // Sign profile data with wallet
-  const signData = async (
-    profileData: FormValues,
-    imageUrlString: string
+  const signProfilePayload = async (
+    payload: {
+      bio?: string;
+      twitter?: string;
+      github?: string;
+      discord?: string;
+      telegram?: string;
+      image_url?: string;
+    } = {}
   ): Promise<SignedData | null> => {
     if (!connected || !signBytes || !publicKey) {
       showToast(ToastCause.WALLET_NOT_CONNECTED);
@@ -113,34 +120,7 @@ export function IdentityProfile({
       const signed = await signProfileData(
         {
           domain: domainName || "",
-          bio: profileData.bio?.trim() || "",
-          twitter: profileData.twitter?.trim() || "",
-          github: profileData.github?.trim() || "",
-          discord: profileData.discord?.trim() || "",
-          telegram: profileData.telegram?.trim() || "",
-          image_url: imageUrlString.trim(),
-        },
-        signBytes,
-        publicKey
-      );
-      return signed;
-    } catch (error) {
-      console.error('Signing failed:', error);
-      throw error;
-    }
-  };
-
-  // Sign for image upload (minimal data)
-  const signForImageUpload = async (): Promise<SignedData | null> => {
-    if (!connected || !signBytes || !publicKey) {
-      showToast(ToastCause.WALLET_NOT_CONNECTED);
-      return null;
-    }
-
-    try {
-      const signed = await signProfileData(
-        {
-          domain: domainName || "",
+          ...payload,
         },
         signBytes,
         publicKey
@@ -203,7 +183,14 @@ export function IdentityProfile({
       const finalImageUrl = imageUrl || "";
 
       // Sign the data
-      const signed = await signData(data, finalImageUrl);
+      const signed = await signProfilePayload({
+        bio: data.bio?.trim() || "",
+        twitter: data.twitter?.trim() || "",
+        github: data.github?.trim() || "",
+        discord: data.discord?.trim() || "",
+        telegram: data.telegram?.trim() || "",
+        image_url: finalImageUrl.trim(),
+      });
       if (!signed) {
         setIsLoading(false);
         return;
@@ -239,7 +226,8 @@ export function IdentityProfile({
       } else {
         showToast(isEditMode ? ToastCause.PROFILE_UPDATE_FAILED : ToastCause.PROFILE_CREATE_FAILED);
       }
-    } catch {
+    } catch (e) {
+      console.error(e)
       showToast(ToastCause.PROFILE_SUBMIT_FAILED);
     } finally {
       setIsLoading(false);
@@ -258,7 +246,7 @@ export function IdentityProfile({
     }
 
     // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_FILE_SIZE) {
       showToast(ToastCause.IMAGE_TOO_LARGE);
       return;
     }
@@ -286,8 +274,8 @@ export function IdentityProfile({
     try {
       setIsUploadingImage(true);
 
-      // Sign for image upload
-      const signed = await signForImageUpload();
+      // Sign for image upload (only domain is required)
+      const signed = await signProfilePayload();
       if (!signed) {
         setImagePreview(""); // Clear preview on error
         setIsUploadingImage(false);
@@ -358,64 +346,7 @@ export function IdentityProfile({
         )}
 
         {/* Loading Profile Indicator */}
-        {isFetchingProfile && (
-          <div className="space-y-6">
-            {/* Edit Mode Indicator Skeleton */}
-            {isEditMode && (
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-4">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-4 w-4 rounded-full" />
-                  <Skeleton className="h-4 w-40" />
-                </div>
-                <Skeleton className="h-8 w-8" />
-              </div>
-            )}
-
-            {/* Profile Picture Skeleton */}
-            <div className="flex flex-col items-center">
-              <Skeleton className="h-32 w-32 rounded-full" />
-              <Skeleton className="h-8 w-28 mt-3" />
-            </div>
-
-            {/* Bio Field Skeleton */}
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-
-            {/* Social Media Section Skeleton */}
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-40" />
-
-              {/* 4 Social Fields */}
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-9 w-full" />
-                </div>
-              ))}
-            </div>
-
-            {/* Domain Information Skeleton */}
-            <div className="space-y-2 pt-4 border-t">
-              <Skeleton className="h-4 w-36" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-background rounded-md p-3 space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-4 w-28" />
-                </div>
-                <div className="bg-background rounded-md p-3 space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-4 w-28" />
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Button Skeleton */}
-            <Skeleton className="h-10 w-full" />
-          </div>
-        )}
+        {isFetchingProfile && <ProfileSkeleton isEditMode={isEditMode} />}
 
         {!isFetchingProfile && (
           <>

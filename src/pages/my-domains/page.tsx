@@ -5,7 +5,7 @@ import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Globe, Github, User, Pencil, RefreshCw } from 'lucide-react'
+import { Plus, Globe, Github, User, RefreshCw, Loader2 } from 'lucide-react'
 import { getAccountAllDomains, batchGetProfiles } from '@/api'
 import type { ProfileData } from '@/api'
 import { useTheme } from '@/components/ThemeProvider'
@@ -155,7 +155,7 @@ export default function MyDomains() {
             My Domains
           </h1>
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="mt-4 text-muted-foreground">Loading your domains...</p>
           </div>
         </div>
@@ -318,19 +318,6 @@ export default function MyDomains() {
                       </p>
                     )}
                   </div>
-
-                  {/* Edit Button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEditDomain(domainInfo.domain)
-                    }}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
                 </div>
               </CardContent>
             </Card>

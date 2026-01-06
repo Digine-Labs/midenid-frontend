@@ -11,7 +11,6 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Loader2 } from 'lucide-react';
 
-// Define Area type locally (react-easy-crop doesn't export it)
 interface Area {
   x: number;
   y: number;

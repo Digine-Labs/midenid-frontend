@@ -1,8 +1,3 @@
-import type { SignatureAuth, VerifySignatureRequest, VerifySignatureResponse } from './api';
-
-// Re-export API auth types
-export type { SignatureAuth, VerifySignatureRequest, VerifySignatureResponse };
-
 // Signed data type (from lib/midenClient.ts)
 export interface SignedData {
   message_hex: string;

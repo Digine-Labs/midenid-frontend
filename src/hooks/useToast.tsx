@@ -69,7 +69,7 @@ const toastConfig: Record<ToastCause, ToastConfig> = {
   [ToastCause.DOMAIN_CHECK_SLOW]: {
     type: 'warning',
     title: 'Network Delay',
-    description: 'Delays may occur due to testnet slowness. Please wait...',
+    description: 'Delays may occur due to testnet being slow. Please wait.',
     icon: <AlertTriangle className="h-5 w-5" />,
   },
   [ToastCause.DOMAIN_CHECK_FAILED]: {

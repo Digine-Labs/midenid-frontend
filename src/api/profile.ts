@@ -8,7 +8,7 @@ import type {
   BatchGetProfilesResponse,
 } from '@/types/api';
 import type { ProfileData, ProfilePayload } from '@/types/profile';
-import { API_BASE } from '@/shared/constants';
+import { API_BASE } from '@/shared';
 
 // Re-export types for backward compatibility
 export type { ProfileData, ProfilePayload };
@@ -100,48 +100,6 @@ export async function saveProfile(
     return {
       success: false,
       error: errorMsg,
-    };
-  }
-}
-
-/**
- * Delete a profile
- * @param domain - The domain name
- * @returns API response with success/error message
- */
-export async function deleteProfile(domain: string): Promise<ApiResponse<void>> {
-  if (!domain) {
-    return {
-      success: false,
-      error: 'Domain name is required',
-    };
-  }
-
-  try {
-    const response = await fetch(
-      `${API_BASE}/metadata/domains/${encodeURIComponent(domain)}/profile`,
-      {
-        method: 'DELETE',
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return {
-        success: false,
-        error: `HTTP ${response.status}: ${errorText}`,
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Profile deleted successfully',
-    };
-  } catch (error) {
-    console.error('Failed to delete profile:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
