@@ -69,9 +69,7 @@ function RegisterModalContent({
   domain: string;
 }) {
   const domainPrice = getDomainPrice(domain.length);
-  // MESS
   const { connected, requestTransaction, address } = useWallet();
-  //const { accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
   const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [transactionFailure, setTransactionFailure] = useState<TransactionFailure | null>(null);
@@ -89,7 +87,7 @@ function RegisterModalContent({
     () => address ? bech32ToAccountId(address) : null,
     [address]
   );
-  
+
 
   const destinationAccountId = useMemo(
     () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
@@ -156,7 +154,7 @@ function RegisterModalContent({
       setIsPurchasing(true);
       setCurrentStep("processing");
       try {
-        const client = await instantiateClient({ accountsToImport: []});
+        const client = await instantiateClient({ accountsToImport: [] });
         // We dont need to sync client we just create note and let wallet sync and broadcasts it
 
         const buyAmount = BigInt(domainPrice * 1000000);
@@ -176,7 +174,7 @@ function RegisterModalContent({
           ])
         );
 
-        
+
         const { noteId } = await transactionCreator({
           client,
           senderAccountId: accountId,
