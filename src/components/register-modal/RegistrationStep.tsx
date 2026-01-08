@@ -1,11 +1,11 @@
-"use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
+import { useWallet, WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { TOKEN_SYMBOL, getDomainPrice } from "@/shared/pricing";
-import { useBalance } from "@/hooks/useBalance";
 import type { AccountId } from "@demox-labs/miden-sdk";
+import { MIDEN_FAUCET_ID_BECH32 } from "@/shared";
+import { ErrorCodes } from "@/types/errors";
+import { executeStep } from "@/utils/errorHandler";
 
 const FUN_TITLES = [
   "Something new is cooking!",
@@ -30,23 +30,59 @@ interface RegistrationStepProps {
   onTermsClick: () => void;
 }
 
+type BalanceStatus = "idle" | "loading" | "loaded" | "error";
+
 export function RegistrationStep({
   domain,
-  buyer,
-  paymentFaucet,
   connected,
   isPurchasing,
   onPurchase,
   onTermsClick,
 }: RegistrationStepProps) {
-  const balance = useBalance({ accountId: buyer, faucetId: paymentFaucet });
-  console.log(`Balance at reg step ${balance}`)
-  
+  const { requestAssets } = useWallet()
+  const [balance, setBalance] = useState<string | null>(null);
+  const [balanceStatus, setBalanceStatus] = useState<BalanceStatus>("idle");
+
   const domainPrice = getDomainPrice(domain.length);
 
   const [randomTitle] = useState(
     () => FUN_TITLES[Math.floor(Math.random() * FUN_TITLES.length)]
   );
+
+  const handleCheckBalance = async () => {
+    try {
+      if (!requestAssets) return
+
+      setBalanceStatus("loading");
+
+      const fetchedBalance = await executeStep(
+        ErrorCodes.BALANCE_CHECK,
+        "Balance check",
+        async () => {
+
+          const assets = await requestAssets();
+
+          const midenAsset = assets.find((asset) => asset.faucetId === MIDEN_FAUCET_ID_BECH32)
+
+          const fetchedBalance = midenAsset?.amount;
+
+          return fetchedBalance
+        }
+      )
+
+      if (!fetchedBalance) {
+        console.error("Balance is undefined")
+        setBalanceStatus("error")
+        return
+      }
+
+      setBalance(fetchedBalance);
+      setBalanceStatus("loaded");
+    } catch (e) {
+      console.error(e);
+      setBalanceStatus("error");
+    }
+  };
 
   return (
     <>
@@ -77,9 +113,15 @@ export function RegistrationStep({
           </div>
         ) : (
           <div className="space-y-3 px-4 ">
-
             <div className="relative">
-              {renderClaimButton(isPurchasing, balance, domainPrice, onPurchase)}
+              {renderClaimButton(
+                isPurchasing,
+                balance,
+                balanceStatus,
+                domainPrice,
+                onPurchase,
+                handleCheckBalance
+              )}
             </div>
           </div>
         )}
@@ -99,67 +141,74 @@ export function RegistrationStep({
   );
 }
 
-function renderClaimButton(isPurchasing: boolean, balance: bigint | null, domainPrice: number, onPurchase: () => void) {
-  // Loading state - balance not yet fetched
-  if (balance === null) {
+function renderClaimButton(
+  isPurchasing: boolean,
+  balance: string | null,
+  balanceStatus: BalanceStatus,
+  domainPrice: number,
+  onPurchase: () => void,
+  onCheckBalance: () => void
+) {
+  // Balance Check
+  if (balanceStatus === "idle") {
     return (
       <Button
-        disabled={true}
-        className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
+        onClick={onCheckBalance}
+        className="w-full px-8 py-8 text-xl"
         size="lg"
       >
-        <div className="flex items-center gap-3">
-          <span className="text-md xs:text-xl font-bold">Loading balance...</span>
-        </div>
+        Check MIDEN balance
       </Button>
     );
   }
 
-  const isBalanceEnough = balance >= BigInt(domainPrice * 1000000);
+  // Balance Fetching
+  if (balanceStatus === "loading") {
+    return (
+      <Button disabled className="w-full px-8 py-8 text-xl" size="lg">
+        Checking MIDEN balance...
+      </Button>
+    );
+  }
 
-  if (isBalanceEnough) {
-    if (isPurchasing) {
+  // Balance error
+  if (balanceStatus === "error") {
+    return (
+      <Button
+        onClick={onCheckBalance}
+        className="w-full px-8 py-8 text-xl"
+        size="lg"
+      >
+        Retry check MIDEN balance
+      </Button>
+    );
+  }
+
+  // Balance Fetched
+  if (balanceStatus === "loaded" && balance !== null) {
+    const isBalanceEnough = BigInt(balance) >= BigInt(domainPrice * 1_000_000);
+
+    if (!isBalanceEnough) {
       return (
-        <Button
-          onClick={onPurchase}
-          disabled={true}
-          className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
-          size="lg"
-        >
-          Processing...
-        </Button>
-      );
-    } else {
-      return (
-        <Button
-          onClick={onPurchase}
-          disabled={false}
-          className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
-          size="lg"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-md xs:text-xl font-bold">Claim</span>
-            <span className="opacity-90">•</span>
-            <span className="text-md xs:text-xl">{domainPrice} {TOKEN_SYMBOL}</span>
-          </div>
+        <Button disabled className="w-full px-8 py-8 text-xl" size="lg">
+          Insufficient Balance • {domainPrice} {TOKEN_SYMBOL}
         </Button>
       );
     }
-  } else {
-    // Balance not enough
+
     return (
       <Button
         onClick={onPurchase}
-        disabled={true}
-        className="w-full px-8 py-8 text-md xs:text-xl bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-primary shadow-lg"
+        disabled={isPurchasing}
+        className="w-full px-8 py-8 text-xl"
         size="lg"
       >
-        <div className="flex items-center gap-3">
-          <span className="text-md xs:text-xl font-bold">Insufficient Balance</span>
-          <span className="opacity-90">•</span>
-          <span className="text-md xs:text-xl">{domainPrice} {TOKEN_SYMBOL}</span>
-        </div>
+        {isPurchasing
+          ? "Processing..."
+          : `Claim • ${domainPrice} ${TOKEN_SYMBOL}`}
       </Button>
     );
   }
+
+  return null;
 }

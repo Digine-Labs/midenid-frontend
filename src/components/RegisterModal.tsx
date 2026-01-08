@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Modal,
   ModalBody,
@@ -7,14 +5,13 @@ import {
   useModal,
 } from "@/components/ui/shadcn-io/animated-modal";
 import { type ReactNode, useState, useEffect } from "react";
-import { cloneElement, isValidElement, useMemo } from "react";
+import { cloneElement, isValidElement } from "react";
 import { useWallet } from "@demox-labs/miden-wallet-adapter";
 import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
 import { AccountId, Felt } from "@demox-labs/miden-sdk";
-import { useNavigate } from "react-router";
 import { useToast } from "@/hooks/useToast";
 import { ToastCause } from "@/types/toast";
 import { TermsModal } from "@/components/TermsModal";
@@ -28,20 +25,8 @@ import { encodeDomain } from "@/utils/encode";
 import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
 import { getDomainPrice } from "@/shared/pricing";
 import { bech32ToAccountId, instantiateClient } from "@/lib/midenClient";
-
-// Transaction failure reason type
-export const TransactionFailureReason = {
-  INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
-  TRANSACTION_ERROR: 'TRANSACTION_ERROR',
-} as const;
-
-export type TransactionFailureReason = typeof TransactionFailureReason[keyof typeof TransactionFailureReason];
-
-// Transaction failure state with unique ID
-export interface TransactionFailure {
-  reason: TransactionFailureReason;
-  id: number;
-}
+import { executeStep } from "@/utils/errorHandler";
+import { ErrorCodes } from "@/types/errors";
 
 interface RegisterModalProps {
   domain: string;
@@ -69,114 +54,66 @@ function RegisterModalContent({
   domain: string;
 }) {
   const domainPrice = getDomainPrice(domain.length);
-  // MESS
   const { connected, requestTransaction, address } = useWallet();
-  //const { accountId, bech32, addPendingTransaction, confirmedDomains } = useWalletAccount();
   const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
-  const [transactionFailure, setTransactionFailure] = useState<TransactionFailure | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
   const [termsOpen, setTermsOpen] = useState(false);
-  const navigate = useNavigate();
-  const { open, setOpen } = useModal();
 
-  const faucetId = useMemo(
-    () => AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string),
-    []
-  );
-  const accountId = useMemo(
-    () => address ? bech32ToAccountId(address) : null,
-    [address]
-  );
-  
+  const faucetId = AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string)
 
-  const destinationAccountId = useMemo(
-    () => AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string),
-    []
-  );
+  const accountId = address ? bech32ToAccountId(address) : null
 
-  // Track if registration was successful
-  const [registrationSuccessful, setRegistrationSuccessful] = useState(false);
-
-  // Track timeout ID for cleanup
-  const [confirmationTimeoutId, setConfirmationTimeoutId] = useState<number | null>(null);
-
-  // Watch for domain confirmation from background monitor
-
-
-  // Reset to registration step when modal is closed or domain changes
-  useEffect(() => {
-    if (!open) {
-      // Clear confirmation timeout if modal closes
-      if (confirmationTimeoutId) {
-        clearTimeout(confirmationTimeoutId);
-        setConfirmationTimeoutId(null);
-      }
-
-      // Wait for modal close animation to complete (300ms) before clearing states
-      const timer = setTimeout(() => {
-        // If registration was successful, clear the home page input
-        if (registrationSuccessful) {
-          setRegistrationSuccessful(false);
-        }
-
-        // Reset all states when modal closes
-        setCurrentStep("registration");
-        setTransactionFailure(null);
-        setIsPurchasing(false);
-      }, 280);
-
-      return () => clearTimeout(timer);
-    }
-  }, [open, registrationSuccessful, confirmationTimeoutId]);
+  const destinationAccountId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string)
 
   // Reset when domain changes
   useEffect(() => {
     setCurrentStep("registration");
-    setTransactionFailure(null);
     setIsPurchasing(false);
   }, [domain]);
-
-  // Show toast when transaction fails
-  useEffect(() => {
-    if (transactionFailure) {
-      const causeMap = {
-        [TransactionFailureReason.INSUFFICIENT_BALANCE]: ToastCause.INSUFFICIENT_BALANCE,
-        [TransactionFailureReason.TRANSACTION_ERROR]: ToastCause.TRANSACTION_ERROR,
-      };
-      showToast(causeMap[transactionFailure.reason]);
-    }
-  }, [transactionFailure, showToast]);
 
   if (!accountId) return null;
   const handlePurchase = async () => {
     if (connected && accountId && requestTransaction) {
-      setTransactionFailure(null);
       setIsPurchasing(true);
       setCurrentStep("processing");
       try {
-        const client = await instantiateClient({ accountsToImport: []});
-        // We dont need to sync client we just create note and let wallet sync and broadcasts it
-
-        const buyAmount = BigInt(domainPrice * 1000000);
-
-        const domainWord = encodeDomain(domain);
-
-        const noteInputs = new NoteInputs(
-          new MidenArrays.FeltArray([
-            new Felt(faucetId.suffix().asInt()),
-            new Felt(faucetId.prefix().asInt()),
-            new Felt(BigInt(0)),
-            new Felt(BigInt(0)),
-            domainWord.toFelts()[0],
-            domainWord.toFelts()[1],
-            domainWord.toFelts()[2],
-            domainWord.toFelts()[3],
-          ])
+        const client = await executeStep(
+          ErrorCodes.CLIENT_INIT_FAILED,
+          'Client initialization',
+          () => instantiateClient({ accountsToImport: [] })
         );
 
-        
+        const buyAmount = await executeStep(
+          ErrorCodes.AMOUNT_CALCULATION_FAILED,
+          'Buy amount calculation',
+          () => BigInt(domainPrice * 1000000)
+        );
+
+        const domainWord = await executeStep(
+          ErrorCodes.DOMAIN_ENCODING_FAILED,
+          'Domain encoding',
+          () => encodeDomain(domain)
+        );
+
+        const noteInputs = await executeStep(
+          ErrorCodes.NOTE_INPUTS_CREATION_FAILED,
+          'Note inputs creation',
+          () => new NoteInputs(
+            new MidenArrays.FeltArray([
+              new Felt(faucetId.suffix().asInt()),
+              new Felt(faucetId.prefix().asInt()),
+              new Felt(BigInt(0)),
+              new Felt(BigInt(0)),
+              domainWord.toFelts()[0],
+              domainWord.toFelts()[1],
+              domainWord.toFelts()[2],
+              domainWord.toFelts()[3],
+            ])
+          )
+        );
+
         const { noteId } = await transactionCreator({
           client,
           senderAccountId: accountId,
@@ -193,13 +130,9 @@ function RegisterModalContent({
         console.log("note_id:", noteId)
         setNoteId(noteId);
         setCurrentStep("confirmed");
-        // Transaction approved by wallet
       } catch (error) {
         console.error("Transaction error:", error);
-        setTransactionFailure({
-          reason: TransactionFailureReason.TRANSACTION_ERROR,
-          id: Date.now()
-        });
+        showToast(ToastCause.TRANSACTION_ERROR)
         setCurrentStep("registration");
       } finally {
         setIsPurchasing(false);
@@ -207,10 +140,6 @@ function RegisterModalContent({
     }
   };
 
-  const handleGoHome = () => {
-    setOpen(false);
-    navigate('/');
-  };
 
   return (
     <>
@@ -257,7 +186,7 @@ function RegisterModalContent({
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
               >
-                <ConfirmedStep noteId={noteId} onGoHome={handleGoHome} />
+                <ConfirmedStep noteId={noteId} />
               </motion.div>
             )}
           </AnimatePresence>

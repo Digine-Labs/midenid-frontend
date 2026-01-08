@@ -2,13 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Github as GithubIcon, FileText, CheckCircle2, AlertCircle, RefreshCw, MessageCircle, Send } from "lucide-react";
+import { Loader2, Github as GithubIcon, FileText, CheckCircle2, AlertCircle, RefreshCw, MessageCircle, Send, Upload, User } from "lucide-react";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/useToast";
 import { ToastCause } from "@/types/toast";
 import {
@@ -20,20 +19,40 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { fetchProfile, saveProfile } from "@/api/profile";
+import { fetchProfile, saveProfile, uploadProfilePicture } from "@/api/profile";
 import type { ProfilePayload } from "@/api/profile";
 import { signProfileData } from "@/lib/midenClient";
 import type { SignedData } from "@/types/auth";
 import { useTheme } from "@/components/ThemeProvider";
+import { ImageCropper } from "@/components/ImageCropper";
+import { MAX_FILE_SIZE } from "@/shared";
+import { ProfileSkeleton } from "./ProfileSkeleton";
+
+// Field length limits
+const FIELD_LIMITS = {
+  bio: 500,
+  twitter: 50,
+  github: 50,
+  discord: 50,
+  telegram: 50,
+} as const;
 
 const formSchema = z.object({
   bio: z.string()
-    .max(280, "Bio must be 280 characters or less")
+    .max(FIELD_LIMITS.bio, `Bio must be ${FIELD_LIMITS.bio} characters or less`)
     .optional(),
-  twitter: z.string().max(20, "Maximum 20 characters").optional(),
-  github: z.string().max(20, "Maximum 20 characters").optional(),
-  discord: z.string().max(20, "Maximum 20 characters").optional(),
-  telegram: z.string().max(20, "Maximum 20 characters").optional(),
+  twitter: z.string()
+    .max(FIELD_LIMITS.twitter, `Twitter handle must be ${FIELD_LIMITS.twitter} characters or less`)
+    .optional(),
+  github: z.string()
+    .max(FIELD_LIMITS.github, `GitHub username must be ${FIELD_LIMITS.github} characters or less`)
+    .optional(),
+  discord: z.string()
+    .max(FIELD_LIMITS.discord, `Discord username must be ${FIELD_LIMITS.discord} characters or less`)
+    .optional(),
+  telegram: z.string()
+    .max(FIELD_LIMITS.telegram, `Telegram handle must be ${FIELD_LIMITS.telegram} characters or less`)
+    .optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,11 +74,17 @@ export function IdentityProfile({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Profile data
   const [imageUrl, setImageUrl] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [domainPurchaseDate, setDomainPurchaseDate] = useState<Date>(new Date());
   const [lastModifiedDate, setLastModifiedDate] = useState<Date>(new Date());
+
+  // Image cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>("");
 
   // Toast hook
   const showToast = useToast();
@@ -76,9 +101,15 @@ export function IdentityProfile({
   });
 
   // Sign profile data with wallet
-  const signData = async (
-    profileData: FormValues,
-    imageUrlString: string
+  const signProfilePayload = async (
+    payload: {
+      bio?: string;
+      twitter?: string;
+      github?: string;
+      discord?: string;
+      telegram?: string;
+      image_url?: string;
+    } = {}
   ): Promise<SignedData | null> => {
     if (!connected || !signBytes || !publicKey) {
       showToast(ToastCause.WALLET_NOT_CONNECTED);
@@ -89,12 +120,7 @@ export function IdentityProfile({
       const signed = await signProfileData(
         {
           domain: domainName || "",
-          bio: profileData.bio?.trim() || "",
-          twitter: profileData.twitter?.trim() || "",
-          github: profileData.github?.trim() || "",
-          discord: profileData.discord?.trim() || "",
-          telegram: profileData.telegram?.trim() || "",
-          image_url: imageUrlString.trim(),
+          ...payload,
         },
         signBytes,
         publicKey
@@ -130,6 +156,7 @@ export function IdentityProfile({
 
         // Set image URL separately (string vs File)
         setImageUrl(data.image_url || "");
+        setImagePreview(""); // Clear any local preview
       } else {
         // No profile exists yet
         setIsEditMode(false);
@@ -156,7 +183,14 @@ export function IdentityProfile({
       const finalImageUrl = imageUrl || "";
 
       // Sign the data
-      const signed = await signData(data, finalImageUrl);
+      const signed = await signProfilePayload({
+        bio: data.bio?.trim() || "",
+        twitter: data.twitter?.trim() || "",
+        github: data.github?.trim() || "",
+        discord: data.discord?.trim() || "",
+        telegram: data.telegram?.trim() || "",
+        image_url: finalImageUrl.trim(),
+      });
       if (!signed) {
         setIsLoading(false);
         return;
@@ -192,11 +226,89 @@ export function IdentityProfile({
       } else {
         showToast(isEditMode ? ToastCause.PROFILE_UPDATE_FAILED : ToastCause.PROFILE_CREATE_FAILED);
       }
-    } catch (error) {
+    } catch (e) {
+      console.error(e)
       showToast(ToastCause.PROFILE_SUBMIT_FAILED);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle image file selection - opens cropper
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !domainName) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showToast(ToastCause.IMAGE_INVALID_TYPE);
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > MAX_FILE_SIZE) {
+      showToast(ToastCause.IMAGE_TOO_LARGE);
+      return;
+    }
+
+    // Create URL for cropper
+    const imageDataUrl = URL.createObjectURL(file);
+    setImageToCrop(imageDataUrl);
+    setCropperOpen(true);
+
+    // Reset input so same file can be selected again
+    event.target.value = '';
+  };
+
+  // Handle cropped image upload
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!domainName) return;
+
+    // Create a File from the Blob for upload
+    const croppedFile = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
+
+    // Show preview immediately
+    const previewUrl = URL.createObjectURL(croppedBlob);
+    setImagePreview(previewUrl);
+
+    try {
+      setIsUploadingImage(true);
+
+      // Sign for image upload (only domain is required)
+      const signed = await signProfilePayload();
+      if (!signed) {
+        setImagePreview(""); // Clear preview on error
+        setIsUploadingImage(false);
+        return;
+      }
+
+      const result = await uploadProfilePicture(domainName, croppedFile, {
+        message_hex: signed.message_hex,
+        pubkey_hex: signed.pubkey_hex,
+        signature_hex: signed.signature_hex,
+      });
+
+      if (result.success && result.data) {
+        setImageUrl(result.data.image_url);
+        setCropperOpen(false);
+        setImageToCrop('');
+        showToast(ToastCause.IMAGE_UPLOAD_SUCCESS);
+      } else {
+        showToast(ToastCause.IMAGE_UPLOAD_FAILED);
+        setImagePreview(""); // Clear preview on error
+      }
+    } catch {
+      showToast(ToastCause.IMAGE_UPLOAD_FAILED);
+      setImagePreview(""); // Clear preview on error
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // Handle cropper close
+  const handleCropperClose = () => {
+    setCropperOpen(false);
+    setImageToCrop('');
   };
 
   // Fetch profile when component mounts or domain changes
@@ -234,58 +346,7 @@ export function IdentityProfile({
         )}
 
         {/* Loading Profile Indicator */}
-        {isFetchingProfile && (
-          <div className="space-y-6">
-            {/* Edit Mode Indicator Skeleton */}
-            {isEditMode && (
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md mb-4">
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-4 w-4 rounded-full" />
-                  <Skeleton className="h-4 w-40" />
-                </div>
-                <Skeleton className="h-8 w-8" />
-              </div>
-            )}
-
-            {/* Bio Field Skeleton */}
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-
-            {/* Social Media Section Skeleton */}
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-40" />
-
-              {/* 4 Social Fields */}
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-9 w-full" />
-                </div>
-              ))}
-            </div>
-
-            {/* Domain Information Skeleton */}
-            <div className="space-y-2 pt-4 border-t">
-              <Skeleton className="h-4 w-36" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-background rounded-md p-3 space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-4 w-28" />
-                </div>
-                <div className="bg-background rounded-md p-3 space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-4 w-28" />
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Button Skeleton */}
-            <Skeleton className="h-10 w-full" />
-          </div>
-        )}
+        {isFetchingProfile && <ProfileSkeleton isEditMode={isEditMode} />}
 
         {!isFetchingProfile && (
           <>
@@ -309,6 +370,60 @@ export function IdentityProfile({
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Profile Picture Upload - Centered at top */}
+                <FormItem className="flex flex-col items-center">
+                  <div className="relative h-32 w-32 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2">
+                    {(imagePreview || imageUrl) ? (
+                      <img
+                        src={imagePreview || imageUrl}
+                        alt="Profile"
+                        className="h-full w-full object-cover object-center"
+                      />
+                    ) : (
+                      <User className="h-12 w-12 text-muted-foreground" />
+                    )}
+                    {isUploadingImage && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-col items-center">
+                    <label htmlFor="profile-picture-upload">
+                      <Input
+                        id="profile-picture-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        disabled={isLoading || isUploadingImage || !connected}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isLoading || isUploadingImage || !connected}
+                        onClick={() => document.getElementById('profile-picture-upload')?.click()}
+                      >
+                        {isUploadingImage ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Change Picture
+                          </>
+                        )}
+                      </Button>
+                    </label>
+                    <FormDescription className="mt-2 text-center">
+                      Output: 512x512px. Max 5MB.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+
                 {/* Bio Field */}
                 <FormField
                   control={form.control}
@@ -324,33 +439,16 @@ export function IdentityProfile({
                           placeholder="Tell us about yourself..."
                           {...field}
                           disabled={isLoading}
-                          maxLength={280}
+                          maxLength={FIELD_LIMITS.bio}
                         />
                       </FormControl>
                       <FormDescription>
-                        {(field.value?.length || 0)}/280 characters
+                        {(field.value?.length || 0)}/{FIELD_LIMITS.bio} characters
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Image URL Input */}
-                {/* <FormItem>
-              <FormLabel>Profile Image URL</FormLabel>
-              <FormControl>
-                <Input
-                  type="url"
-                  placeholder="https://example.com/avatar.png"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormDescription>
-                Direct URL to your profile image
-              </FormDescription>
-            </FormItem> */}
 
                 {/* Social Media Fields */}
                 <div className="space-y-4">
@@ -371,8 +469,16 @@ export function IdentityProfile({
                           Twitter
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="@username" {...field} disabled={isLoading} />
+                          <Input
+                            placeholder="@username"
+                            {...field}
+                            disabled={isLoading}
+                            maxLength={FIELD_LIMITS.twitter}
+                          />
                         </FormControl>
+                        <FormDescription>
+                          {(field.value?.length || 0)}/{FIELD_LIMITS.twitter} characters
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -388,8 +494,16 @@ export function IdentityProfile({
                           GitHub
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="username" {...field} disabled={isLoading} />
+                          <Input
+                            placeholder="username"
+                            {...field}
+                            disabled={isLoading}
+                            maxLength={FIELD_LIMITS.github}
+                          />
                         </FormControl>
+                        <FormDescription>
+                          {(field.value?.length || 0)}/{FIELD_LIMITS.github} characters
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -405,8 +519,16 @@ export function IdentityProfile({
                           Discord
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="username#0000" {...field} disabled={isLoading} />
+                          <Input
+                            placeholder="username#0000"
+                            {...field}
+                            disabled={isLoading}
+                            maxLength={FIELD_LIMITS.discord}
+                          />
                         </FormControl>
+                        <FormDescription>
+                          {(field.value?.length || 0)}/{FIELD_LIMITS.discord} characters
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -422,8 +544,16 @@ export function IdentityProfile({
                           Telegram
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="@username" {...field} disabled={isLoading} />
+                          <Input
+                            placeholder="@username"
+                            {...field}
+                            disabled={isLoading}
+                            maxLength={FIELD_LIMITS.telegram}
+                          />
                         </FormControl>
+                        <FormDescription>
+                          {(field.value?.length || 0)}/{FIELD_LIMITS.telegram} characters
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -465,6 +595,15 @@ export function IdentityProfile({
           </>
         )}
       </Card>
+
+      {/* Image Cropper Dialog */}
+      <ImageCropper
+        imageSrc={imageToCrop}
+        open={cropperOpen}
+        onClose={handleCropperClose}
+        onCropComplete={handleCropComplete}
+        isUploading={isUploadingImage}
+      />
     </div>
   );
 }

@@ -3,55 +3,11 @@
  */
 
 import type {
-  AccountToDomainResponse,
   AccountToAllDomainsResponse,
-  BatchAccountToDomainRequest,
-  BatchAccountToDomainResponse,
+  MidenBalanceResponse,
   ApiResponse,
 } from '@/types/api';
-import { API_BASE } from '@/shared/constants';
-
-/**
- * Get active domain for an account
- * @param identifier - Account ID (hex) or bech32 address
- * @returns Active domain information
- */
-export async function getAccountActiveDomain(
-  identifier: string
-): Promise<ApiResponse<AccountToDomainResponse>> {
-  if (!identifier) {
-    return {
-      success: false,
-      error: 'Account identifier is required',
-    };
-  }
-
-  try {
-    const response = await fetch(
-      `${API_BASE}/accounts/${encodeURIComponent(identifier)}`
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return {
-        success: false,
-        error: `HTTP ${response.status}: ${errorText}`,
-      };
-    }
-
-    const data: AccountToDomainResponse = await response.json();
-    return {
-      success: true,
-      data,
-    };
-  } catch (error) {
-    console.error('Failed to get account active domain:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-}
+import { API_BASE } from '@/shared';
 
 /**
  * Get all domains for an account
@@ -96,32 +52,24 @@ export async function getAccountAllDomains(
 }
 
 /**
- * Batch lookup primary domains for multiple accounts
- * @param accountIds - Array of account IDs to lookup
- * @returns Primary domain for each account
+ * Get MIDEN balance for an account
+ * @param accountId - Account ID in hex format (e.g., "0xbcf3703152589f40689336e42bfbef")
+ * @returns Account's MIDEN balance
  */
-export async function batchGetAccountDomains(
-  accountIds: string[]
-): Promise<ApiResponse<BatchAccountToDomainResponse>> {
-  if (!accountIds || accountIds.length === 0) {
+export async function getMidenBalance(
+  accountId: string
+): Promise<ApiResponse<MidenBalanceResponse>> {
+  if (!accountId) {
     return {
       success: false,
-      error: 'At least one account ID is required',
+      error: 'Account ID is required',
     };
   }
 
-  const payload: BatchAccountToDomainRequest = {
-    accounts: accountIds.map(id => ({ account_id: id })),
-  };
-
   try {
-    const response = await fetch(`${API_BASE}/accounts/batch`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    const response = await fetch(
+      `${API_BASE}/miden/miden_balance?accountId=${encodeURIComponent(accountId)}`
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -131,13 +79,13 @@ export async function batchGetAccountDomains(
       };
     }
 
-    const data: BatchAccountToDomainResponse = await response.json();
+    const data: MidenBalanceResponse = await response.json();
     return {
       success: true,
       data,
     };
   } catch (error) {
-    console.error('Failed to batch get account domains:', error);
+    console.error('Failed to get MIDEN balance:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

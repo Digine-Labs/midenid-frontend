@@ -5,7 +5,7 @@ import { useWallet } from '@demox-labs/miden-wallet-adapter-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Globe, Github, User, Pencil, RefreshCw } from 'lucide-react'
+import { Plus, Globe, Github, User, RefreshCw, Loader2 } from 'lucide-react'
 import { getAccountAllDomains, batchGetProfiles } from '@/api'
 import type { ProfileData } from '@/api'
 import { useTheme } from '@/components/ThemeProvider'
@@ -18,8 +18,6 @@ interface DomainInfo {
 export default function MyDomains() {
   const navigate = useNavigate()
   const { connected, address } = useWallet()
-  //const { isLoading: isWalletLoading } = useWalletAccount()
-  const isWalletLoading = true;
   const { resolvedTheme } = useTheme()
   const [domains, setDomains] = useState<DomainInfo[]>([])
   const [activeDomain, setActiveDomain] = useState<string | null>(null)
@@ -96,12 +94,12 @@ export default function MyDomains() {
   }
 
   useEffect(() => {
-    if (connected && address && !isWalletLoading) {
+    if (connected && address) {
       fetchDomains()
     } else if (!connected) {
       setDomains([])
     }
-  }, [connected, address, isWalletLoading])
+  }, [connected, address])
 
   const handleAddDomain = () => {
     // Navigate to home page for domain registration
@@ -113,7 +111,7 @@ export default function MyDomains() {
     navigate('/identity', { state: { domain: domainName } })
   }
 
-  const isLoading = isWalletLoading || isLoadingDomains
+  const isLoading = isLoadingDomains
 
   // Page wrapper component to reduce duplication
   const PageWrapper = ({ children, centered = true }: { children: React.ReactNode, centered?: boolean }) => (
@@ -157,7 +155,7 @@ export default function MyDomains() {
             My Domains
           </h1>
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
             <p className="mt-4 text-muted-foreground">Loading your domains...</p>
           </div>
         </div>
@@ -320,19 +318,6 @@ export default function MyDomains() {
                       </p>
                     )}
                   </div>
-
-                  {/* Edit Button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEditDomain(domainInfo.domain)
-                    }}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
                 </div>
               </CardContent>
             </Card>

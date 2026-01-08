@@ -14,6 +14,3 @@ export * from './format';
 // Encoding/Decoding utilities
 export * from './encode';
 export * from './decode';
-
-// Domain registry utilities
-export * from './domain-registry';

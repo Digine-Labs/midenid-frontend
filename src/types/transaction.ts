@@ -7,9 +7,3 @@ export interface PendingTransaction {
   timestamp: number; // When transaction was created
   attemptCount: number; // Number of polling attempts made
 }
-
-export interface TransactionResult {
-  success: boolean;
-  domain: string;
-  error?: string;
-}
