@@ -4,6 +4,8 @@ import { useWallet, WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { TOKEN_SYMBOL, getDomainPrice } from "@/shared/pricing";
 import type { AccountId } from "@demox-labs/miden-sdk";
 import { MIDEN_FAUCET_ID_BECH32 } from "@/shared";
+import { ErrorCodes } from "@/types/errors";
+import { executeStep } from "@/utils/errorHandler";
 
 const FUN_TITLES = [
   "Something new is cooking!",
@@ -53,12 +55,20 @@ export function RegistrationStep({
 
       setBalanceStatus("loading");
 
-      const assets = await requestAssets();
+      const fetchedBalance = await executeStep(
+        ErrorCodes.BALANCE_CHECK,
+        "Balance check",
+        async () => {
 
-      const midenAsset = assets.find((asset) => asset.faucetId === MIDEN_FAUCET_ID_BECH32)
+          const assets = await requestAssets();
 
-      // örnek: assets içinden balance çıkar
-      const fetchedBalance = midenAsset?.amount; // bigint varsayalım
+          const midenAsset = assets.find((asset) => asset.faucetId === MIDEN_FAUCET_ID_BECH32)
+
+          const fetchedBalance = midenAsset?.amount;
+
+          return fetchedBalance
+        }
+      )
 
       if (!fetchedBalance) {
         console.error("Balance is undefined")
@@ -141,7 +151,6 @@ function renderClaimButton(
 ) {
   // Balance Check
   if (balanceStatus === "idle") {
-    console.log(balance)
     return (
       <Button
         onClick={onCheckBalance}
@@ -155,7 +164,6 @@ function renderClaimButton(
 
   // Balance Fetching
   if (balanceStatus === "loading") {
-    console.log(balance)
     return (
       <Button disabled className="w-full px-8 py-8 text-xl" size="lg">
         Checking MIDEN balance...
@@ -179,8 +187,6 @@ function renderClaimButton(
   // Balance Fetched
   if (balanceStatus === "loaded" && balance !== null) {
     const isBalanceEnough = BigInt(balance) >= BigInt(domainPrice * 1_000_000);
-
-    console.log(balance)
 
     if (!isBalanceEnough) {
       return (

@@ -25,6 +25,8 @@ import { encodeDomain } from "@/utils/encode";
 import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
 import { getDomainPrice } from "@/shared/pricing";
 import { bech32ToAccountId, instantiateClient } from "@/lib/midenClient";
+import { executeStep } from "@/utils/errorHandler";
+import { ErrorCodes } from "@/types/errors";
 
 interface RegisterModalProps {
   domain: string;
@@ -77,26 +79,40 @@ function RegisterModalContent({
       setIsPurchasing(true);
       setCurrentStep("processing");
       try {
-        const client = await instantiateClient({ accountsToImport: [] });
-        // We dont need to sync client we just create note and let wallet sync and broadcasts it
-
-        const buyAmount = BigInt(domainPrice * 1000000);
-
-        const domainWord = encodeDomain(domain);
-
-        const noteInputs = new NoteInputs(
-          new MidenArrays.FeltArray([
-            new Felt(faucetId.suffix().asInt()),
-            new Felt(faucetId.prefix().asInt()),
-            new Felt(BigInt(0)),
-            new Felt(BigInt(0)),
-            domainWord.toFelts()[0],
-            domainWord.toFelts()[1],
-            domainWord.toFelts()[2],
-            domainWord.toFelts()[3],
-          ])
+        const client = await executeStep(
+          ErrorCodes.CLIENT_INIT_FAILED,
+          'Client initialization',
+          () => instantiateClient({ accountsToImport: [] })
         );
 
+        const buyAmount = await executeStep(
+          ErrorCodes.AMOUNT_CALCULATION_FAILED,
+          'Buy amount calculation',
+          () => BigInt(domainPrice * 1000000)
+        );
+
+        const domainWord = await executeStep(
+          ErrorCodes.DOMAIN_ENCODING_FAILED,
+          'Domain encoding',
+          () => encodeDomain(domain)
+        );
+
+        const noteInputs = await executeStep(
+          ErrorCodes.NOTE_INPUTS_CREATION_FAILED,
+          'Note inputs creation',
+          () => new NoteInputs(
+            new MidenArrays.FeltArray([
+              new Felt(faucetId.suffix().asInt()),
+              new Felt(faucetId.prefix().asInt()),
+              new Felt(BigInt(0)),
+              new Felt(BigInt(0)),
+              domainWord.toFelts()[0],
+              domainWord.toFelts()[1],
+              domainWord.toFelts()[2],
+              domainWord.toFelts()[3],
+            ])
+          )
+        );
 
         const { noteId } = await transactionCreator({
           client,
@@ -114,7 +130,6 @@ function RegisterModalContent({
         console.log("note_id:", noteId)
         setNoteId(noteId);
         setCurrentStep("confirmed");
-        // Transaction approved by wallet
       } catch (error) {
         console.error("Transaction error:", error);
         showToast(ToastCause.TRANSACTION_ERROR)

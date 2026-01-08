@@ -21,6 +21,8 @@ import {
     TransactionType,
 } from "@demox-labs/miden-wallet-adapter-base";
 import { generateRandomSerialNumber, accountIdToBech32 } from "./midenClient";
+import { executeStep } from '@/utils/errorHandler';
+import { ErrorCodes } from '@/types/errors';
 
 export interface NoteFromMasmParams {
     client: WebClient
@@ -97,64 +99,88 @@ export async function transactionCreator({
 
     try {
 
-        const builder = client.createScriptBuilder();
-
-        const registerComponentLib = builder.buildLibrary(libraryName, libraryScript)
-
-        builder.linkDynamicLibrary(registerComponentLib)
-
-        const script = builder.compileNoteScript(noteScript)
+        const script = await executeStep(
+            ErrorCodes.SCRIPT_BUILDER_AND_COMPILER,
+            "Script builder or compiler",
+            () => {
+                const builder = client.createScriptBuilder()
+                const registerComponentLib = builder.buildLibrary(libraryName, libraryScript)
+                builder.linkDynamicLibrary(registerComponentLib)
+                const script = builder.compileNoteScript(noteScript)
+                return script
+            }
+        )
 
         // Create a new serial number for the note
         const serialNumber = generateRandomSerialNumber();
 
-        const noteType = NoteType.Public
+        const note = await executeStep(
+            ErrorCodes.NOTE_CREATION,
+            "Failed to create note",
+            () => {
+                const noteType = NoteType.Public
 
-        const assets = new FungibleAsset(faucetId, amount);
-        const noteAssets = new NoteAssets([assets]);
-        const noteTag = NoteTag.fromAccountId(destinationAccountId);
+                const assets = new FungibleAsset(faucetId, amount);
+                const noteAssets = new NoteAssets([assets]);
+                const noteTag = NoteTag.fromAccountId(destinationAccountId);
 
-        const noteMetadata = new NoteMetadata(
-            senderAccountId,
-            noteType,
-            noteTag,
-            NoteExecutionHint.always(),
-            new Felt(BigInt(0))
-        );
+                const noteMetadata = new NoteMetadata(
+                    senderAccountId,
+                    noteType,
+                    noteTag,
+                    NoteExecutionHint.always(),
+                    new Felt(BigInt(0))
+                );
 
-        const note = new Note(
-            noteAssets,
-            noteMetadata,
-            new NoteRecipient(serialNumber, script, noteInputs)
-        );
+                const note = new Note(
+                    noteAssets,
+                    noteMetadata,
+                    new NoteRecipient(serialNumber, script, noteInputs)
+                );
+                return note
+            }
+        )
 
         const noteId = note.id().toString();
 
-        const noteArray = new MidenArrays.OutputNoteArray([OutputNote.full(note)]);
+        const transactionRequest = await executeStep(
+            ErrorCodes.TRANSACTION_REQ_CREATION,
+            "Failed to create transaction request",
+            () => {
+                const noteArray = new MidenArrays.OutputNoteArray([OutputNote.full(note)]);
 
-        const transactionRequest = new TransactionRequestBuilder()
-            .withOwnOutputNotes(noteArray)
-            .build();
+                const transactionRequest = new TransactionRequestBuilder()
+                    .withOwnOutputNotes(noteArray)
+                    .build();
 
+                return transactionRequest
+            }
+        )
 
-        const tx = new CustomTransaction(
-            accountIdToBech32(senderAccountId), // from
-            accountIdToBech32(destinationAccountId), // to
-            transactionRequest,
-            [],
-            [],
-        );
+        const txId = await executeStep(
+            ErrorCodes.TRANSACTION_SUBMIT,
+            "Failed to submit the transaction",
+            async () => {
+                const tx = new CustomTransaction(
+                    accountIdToBech32(senderAccountId), // from
+                    accountIdToBech32(destinationAccountId), // to
+                    transactionRequest,
+                    [],
+                    [],
+                );
 
-        const txId = await requestTransaction({
-            type: TransactionType.Custom,
-            payload: tx,
-        });
+                const txId = await requestTransaction({
+                    type: TransactionType.Custom,
+                    payload: tx,
+                });
 
-        //const blockNumber = state.blockNum()
+                return txId
+            }
+        )
 
         return { txId, noteId };
     } catch (error) {
-        console.error("Note transaction failed:", error);
-        throw new Error("Note transaction failed");
+        console.error("Transaction Creation failed:", error);
+        throw new Error("Transaction Creation failed");
     }
 }
