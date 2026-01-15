@@ -1,4 +1,5 @@
-export const MIDEN_NAME_CONTRACT_CODE = `use.miden::active_account
+export const MIDEN_NAME_CONTRACT_CODE = `
+use.miden::active_account
 use.miden::native_account
 use.miden::account_id
 use.miden::input_note
