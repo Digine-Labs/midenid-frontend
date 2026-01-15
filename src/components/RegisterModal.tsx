@@ -55,6 +55,7 @@ function RegisterModalContent({
 }) {
   const domainPrice = getDomainPrice(domain.length);
   const { connected, requestTransaction, address } = useWallet();
+  const { open } = useModal();
   const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -66,6 +67,13 @@ function RegisterModalContent({
   const accountId = address ? bech32ToAccountId(address) : null
 
   const destinationAccountId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string)
+
+  // Reset when modal closes
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep("registration");
+    }
+  }, [open]);
 
   // Reset when domain changes
   useEffect(() => {
@@ -96,6 +104,8 @@ function RegisterModalContent({
           'Domain encoding',
           () => encodeDomain(domain)
         );
+
+        console.log("buyAmount:", buyAmount.toString());
 
         const noteInputs = await executeStep(
           ErrorCodes.NOTE_INPUTS_CREATION_FAILED,

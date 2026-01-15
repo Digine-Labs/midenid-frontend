@@ -1,5 +1,4 @@
-export const MIDEN_NAME_CONTRACT_CODE = `
-use.miden::active_account
+export const MIDEN_NAME_CONTRACT_CODE = `use.miden::active_account
 use.miden::native_account
 use.miden::account_id
 use.miden::input_note
@@ -103,7 +102,6 @@ export.register
     exec._clear_domain_mapping
 
     #exec._calculate_domain_price
-    debug.stack.4
     # [price]
     #exec._increase_total_revenue
     
