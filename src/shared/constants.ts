@@ -4,3 +4,5 @@ export const MIDEN_FAUCET_ID_BECH32 = import.meta.env.VITE_MIDEN_FAUCET_ID_BECH3
 export const API_BASE = import.meta.env.VITE_API_BASE;
 // MAX FILE SIZE 5 * 1024 * 1024
 export const MAX_FILE_SIZE = Number(import.meta.env.VITE_MAX_FILE_SIZE);
+// Dashboard API base URL
+export const DASHBOARD_API_BASE = import.meta.env.VITE_DASHBOARD_API_BASE;
