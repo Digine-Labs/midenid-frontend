@@ -147,15 +147,15 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Recent domains table */}
-        <RecentDomainsTable
-          domains={data.recent_domains}
-          limit={limit}
-          onLimitChange={handleLimitChange}
-        />
-
-        {/* Recent errors table */}
-        <RecentErrorsTable errors={data.recent_errors} />
+        {/* Recent errors and domains - side by side on larger screens */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <RecentErrorsTable errors={data.recent_errors} />
+          <RecentDomainsTable
+            domains={data.recent_domains}
+            limit={limit}
+            onLimitChange={handleLimitChange}
+          />
+        </div>
       </main>
     </div>
   );
