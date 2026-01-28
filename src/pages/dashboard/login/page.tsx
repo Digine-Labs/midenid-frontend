@@ -57,8 +57,8 @@ export default function DashboardLogin() {
           <CardTitle className="text-2xl font-bold">
             M<span className="text-primary">id</span>en Dashboard
           </CardTitle>
-          <CardDescription>
-            Sign in to access the admin dashboard
+          <CardDescription className="text-muted-foreground/60">
+            Login
           </CardDescription>
         </CardHeader>
         <CardContent>
