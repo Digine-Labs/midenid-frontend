@@ -14,6 +14,11 @@ const Home = lazy(() => import('@/pages/home/page'))
 // const MyDomains = lazy(() => import('./pages/my-domains/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
+// Dashboard pages (separate auth system)
+const DashboardLayout = lazy(() => import('@/pages/dashboard/layout'))
+const DashboardLogin = lazy(() => import('@/pages/dashboard/login/page'))
+const Dashboard = lazy(() => import('@/pages/dashboard/page'))
+
 const PageLoader = () => (
   <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -56,6 +61,33 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <NotFound />
+          </Suspense>
+        )
+      }
+    ]
+  },
+  // Dashboard routes (separate from wallet-based auth)
+  {
+    path: "/dashboard",
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <DashboardLayout />
+      </Suspense>
+    ),
+    children: [
+      {
+        path: "login",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <DashboardLogin />
+          </Suspense>
+        )
+      },
+      {
+        index: true,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Dashboard />
           </Suspense>
         )
       }

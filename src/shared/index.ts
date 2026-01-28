@@ -4,7 +4,8 @@ export {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_FAUCET_ID_BECH32,
   MAX_FILE_SIZE,
-  API_BASE
+  API_BASE,
+  DASHBOARD_API_BASE
 } from './constants';
 
 // Contracts
