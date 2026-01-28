@@ -42,10 +42,21 @@ export interface SystemStats {
   last_store_reset: string | null;
 }
 
+export interface ErrorLog {
+  id: number;
+  status_code: number;
+  method: string;
+  path: string;
+  error_message: string | null;
+  request_body: string | null;
+  created_at: string;
+}
+
 export interface DashboardData {
   blockchain: BlockchainStatus;
   notifications: NotificationStatus;
   recent_domains: DomainRegistration[];
+  recent_errors: ErrorLog[];
   stats: SystemStats;
 }
 

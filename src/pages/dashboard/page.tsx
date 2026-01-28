@@ -8,6 +8,7 @@ import {
   StatsCard,
   BlockchainStatusCard,
   RecentDomainsTable,
+  RecentErrorsTable,
   DashboardSkeleton,
   NotificationCard,
   ResetStoreCard,
@@ -152,6 +153,9 @@ export default function Dashboard() {
           limit={limit}
           onLimitChange={handleLimitChange}
         />
+
+        {/* Recent errors table */}
+        <RecentErrorsTable errors={data.recent_errors} />
       </main>
     </div>
   );
