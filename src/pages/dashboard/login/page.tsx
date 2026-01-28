@@ -68,7 +68,6 @@ export default function DashboardLogin() {
               <Input
                 id="username"
                 type="text"
-                placeholder="admin"
                 {...register('username')}
                 disabled={isSubmitting}
               />
@@ -82,7 +81,6 @@ export default function DashboardLogin() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
                 {...register('password')}
                 disabled={isSubmitting}
               />
