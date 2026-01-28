@@ -118,6 +118,19 @@ export default function Dashboard() {
     <div>
       <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Admin actions - actionable items first */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <NotificationCard
+            telegramEnabled={data.notifications.telegram_enabled}
+            onStatusChange={handleTelegramStatusChange}
+          />
+          <ResetStoreCard
+            lastReset={data.stats.last_store_reset}
+            onResetComplete={handleResetComplete}
+          />
+          <BlockchainStatusCard blockchain={data.blockchain} />
+        </div>
+
         {/* Stats cards */}
         <div className="grid gap-4 md:grid-cols-2">
           <StatsCard
@@ -131,19 +144,6 @@ export default function Dashboard() {
             value={data.stats.total_profiles.toLocaleString()}
             description="User profiles created"
             icon={<Users className="h-4 w-4 text-muted-foreground" />}
-          />
-        </div>
-
-        {/* Blockchain status and admin actions */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <BlockchainStatusCard blockchain={data.blockchain} />
-          <NotificationCard
-            telegramEnabled={data.notifications.telegram_enabled}
-            onStatusChange={handleTelegramStatusChange}
-          />
-          <ResetStoreCard
-            lastReset={data.stats.last_store_reset}
-            onResetComplete={handleResetComplete}
           />
         </div>
 
