@@ -1,10 +1,8 @@
 import {
     AccountId,
-    Felt,
     FungibleAsset,
     Note,
     NoteAssets,
-    NoteExecutionHint,
     NoteInputs,
     NoteMetadata,
     NoteRecipient,
@@ -14,7 +12,7 @@ import {
     TransactionRequestBuilder,
     MidenArrays,
     WebClient
-} from '@demox-labs/miden-sdk';
+} from '@miden-sdk/miden-sdk';
 import {
     CustomTransaction,
     type MidenTransaction,
@@ -103,7 +101,7 @@ export async function transactionCreator({
             ErrorCodes.SCRIPT_BUILDER_AND_COMPILER,
             "Script builder or compiler",
             () => {
-                const builder = client.createScriptBuilder()
+                const builder = client.createCodeBuilder()
                 const registerComponentLib = builder.buildLibrary(libraryName, libraryScript)
                 builder.linkDynamicLibrary(registerComponentLib)
                 const script = builder.compileNoteScript(noteScript)
@@ -122,14 +120,12 @@ export async function transactionCreator({
 
                 const assets = new FungibleAsset(faucetId, amount);
                 const noteAssets = new NoteAssets([assets]);
-                const noteTag = NoteTag.fromAccountId(destinationAccountId);
+                const noteTag = NoteTag.withAccountTarget(destinationAccountId);
 
                 const noteMetadata = new NoteMetadata(
                     senderAccountId,
                     noteType,
-                    noteTag,
-                    NoteExecutionHint.always(),
-                    new Felt(BigInt(0))
+                    noteTag
                 );
 
                 const note = new Note(

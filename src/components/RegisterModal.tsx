@@ -11,7 +11,7 @@ import {
   MIDEN_FAUCET_CONTRACT_ADDRESS,
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
-import { AccountId, Felt } from "@demox-labs/miden-sdk";
+import { AccountId, Felt } from "@miden-sdk/miden-sdk";
 import { useToast } from "@/hooks/useToast";
 import { ToastCause } from "@/types/toast";
 import { TermsModal } from "@/components/TermsModal";
@@ -22,7 +22,7 @@ import { ConfirmedStep } from "./register-modal/ConfirmedStep";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
-import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
+import { NoteInputs, MidenArrays } from "@miden-sdk/miden-sdk";
 import { getDomainPrice } from "@/shared/pricing";
 import { bech32ToAccountId, instantiateClient } from "@/lib/midenClient";
 import { executeStep } from "@/utils/errorHandler";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet, WalletMultiButton } from "@demox-labs/miden-wallet-adapter";
 import { TOKEN_SYMBOL, getDomainPrice } from "@/shared/pricing";
-import type { AccountId } from "@demox-labs/miden-sdk";
+import type { AccountId } from "@miden-sdk/miden-sdk";
 import { MIDEN_FAUCET_ID_BECH32 } from "@/shared";
 import { ErrorCodes } from "@/types/errors";
 import { executeStep } from "@/utils/errorHandler";

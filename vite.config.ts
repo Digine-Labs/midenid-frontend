@@ -10,7 +10,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ['@demox-labs/miden-sdk'],
+    exclude: ['@miden-sdk/miden-sdk'],
     include: ['buffer'],
   },
   assetsInclude: ['**/*.masm'],
@@ -24,9 +24,7 @@ export default defineConfig({
           // Vendor chunks
           'react-vendor': ['react', 'react-dom', 'react-router'],
           'miden-wallet': [
-            '@demox-labs/miden-wallet-adapter',
-            '@demox-labs/miden-wallet-adapter-react',
-            '@demox-labs/miden-wallet-adapter-reactui'
+            '@demox-labs/miden-wallet-adapter'
           ],
           'ui-vendor': [
             '@radix-ui/react-dialog',

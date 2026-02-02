@@ -15,7 +15,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@demox-labs/miden-sdk": "^0.12.5",
+    "@miden-sdk/miden-sdk": "^0.13.0",
     "@demox-labs/miden-wallet-adapter": "^0.10.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
