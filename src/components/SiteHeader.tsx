@@ -1,8 +1,8 @@
+import { lazy, Suspense } from 'react'
 import { Menubar } from '@/components/ui/menubar'
 import { Separator } from '@/components/ui/separator'
 import { Link } from 'react-router'
 import { MobileSidebar } from './MobileSidebar'
-import { WalletMultiButton } from '@miden-sdk/miden-wallet-adapter'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,10 +12,17 @@ import {
 import { Github, Send } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { useTheme } from './ThemeProvider'
+import logoDark from '/images/alternate/8.webp'
+import logoLight from '/images/alternate/7.webp'
+
+const LazyWalletGate = lazy(() =>
+  import('./WalletGate').then((mod) => ({ default: mod.WalletGate }))
+)
 
 export function SiteHeader() {
   const { resolvedTheme } = useTheme()
-  const logoSrc = resolvedTheme === 'dark' ? '/images/alternate/8.png' : '/images/alternate/7.png'
+  const isDark = resolvedTheme === 'dark'
+  const logoWebp = isDark ? logoDark : logoLight
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-background border-b">
@@ -24,11 +31,13 @@ export function SiteHeader() {
           {/* Logo */}
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center">
-              <img
-                src={logoSrc}
-                alt="Miden.name"
-                className="h-5 md:h-6"
-              />
+              <picture>
+                <img
+                  src={logoWebp}
+                  alt="Miden.name"
+                  className="h-5 md:h-6"
+                />
+              </picture>
             </Link>
           </div>
 
@@ -94,7 +103,9 @@ export function SiteHeader() {
 
 
             <Separator orientation="vertical" className="h-6" />
-            <WalletMultiButton />
+            <Suspense fallback={null}>
+              <LazyWalletGate />
+            </Suspense>
 
             <div className="flex items-center">
               <ThemeToggle />

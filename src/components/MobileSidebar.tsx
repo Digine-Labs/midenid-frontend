@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Link } from 'react-router'
 import { Menu, Github, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -7,8 +8,11 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { WalletMultiButton } from '@miden-sdk/miden-wallet-adapter'
 import { Separator } from '@/components/ui/separator'
+
+const LazyWalletGate = lazy(() =>
+  import('./WalletGate').then((mod) => ({ default: mod.WalletGate }))
+)
 import { useTheme } from './ThemeProvider'
 import ThemeToggle from './ThemeToggle'
 
@@ -67,7 +71,9 @@ export function MobileSidebar() {
           <div className="py-2 px-3 relative mt-6">
             <SheetClose asChild>
               <div>
-                <WalletMultiButton />
+                <Suspense fallback={null}>
+                  <LazyWalletGate />
+                </Suspense>
               </div>
             </SheetClose>
           </div>

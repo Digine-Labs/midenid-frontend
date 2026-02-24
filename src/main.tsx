@@ -3,11 +3,6 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from '@/components/ThemeProvider.tsx'
-import {
-  WalletProvider,
-  WalletModalProvider,
-  MidenWalletAdapter,
-} from '@miden-sdk/miden-wallet-adapter';
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { Loader2 } from 'lucide-react'
 
@@ -16,17 +11,21 @@ const Home = lazy(() => import('@/pages/home/page'))
 // const MyDomains = lazy(() => import('./pages/my-domains/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
+const LazyWalletProviderTree = lazy(() =>
+  import('@/components/WalletProviderTree').then((mod) => ({
+    default: mod.WalletProviderTree,
+  }))
+)
+
 const PageLoader = () => (
   <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
   </div>
 )
 
-const wallets = [new MidenWalletAdapter({ appName: 'Miden.name' })]
-
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <App />,
     children: [
       {
@@ -35,7 +34,7 @@ const router = createBrowserRouter([
           <Suspense fallback={<PageLoader />}>
             <Home />
           </Suspense>
-        )
+        ),
       },
       // {
       //   path: "identity",
@@ -54,27 +53,31 @@ const router = createBrowserRouter([
       //   )
       // },
       {
-        path: "*",
+        path: '*',
         element: (
           <Suspense fallback={<PageLoader />}>
             <NotFound />
           </Suspense>
-        )
-      }
-    ]
-  }
+        ),
+      },
+    ],
+  },
 ])
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <WalletProvider
-      wallets={wallets}
-    >
-      <WalletModalProvider>
+function AppRoot() {
+  return (
+    <Suspense fallback={null}>
+      <LazyWalletProviderTree>
         <ThemeProvider>
           <RouterProvider router={router} />
         </ThemeProvider>
-      </WalletModalProvider>
-    </WalletProvider>
-  </StrictMode>,
+      </LazyWalletProviderTree>
+    </Suspense>
+  )
+}
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <AppRoot />
+  </StrictMode>
 )

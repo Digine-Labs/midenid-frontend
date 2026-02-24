@@ -1,9 +1,14 @@
+import { lazy, Suspense } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
-import { RegisterModal } from '@/components/RegisterModal'
-import { useWallet, useWalletModal } from '@miden-sdk/miden-wallet-adapter'
+import { useWallet } from '@miden-sdk/miden-wallet-adapter-react/dist/useWallet.js'
+import { useWalletModal } from '@miden-sdk/miden-wallet-adapter-reactui/dist/useWalletModal.js'
 import { useDomainAvailability } from '@/hooks/useDomainAvailability'
+
+const RegisterModal = lazy(() =>
+  import('@/components/RegisterModal').then((mod) => ({ default: mod.RegisterModal }))
+)
 
 interface DomainCardProps {
   domain: string
@@ -41,9 +46,12 @@ export function DomainCard({ domain }: DomainCardProps) {
     </Card>
   );
 
-  // If domain is available and not loading, wrap in RegisterModal
   if (!loading && available === true && connected) {
-    return <RegisterModal domain={domain} trigger={cardContent} />;
+    return (
+      <Suspense fallback={cardContent}>
+        <RegisterModal domain={domain} trigger={cardContent} />
+      </Suspense>
+    );
   }
 
   // Otherwise, just show the card (unavailable or loading)

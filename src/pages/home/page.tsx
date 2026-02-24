@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/TestnetWarningModal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/ThemeProvider'
+
+const DomainCard = lazy(() =>
+  import('./components/domain-card').then((mod) => ({ default: mod.DomainCard }))
+)
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
@@ -96,11 +99,13 @@ export default function Home() {
 
               {/* Dynamic Card */}
               <div className="min-h-[120px]">
-                {debouncedValue.trim() && (
-                  <DomainCard
-                    domain={debouncedValue.trim().toLowerCase()}
-                  />
-                )}
+                <Suspense fallback={null}>
+                  {debouncedValue.trim() && (
+                    <DomainCard
+                      domain={debouncedValue.trim().toLowerCase()}
+                    />
+                  )}
+                </Suspense>
               </div>
             </div>
           </div>
