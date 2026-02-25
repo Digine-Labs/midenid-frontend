@@ -12,15 +12,6 @@ interface UseDomainAvailabilityResult {
 }
 
 export function useDomainAvailability(domain: string): UseDomainAvailabilityResult {
-  console.log(domain)
-  return {
-    available: true,
-    loading: false,
-    error: null,
-  }
-}
-
-export function useDomainAvailabilityx(domain: string): UseDomainAvailabilityResult {
   const [status, setStatus] = useState<Status>('idle')
   const [available, setAvailable] = useState<boolean | null>(null)
   const [error, setError] = useState<string | null>(null)

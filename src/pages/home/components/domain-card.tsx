@@ -2,8 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
-import { useWallet } from '@miden-sdk/miden-wallet-adapter-react/dist/useWallet.js'
-import { useWalletModal } from '@miden-sdk/miden-wallet-adapter-reactui/dist/useWalletModal.js'
+import { useWallet, useWalletModal } from '@miden-sdk/miden-wallet-adapter'
 import { useDomainAvailability } from '@/hooks/useDomainAvailability'
 
 const RegisterModal = lazy(() =>
@@ -54,7 +53,6 @@ export function DomainCard({ domain }: DomainCardProps) {
     );
   }
 
-  // Otherwise, just show the card (unavailable or loading)
   return cardContent;
 }
 
