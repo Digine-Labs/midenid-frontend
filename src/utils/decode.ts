@@ -1,4 +1,4 @@
-import { Word } from '@demox-labs/miden-sdk';
+import { Word } from '@miden-sdk/miden-sdk';
 
 /**
  * Decodes a numeric value back to its character representation.

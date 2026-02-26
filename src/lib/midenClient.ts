@@ -6,7 +6,7 @@ import {
   Word,
   Felt,
   SigningInputs,
-} from '@demox-labs/miden-sdk';
+} from '@miden-sdk/miden-sdk';
 import { uint8ArrayToHex, createMessage } from '@/utils';
 import type { CreateMessageParams } from '@/types/profile';
 import type { SignedData } from '@/types/auth';
@@ -65,7 +65,7 @@ export const safeAccountImport = async (client: WebClient, accountId: AccountId)
 
 export const accountIdToBech32 = (
   accountId: AccountId,
-  networkId: NetworkId = NetworkId.Testnet,
+  networkId: NetworkId = NetworkId.testnet(),
 ) => {
   return Address.fromAccountId(accountId).toBech32(networkId)
 };

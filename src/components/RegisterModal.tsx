@@ -6,12 +6,12 @@ import {
 } from "@/components/ui/shadcn-io/animated-modal";
 import { type ReactNode, useState, useEffect } from "react";
 import { cloneElement, isValidElement } from "react";
-import { useWallet } from "@demox-labs/miden-wallet-adapter";
+import { useWallet } from "@miden-sdk/miden-wallet-adapter";
 import {
-  MIDEN_FAUCET_CONTRACT_ADDRESS,
+  MIDEN_FAUCET_ID_BECH32,
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
-import { AccountId, Felt } from "@demox-labs/miden-sdk";
+import { AccountId, Felt } from "@miden-sdk/miden-sdk";
 import { useToast } from "@/hooks/useToast";
 import { ToastCause } from "@/types/toast";
 import { TermsModal } from "@/components/TermsModal";
@@ -22,7 +22,7 @@ import { ConfirmedStep } from "./register-modal/ConfirmedStep";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
-import { NoteInputs, MidenArrays } from "@demox-labs/miden-sdk";
+import { NoteInputs, MidenArrays } from "@miden-sdk/miden-sdk";
 import { getDomainPrice } from "@/shared/pricing";
 import { bech32ToAccountId, instantiateClient } from "@/lib/midenClient";
 import { executeStep } from "@/utils/errorHandler";
@@ -55,17 +55,25 @@ function RegisterModalContent({
 }) {
   const domainPrice = getDomainPrice(domain.length);
   const { connected, requestTransaction, address } = useWallet();
+  const { open } = useModal();
   const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
   const [termsOpen, setTermsOpen] = useState(false);
 
-  const faucetId = AccountId.fromHex(MIDEN_FAUCET_CONTRACT_ADDRESS as string)
+  const faucetId = AccountId.fromBech32(MIDEN_FAUCET_ID_BECH32 as string);
 
   const accountId = address ? bech32ToAccountId(address) : null
 
   const destinationAccountId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string)
+
+  // Reset when modal closes
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep("registration");
+    }
+  }, [open]);
 
   // Reset when domain changes
   useEffect(() => {
@@ -96,6 +104,10 @@ function RegisterModalContent({
           'Domain encoding',
           () => encodeDomain(domain)
         );
+
+        console.log("buyAmount:", buyAmount.toString());
+
+        console.log("faucetId:", faucetId.toString());
 
         const noteInputs = await executeStep(
           ErrorCodes.NOTE_INPUTS_CREATION_FAILED,

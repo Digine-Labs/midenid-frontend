@@ -2,7 +2,7 @@ import { Menubar } from '@/components/ui/menubar'
 import { Separator } from '@/components/ui/separator'
 import { Link } from 'react-router'
 import { MobileSidebar } from './MobileSidebar'
-import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter-reactui'
+import { WalletMultiButton } from '@miden-sdk/miden-wallet-adapter'
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -1,4 +1,4 @@
-import { Felt, Word } from '@demox-labs/miden-sdk';
+import { Felt, Word } from '@miden-sdk/miden-sdk';
 
 /**
  * Encodes a character to its numeric representation.

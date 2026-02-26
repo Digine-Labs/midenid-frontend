@@ -337,4 +337,4 @@ For issues and questions:
 
 ---
 
-Built with ❤️ for the Miden ecosystem
+Built with ❤️ for the Miden ecosystem.

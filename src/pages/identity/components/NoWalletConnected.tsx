@@ -1,4 +1,4 @@
-import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-reactui";
+import { WalletMultiButton } from "@miden-sdk/miden-wallet-adapter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Wallet } from "lucide-react";
 

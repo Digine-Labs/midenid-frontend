@@ -7,7 +7,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { WalletMultiButton } from '@demox-labs/miden-wallet-adapter-reactui'
+import { WalletMultiButton } from '@miden-sdk/miden-wallet-adapter'
 import { Separator } from '@/components/ui/separator'
 import { useTheme } from './ThemeProvider'
 import ThemeToggle from './ThemeToggle'

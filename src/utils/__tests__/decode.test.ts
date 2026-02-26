@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { decodeChar, decodeDomain } from '../decode';
 import { encodeDomain } from '../encode';
-import { Felt, Word } from '@demox-labs/miden-sdk';
+import { Felt, Word } from '@miden-sdk/miden-sdk';
 
 describe('decodeChar', () => {
   it('should decode values 1-26 to lowercase letters a-z', () => {

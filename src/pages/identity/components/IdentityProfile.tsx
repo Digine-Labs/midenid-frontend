@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, Github as GithubIcon, FileText, CheckCircle2, AlertCircle, RefreshCw, MessageCircle, Send, Upload, User } from "lucide-react";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { useWallet } from "@miden-sdk/miden-wallet-adapter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";

@@ -1,4 +1,4 @@
-import type { AccountId } from '@demox-labs/miden-sdk';
+import type { AccountId } from '@miden-sdk/miden-sdk';
 
 // Balance hook params (from hooks/useBalance.tsx)
 export interface BalanceParams {

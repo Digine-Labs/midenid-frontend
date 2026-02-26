@@ -1,4 +1,4 @@
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { useWallet } from "@miden-sdk/miden-wallet-adapter";
 import { useLocation, useNavigate } from "react-router";
 import { useEffect } from "react";
 import { NoWalletConnected } from "./components/NoWalletConnected";

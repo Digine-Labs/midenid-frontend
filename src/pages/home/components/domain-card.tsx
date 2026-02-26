@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
 import { RegisterModal } from '@/components/RegisterModal'
-import { useWallet, useWalletModal } from '@demox-labs/miden-wallet-adapter'
+import { useWallet, useWalletModal } from '@miden-sdk/miden-wallet-adapter'
 import { useDomainAvailability } from '@/hooks/useDomainAvailability'
 
 interface DomainCardProps {
@@ -22,7 +22,9 @@ export function DomainCard({ domain }: DomainCardProps) {
 
   const cardContent = (
     <Card
-      className={`cursor-pointer hover:shadow transition-all duration-200 border bg-card ${!loading && available === false
+      className={`cursor-pointer hover:shadow transition-all duration-200 border bg-card ${!loading && error
+        ? 'hover:border-yellow-500/50'
+        : !loading && available === false
         ? 'hover:border-destructive/50'
         : 'hover:border-primary/50'
         }`}

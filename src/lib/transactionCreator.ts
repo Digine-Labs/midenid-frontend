@@ -1,10 +1,8 @@
 import {
     AccountId,
-    Felt,
     FungibleAsset,
     Note,
     NoteAssets,
-    NoteExecutionHint,
     NoteInputs,
     NoteMetadata,
     NoteRecipient,
@@ -13,13 +11,15 @@ import {
     OutputNote,
     TransactionRequestBuilder,
     MidenArrays,
-    WebClient
-} from '@demox-labs/miden-sdk';
+    WebClient,
+    NoteAttachment,
+    NoteExecutionHint
+} from '@miden-sdk/miden-sdk';
 import {
     CustomTransaction,
     type MidenTransaction,
     TransactionType,
-} from "@demox-labs/miden-wallet-adapter-base";
+} from "@miden-sdk/miden-wallet-adapter";
 import { generateRandomSerialNumber, accountIdToBech32 } from "./midenClient";
 import { executeStep } from '@/utils/errorHandler';
 import { ErrorCodes } from '@/types/errors';
@@ -103,7 +103,7 @@ export async function transactionCreator({
             ErrorCodes.SCRIPT_BUILDER_AND_COMPILER,
             "Script builder or compiler",
             () => {
-                const builder = client.createScriptBuilder()
+                const builder = client.createCodeBuilder()
                 const registerComponentLib = builder.buildLibrary(libraryName, libraryScript)
                 builder.linkDynamicLibrary(registerComponentLib)
                 const script = builder.compileNoteScript(noteScript)
@@ -122,15 +122,15 @@ export async function transactionCreator({
 
                 const assets = new FungibleAsset(faucetId, amount);
                 const noteAssets = new NoteAssets([assets]);
-                const noteTag = NoteTag.fromAccountId(destinationAccountId);
+                const noteTag = NoteTag.withAccountTarget(destinationAccountId);
+
+                const networkTarget = NoteAttachment.newNetworkAccountTarget(destinationAccountId, NoteExecutionHint.always())
 
                 const noteMetadata = new NoteMetadata(
                     senderAccountId,
                     noteType,
-                    noteTag,
-                    NoteExecutionHint.always(),
-                    new Felt(BigInt(0))
-                );
+                    noteTag
+                ).withAttachment(networkTarget);
 
                 const note = new Note(
                     noteAssets,
