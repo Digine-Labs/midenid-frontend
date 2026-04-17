@@ -2,18 +2,17 @@ import {
     AccountId,
     FungibleAsset,
     Note,
+    NoteArray,
     NoteAssets,
-    NoteInputs,
     NoteMetadata,
     NoteRecipient,
+    NoteStorage,
     NoteTag,
     NoteType,
-    OutputNote,
     TransactionRequestBuilder,
-    MidenArrays,
-    WebClient,
     NoteAttachment,
-    NoteExecutionHint
+    NoteExecutionHint,
+    MidenClient
 } from '@miden-sdk/miden-sdk';
 import {
     CustomTransaction,
@@ -25,13 +24,13 @@ import { executeStep } from '@/utils/errorHandler';
 import { ErrorCodes } from '@/types/errors';
 
 export interface NoteFromMasmParams {
-    client: WebClient
+    client: MidenClient
     senderAccountId: AccountId;
     destinationAccountId: AccountId;
     noteScript: string;
     libraryScript: string;
     libraryName: string;
-    noteInputs: NoteInputs;
+    noteInputs: NoteStorage;
     faucetId: AccountId;
     amount: bigint;
     requestTransaction: (tx: MidenTransaction) => Promise<string>;
@@ -102,11 +101,14 @@ export async function transactionCreator({
         const script = await executeStep(
             ErrorCodes.SCRIPT_BUILDER_AND_COMPILER,
             "Script builder or compiler",
-            () => {
-                const builder = client.createCodeBuilder()
-                const registerComponentLib = builder.buildLibrary(libraryName, libraryScript)
-                builder.linkDynamicLibrary(registerComponentLib)
-                const script = builder.compileNoteScript(noteScript)
+            async () => {
+                const script = await client.compile.noteScript({
+                    code: noteScript,
+                    libraries: [{
+                        namespace: libraryName,
+                        code: libraryScript
+                    }]
+                })
                 return script
             }
         )
@@ -116,7 +118,7 @@ export async function transactionCreator({
 
         const note = await executeStep(
             ErrorCodes.NOTE_CREATION,
-            "Failed to create note",
+            "Note creation",
             () => {
                 const noteType = NoteType.Public
 
@@ -147,7 +149,7 @@ export async function transactionCreator({
             ErrorCodes.TRANSACTION_REQ_CREATION,
             "Failed to create transaction request",
             () => {
-                const noteArray = new MidenArrays.OutputNoteArray([OutputNote.full(note)]);
+                const noteArray = new NoteArray([note]);
 
                 const transactionRequest = new TransactionRequestBuilder()
                     .withOwnOutputNotes(noteArray)

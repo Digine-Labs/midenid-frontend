@@ -2,10 +2,10 @@ import {
   AccountId,
   Address,
   NetworkId,
-  WebClient,
   Word,
   Felt,
   SigningInputs,
+  MidenClient,
 } from '@miden-sdk/miden-sdk';
 import { uint8ArrayToHex, createMessage } from '@/utils';
 import type { CreateMessageParams } from '@/types/profile';
@@ -26,17 +26,24 @@ const clearMidenIndexedDB = async () => {
 export const instantiateClient = async (
   { accountsToImport }: { accountsToImport: AccountId[] },
 ) => {
-  const nodeEndpoint = 'https://rpc.testnet.miden.io';
+  const nodeEndpoint = 'https://rpc.devnet.miden.io';
 
-  let client: WebClient;
+  let client: MidenClient;
   try {
-    client = await WebClient.createClient(nodeEndpoint);
+    client = await MidenClient.create({
+      rpcUrl: nodeEndpoint,
+      storeName: "miden.name",
+    });
+
   } catch (e) {
     // If database schema is incompatible, clear and retry
     const errorMsg = e instanceof Error ? e.message : String(e);
     if (errorMsg.includes('Indexdb') || errorMsg.includes('WebStore') || errorMsg.includes('primary key')) {
       await clearMidenIndexedDB();
-      client = await WebClient.createClient(nodeEndpoint);
+      client = await MidenClient.create({
+        rpcUrl: nodeEndpoint,
+        storeName: "miden.name",
+      });
     } else {
       throw e;
     }
@@ -53,10 +60,10 @@ export const instantiateClient = async (
   return client;
 };
 
-export const safeAccountImport = async (client: WebClient, accountId: AccountId) => {
-  if (await client.getAccount(accountId) == null) {
+export const safeAccountImport = async (client: MidenClient, accountId: AccountId) => {
+  if (await client.accounts.get(accountId) == null) {
     try {
-      await client.importAccountById(accountId);
+      await client.accounts.import(accountId);
     } catch {
       // Account may already exist or be unavailable
     }

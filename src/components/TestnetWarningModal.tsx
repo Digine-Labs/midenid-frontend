@@ -35,7 +35,7 @@ export function TestnetWarningModal() {
                 Important: Names registered on the testnet may be wiped out during maintenance or new deployments. Registration on testnet does not guarantee name availability or ownership on mainnet.
               </div>
               <div className="font-semibold text-red-600">
-                Miden name is transitioning from testnet version v0.12 to v0.13. During this transition application can behave unpredictably.
+                Miden name is transitioning from testnet version v0.13 to v0.14. During this transition application can behave unpredictably.
               </div>
             </div>
           </DialogDescription>

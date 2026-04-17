@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet, WalletMultiButton } from "@miden-sdk/miden-wallet-adapter";
 import { TOKEN_SYMBOL, getDomainPrice } from "@/shared/pricing";
-import type { AccountId } from "@miden-sdk/miden-sdk";
 import { MIDEN_FAUCET_ID_BECH32 } from "@/shared";
 import { ErrorCodes } from "@/types/errors";
 import { executeStep } from "@/utils/errorHandler";
@@ -22,8 +21,6 @@ const FUN_TITLES = [
 
 interface RegistrationStepProps {
   domain: string;
-  buyer: AccountId;
-  paymentFaucet: AccountId;
   connected: boolean;
   isPurchasing: boolean;
   onPurchase: () => void;

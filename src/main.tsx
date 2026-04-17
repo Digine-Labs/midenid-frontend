@@ -7,6 +7,7 @@ import {
   WalletProvider,
   WalletModalProvider,
   MidenWalletAdapter,
+  WalletAdapterNetwork,
 } from '@miden-sdk/miden-wallet-adapter';
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { Loader2 } from 'lucide-react'
@@ -69,6 +70,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <WalletProvider
       wallets={wallets}
+      network={WalletAdapterNetwork.Devnet}
     >
       <WalletModalProvider>
         <ThemeProvider>
