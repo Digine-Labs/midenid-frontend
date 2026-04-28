@@ -30,7 +30,7 @@ export interface NoteFromMasmParams {
     noteScript: string;
     libraryScript: string;
     libraryName: string;
-    noteInputs: NoteStorage;
+    noteStorage: NoteStorage;
     faucetId: AccountId;
     amount: bigint;
     requestTransaction: (tx: MidenTransaction) => Promise<string>;
@@ -45,7 +45,7 @@ export interface NoteFromMasmParams {
  * @param noteScript - The MASM note script as a string
  * @param libraryScript - The MASM library script as a string
  * @param libraryName - The name of the library to link in the script (e.g., "miden_id::registry")
- * @param noteInputs - The inputs to pass to the note script
+ * @param noteStorage - The inputs to pass to the note script
  * @param faucetId - The faucet account ID to source tokens from (defaults to Miden testnet faucet)
  * @param amount - Amount of tokens to transfer (in base units, e.g., BigInt(50))
  * @param requestTransaction - Function to request transaction signing from the miden-wallet-adapter
@@ -86,7 +86,7 @@ export async function transactionCreator({
     noteScript,
     libraryScript,
     libraryName,
-    noteInputs,
+    noteStorage,
     faucetId,
     amount,
     requestTransaction,
@@ -137,7 +137,7 @@ export async function transactionCreator({
                 const note = new Note(
                     noteAssets,
                     noteMetadata,
-                    new NoteRecipient(serialNumber, script, noteInputs)
+                    new NoteRecipient(serialNumber, script, noteStorage)
                 );
                 return note
             }

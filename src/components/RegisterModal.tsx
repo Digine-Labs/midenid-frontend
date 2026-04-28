@@ -136,7 +136,7 @@ function RegisterModalContent({
           noteScript: REGISTER_NOTE_SCRIPT,
           libraryScript: MIDEN_NAME_CONTRACT_CODE,
           libraryName: "miden_name::naming",
-          noteInputs: noteInputs,
+          noteStorage: noteInputs,
           faucetId: faucetId,
           amount: buyAmount,
           requestTransaction: requestTransaction,

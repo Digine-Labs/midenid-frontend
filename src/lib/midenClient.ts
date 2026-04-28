@@ -26,24 +26,17 @@ const clearMidenIndexedDB = async () => {
 export const instantiateClient = async (
   { accountsToImport }: { accountsToImport: AccountId[] },
 ) => {
-  const nodeEndpoint = 'https://rpc.devnet.miden.io';
 
   let client: MidenClient;
   try {
-    client = await MidenClient.create({
-      rpcUrl: nodeEndpoint,
-      storeName: "miden.name",
-    });
+    client = await MidenClient.createTestnet()
 
   } catch (e) {
     // If database schema is incompatible, clear and retry
     const errorMsg = e instanceof Error ? e.message : String(e);
     if (errorMsg.includes('Indexdb') || errorMsg.includes('WebStore') || errorMsg.includes('primary key')) {
       await clearMidenIndexedDB();
-      client = await MidenClient.create({
-        rpcUrl: nodeEndpoint,
-        storeName: "miden.name",
-      });
+      client = await MidenClient.createTestnet();
     } else {
       throw e;
     }
