@@ -22,7 +22,7 @@ import { ConfirmedStep } from "./register-modal/ConfirmedStep";
 import { transactionCreator } from "@/lib/transactionCreator";
 import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
-import { NoteInputs, MidenArrays } from "@miden-sdk/miden-sdk";
+import { NoteStorage, MidenArrays } from "@miden-sdk/miden-sdk";
 import { getDomainPrice } from "@/shared/pricing";
 import { bech32ToAccountId, instantiateClient } from "@/lib/midenClient";
 import { executeStep } from "@/utils/errorHandler";
@@ -62,11 +62,10 @@ function RegisterModalContent({
   const [noteId, setNoteId] = useState<string | null>(null);
   const [termsOpen, setTermsOpen] = useState(false);
 
-  const faucetId = AccountId.fromBech32(MIDEN_FAUCET_ID_BECH32 as string);
+  const accountId = address
 
-  const accountId = address ? bech32ToAccountId(address) : null
-
-  const destinationAccountId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string)
+  let faucetId: AccountId;
+  let destinationAccountId: AccountId;
 
   // Reset when modal closes
   useEffect(() => {
@@ -90,8 +89,12 @@ function RegisterModalContent({
         const client = await executeStep(
           ErrorCodes.CLIENT_INIT_FAILED,
           'Client initialization',
-          () => instantiateClient({ accountsToImport: [] })
+          async () => await instantiateClient({ accountsToImport: [] })
         );
+
+        faucetId = AccountId.fromBech32(MIDEN_FAUCET_ID_BECH32 as string);
+
+        destinationAccountId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string)
 
         const buyAmount = await executeStep(
           ErrorCodes.AMOUNT_CALCULATION_FAILED,
@@ -112,7 +115,7 @@ function RegisterModalContent({
         const noteInputs = await executeStep(
           ErrorCodes.NOTE_INPUTS_CREATION_FAILED,
           'Note inputs creation',
-          () => new NoteInputs(
+          () => new NoteStorage(
             new MidenArrays.FeltArray([
               new Felt(faucetId.suffix().asInt()),
               new Felt(faucetId.prefix().asInt()),
@@ -128,12 +131,12 @@ function RegisterModalContent({
 
         const { noteId } = await transactionCreator({
           client,
-          senderAccountId: accountId,
+          senderAccountId: bech32ToAccountId(accountId),
           destinationAccountId: destinationAccountId,
           noteScript: REGISTER_NOTE_SCRIPT,
           libraryScript: MIDEN_NAME_CONTRACT_CODE,
           libraryName: "miden_name::naming",
-          noteInputs: noteInputs,
+          noteStorage: noteInputs,
           faucetId: faucetId,
           amount: buyAmount,
           requestTransaction: requestTransaction,
@@ -168,8 +171,6 @@ function RegisterModalContent({
               >
                 <RegistrationStep
                   domain={domain}
-                  buyer={accountId}
-                  paymentFaucet={faucetId}
                   connected={connected}
                   isPurchasing={isPurchasing}
                   onPurchase={handlePurchase}

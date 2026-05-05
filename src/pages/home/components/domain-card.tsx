@@ -25,8 +25,8 @@ export function DomainCard({ domain }: DomainCardProps) {
       className={`cursor-pointer hover:shadow transition-all duration-200 border bg-card ${!loading && error
         ? 'hover:border-yellow-500/50'
         : !loading && available === false
-        ? 'hover:border-destructive/50'
-        : 'hover:border-primary/50'
+          ? 'hover:border-destructive/50'
+          : 'hover:border-primary/50'
         }`}
       onClick={handleCardClick}
     >
