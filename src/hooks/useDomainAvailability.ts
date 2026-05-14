@@ -59,18 +59,17 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
     const checkDomain = async () => {
       try {
         const encodedDomain = encodeDomain(domain)
+        
+        const domainHex = encodedDomain.toHex()
+
         const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string)
 
         const requirements = AccountStorageRequirements.fromSlotAndKeysArray([
           new SlotAndKeys(DOMAIN_TO_OWNER_SLOT, [encodedDomain]),
         ])
 
-        console.log(requirements)
-
         const rpc = new RpcClient(Endpoint.testnet())
         const proof = await rpc.getAccountProof(contractId, requirements)
-
-        console.log(proof)
 
         if (abortedRef.current) return
 
@@ -78,20 +77,14 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
           clearTimeout(slowWarningTimerRef.current)
           slowWarningTimerRef.current = null
         }
-        console.log("adasdas", encodedDomain)
-
-        const domainHex = encodedDomain.toHex()
-
 
         const entries = proof.getStorageMapEntries("naming::domain_to_owner")
 
-        console.log("111", entries)
-
+        console.log("entries", entries)
 
         const ownerEntry = entries?.find(e => e.key().toHex() === domainHex)
         const ownerWord = ownerEntry?.value()
 
-        console.log(encodedDomain)
         console.log(ownerWord)
 
         // Domain is available when owner entry is absent or all-zero (unregistered)

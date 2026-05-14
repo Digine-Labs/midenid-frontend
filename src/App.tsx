@@ -1,27 +1,34 @@
-import { lazy, Suspense, useMemo } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router'
-import { Loader2 } from 'lucide-react'
-import { MidenWalletAdapter, WalletModalProvider, WalletProvider } from '@miden-sdk/miden-wallet-adapter'
-import { ThemeProvider } from '@/components/ThemeProvider'
+import { lazy, Suspense, useMemo } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router";
+import { Loader2 } from "lucide-react";
+import {
+  MidenWalletAdapter,
+  WalletModalProvider,
+  WalletProvider,
+} from "@miden-sdk/miden-wallet-adapter";
+import { ThemeProvider } from "@/components/ThemeProvider";
 // import { ParaProviderWrapper } from '@/providers/ParaProviderWrapper'
-import { UnifiedWalletProvider } from '@/providers/UnifiedWalletProvider'
-import { MidenNameProvider } from '@/providers/MidenNameProvider'
-import AppLayout from '@/components/AppLayout'
+// import { UnifiedWalletProvider } from "@/providers/UnifiedWalletProvider";
+// import { MidenNameProvider } from "@/providers/MidenNameProvider";
+import AppLayout from "@/components/AppLayout";
 
-const Home = lazy(() => import('@/pages/home/page'))
+const Home = lazy(() => import("@/pages/home/page"));
 // const Identity = lazy(() => import('@/pages/identity/page'))
 // const MyDomains = lazy(() => import('@/pages/my-domains/page'))
-const NotFound = lazy(() => import('@/pages/not-found/page'))
+const NotFound = lazy(() => import("@/pages/not-found/page"));
 
 const PageLoader = () => (
-  <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
+  <div
+    className="flex items-center justify-center"
+    style={{ minHeight: "calc(100vh - 56px)" }}
+  >
     <Loader2 className="h-8 w-8 animate-spin text-primary" />
   </div>
-)
+);
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <AppLayout />,
     children: [
       {
@@ -49,7 +56,7 @@ const router = createBrowserRouter([
       //   ),
       // },
       {
-        path: '*',
+        path: "*",
         element: (
           <Suspense fallback={<PageLoader />}>
             <NotFound />
@@ -58,27 +65,27 @@ const router = createBrowserRouter([
       },
     ],
   },
-])
+]);
 
 function App() {
   const wallets = useMemo(
-    () => [new MidenWalletAdapter({ appName: 'Miden.name' })],
+    () => [new MidenWalletAdapter({ appName: "Miden.name" })],
     [],
-  )
+  );
 
   return (
     <WalletProvider wallets={wallets} autoConnect>
       <WalletModalProvider>
-        <UnifiedWalletProvider>
-          <MidenNameProvider>
-            <ThemeProvider>
-              <RouterProvider router={router} />
-            </ThemeProvider>
-          </MidenNameProvider>
-        </UnifiedWalletProvider>
+        {/* <UnifiedWalletProvider>
+          <MidenNameProvider> */}
+        <ThemeProvider>
+          <RouterProvider router={router} />
+        </ThemeProvider>
+        {/* </MidenNameProvider>
+        </UnifiedWalletProvider> */}
       </WalletModalProvider>
     </WalletProvider>
-  )
+  );
 }
 
-export default App
+export default App;
