@@ -40,6 +40,7 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
 
   // Clone the trigger element and add onClick handler
   if (isValidElement(children)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return cloneElement(children as React.ReactElement<any>, {
       onClick: () => setOpen(true),
     });

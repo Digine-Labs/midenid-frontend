@@ -4,8 +4,8 @@ import { useParaMiden } from '@miden-sdk/use-miden-para-react';
 import { useEffect, useState, type ReactNode } from "react";
 import { NETWORK } from "@/lib/config";
 import {
-  type TransactionRequest,
-  UnifiedWalletContext,
+  type TransactionRequest as _TransactionRequest,
+  UnifiedWalletContext as _UnifiedWalletContext,
   type WalletType,
 } from './UnifiedWalletContext';
 
@@ -13,15 +13,15 @@ interface UnifiedWalletProviderProps {
   readonly children: ReactNode;
 }
 
-export function UnifiedWalletProvider({ children }: UnifiedWalletProviderProps) {
+export function UnifiedWalletProvider({ children: _children }: UnifiedWalletProviderProps) {
     const midenWallet = useWallet();
 
     const { isConnected: paraConnected } = useAccount();
-    const { logoutAsync } = useLogout();
+    const { logoutAsync: _logoutAsync } = useLogout();
 
     const {
-        client: paraMidenClient,
-        accountId: paraMiddenAccountId,
+        client: _paraMidenClient,
+        accountId: _paraMiddenAccountId,
     } = useParaMiden(NETWORK.rpcEndpoint);
 
     const [walletType, setWalletType] = useState<WalletType>(null);
