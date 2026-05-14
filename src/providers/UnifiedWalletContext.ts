@@ -2,7 +2,7 @@ import type { AccountId } from '@miden-sdk/miden-sdk';
 import type { CustomTransaction, Transaction } from '@miden-sdk/miden-wallet-adapter';
 import { createContext } from 'react';
 
-export type WalletType = 'miden' | 'para' | null;
+export type WalletType = 'miden' | /* 'para' | */ null;
 
 export type TransactionRequest =
   | Transaction

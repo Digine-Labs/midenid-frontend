@@ -1,7 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
-import { checkDomainAvailability } from '@/api'
 import { useToast } from '@/hooks/useToast'
 import { ToastCause } from '@/types/toast'
+import { encodeDomain } from '@/utils/encode'
+import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants'
+import {
+  AccountId,
+  AccountStorageRequirements,
+  Endpoint,
+  RpcClient,
+  SlotAndKeys,
+} from '@miden-sdk/miden-sdk'
+
+const DOMAIN_TO_OWNER_SLOT = 'naming::domain_to_owner'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -17,11 +27,10 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
   const [error, setError] = useState<string | null>(null)
   const showToast = useToast()
   const warningShownRef = useRef(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const abortedRef = useRef(false)
   const slowWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    // Reset state when domain is empty
     if (!domain) {
       setStatus('idle')
       setAvailable(null)
@@ -30,22 +39,16 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
       return
     }
 
-    // Abort any in-flight request
-    abortControllerRef.current?.abort()
-    abortControllerRef.current = new AbortController()
-
-    // Reset for new check
+    abortedRef.current = false
     setStatus('loading')
     setAvailable(null)
     setError(null)
     warningShownRef.current = false
 
-    // Clear any existing timer
     if (slowWarningTimerRef.current) {
       clearTimeout(slowWarningTimerRef.current)
     }
 
-    // Start slow loading warning timer
     slowWarningTimerRef.current = setTimeout(() => {
       if (!warningShownRef.current) {
         showToast(ToastCause.DOMAIN_CHECK_SLOW)
@@ -55,31 +58,51 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
 
     const checkDomain = async () => {
       try {
-        const result = await checkDomainAvailability(domain)
+        const encodedDomain = encodeDomain(domain)
+        const contractId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string)
 
-        // Check if request was aborted
-        if (abortControllerRef.current?.signal.aborted) return
+        const requirements = AccountStorageRequirements.fromSlotAndKeysArray([
+          new SlotAndKeys(DOMAIN_TO_OWNER_SLOT, [encodedDomain]),
+        ])
 
-        // Clear the slow warning timer on completion
+        console.log(requirements)
+
+        const rpc = new RpcClient(Endpoint.testnet())
+        const proof = await rpc.getAccountProof(contractId, requirements)
+
+        console.log(proof)
+
+        if (abortedRef.current) return
+
         if (slowWarningTimerRef.current) {
           clearTimeout(slowWarningTimerRef.current)
           slowWarningTimerRef.current = null
         }
+        console.log("adasdas", encodedDomain)
 
-        if (result.success && result.data) {
-          setAvailable(result.data.available)
-          setStatus('success')
-          setError(null)
-        } else {
-          setAvailable(null)
-          setStatus('error')
-          setError(result.error || 'Failed to check domain availability')
-          showToast(ToastCause.DOMAIN_CHECK_FAILED)
-        }
+        const domainHex = encodedDomain.toHex()
+
+
+        const entries = proof.getStorageMapEntries("naming::domain_to_owner")
+
+        console.log("111", entries)
+
+
+        const ownerEntry = entries?.find(e => e.key().toHex() === domainHex)
+        const ownerWord = ownerEntry?.value()
+
+        console.log(encodedDomain)
+        console.log(ownerWord)
+
+        // Domain is available when owner entry is absent or all-zero (unregistered)
+        const isAvailable = !ownerWord || ownerWord.toFelts().every(f => f.asInt() === 0n)
+
+        setAvailable(isAvailable)
+        setStatus('success')
+        setError(null)
       } catch (err) {
-        if (abortControllerRef.current?.signal.aborted) return
+        if (abortedRef.current) return
 
-        // Clear the slow warning timer on error
         if (slowWarningTimerRef.current) {
           clearTimeout(slowWarningTimerRef.current)
           slowWarningTimerRef.current = null
@@ -95,11 +118,11 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
     checkDomain()
 
     return () => {
+      abortedRef.current = true
       if (slowWarningTimerRef.current) {
         clearTimeout(slowWarningTimerRef.current)
         slowWarningTimerRef.current = null
       }
-      abortControllerRef.current?.abort()
     }
   }, [domain, showToast])
 

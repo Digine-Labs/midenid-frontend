@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), nodePolyfills()],
   resolve: {
     alias: {
       '@': '/src'
@@ -11,6 +12,12 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['@miden-sdk/miden-sdk'],
+    // Para SDK exclusions — temporarily disabled (dependency issues):
+    // "@getpara/aa-alchemy", "@getpara/solana-wallet-connectors", "@getpara/aa-zerodev",
+    // "@getpara/aa-biconomy", "@getpara/aa-cdp", "@getpara/aa-porto", "@getpara/aa-gelato",
+    // "@getpara/aa-pimlico", "@getpara/aa-thirdweb", "@getpara/aa-rhinestone", "@getpara/aa-safe",
+    // "@getpara/evm-wallet-connectors", "@getpara/cosmos-wallet-connectors",
+    // "@getpara/aa-ethers", "@getpara/aa-infura", "@getpara/aa-pocket", "@getpara/aa-viem"
     include: ['buffer'],
   },
   assetsInclude: ['**/*.masm'],
@@ -19,6 +26,12 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      // Para SDK externals — temporarily disabled (dependency issues):
+      // external: ["@getpara/aa-alchemy", "@getpara/solana-wallet-connectors", "@getpara/aa-zerodev",
+      //   "@getpara/aa-biconomy", "@getpara/aa-cdp", "@getpara/aa-porto", "@getpara/aa-gelato",
+      //   "@getpara/aa-pimlico", "@getpara/aa-thirdweb", "@getpara/aa-rhinestone", "@getpara/aa-safe",
+      //   "@getpara/evm-wallet-connectors", "@getpara/cosmos-wallet-connectors",
+      //   "@getpara/aa-ethers", "@getpara/aa-infura", "@getpara/aa-pocket", "@getpara/aa-viem"],
       output: {
         manualChunks: {
           // Vendor chunks
