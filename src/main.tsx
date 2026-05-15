@@ -10,6 +10,7 @@ import {
 } from '@miden-sdk/miden-wallet-adapter';
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { Loader2 } from 'lucide-react'
+import { MidenClientProvider } from '@/providers/MidenClientProvider'
 
 const Home = lazy(() => import('@/pages/home/page'))
 // const Identity = lazy(() => import('./pages/identity/page.tsx'))
@@ -71,9 +72,11 @@ createRoot(document.getElementById('root')!).render(
       wallets={wallets}
     >
       <WalletModalProvider>
-        <ThemeProvider>
-          <RouterProvider router={router} />
-        </ThemeProvider>
+        <MidenClientProvider>
+          <ThemeProvider>
+            <RouterProvider router={router} />
+          </ThemeProvider>
+        </MidenClientProvider>
       </WalletModalProvider>
     </WalletProvider>
   </StrictMode>,
