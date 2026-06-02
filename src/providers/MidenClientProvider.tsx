@@ -100,12 +100,9 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
   const getDomainOwner = useCallback(
     async (domain: string): Promise<AccountId | null> => {
       if (!client) return null;
-      if (!MIDEN_ID_CONTRACT_ADDRESS) {
-        throw new Error('VITE_MIDEN_ID_CONTRACT_ADDRESS is not set');
-      }
 
       const domainWord = encodeDomain(domain);
-      const registryId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string);
+      const registryId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS);
 
       return mutexRef.current.runExclusive(async () => {
         await throttledSync(client);
