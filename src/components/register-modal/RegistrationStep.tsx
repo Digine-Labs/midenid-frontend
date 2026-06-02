@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useWallet, WalletMultiButton } from "@miden-sdk/miden-wallet-adapter";
+import { WalletMultiButton } from "@miden-sdk/miden-wallet-adapter";
 import { TOKEN_SYMBOL, getDomainPrice } from "@/shared/pricing";
 import { MIDEN_FAUCET_ID_BECH32 } from "@/shared";
-import { ErrorCodes } from "@/types/errors";
-import { executeStep } from "@/utils/errorHandler";
+import { useMidenClient } from "@/contexts/MidenClientContext";
 
 const FUN_TITLES = [
   "Something new is cooking!",
@@ -36,9 +35,14 @@ export function RegistrationStep({
   onPurchase,
   onTermsClick,
 }: RegistrationStepProps) {
-  const { requestAssets } = useWallet()
+  const { getUserBalance, userAccountId } = useMidenClient();
   const [balance, setBalance] = useState<string | null>(null);
   const [balanceStatus, setBalanceStatus] = useState<BalanceStatus>("idle");
+
+  // Non-private accounts (public/network) have their balance reachable on-chain
+  // without a wallet prompt, so we just fetch it silently. Private accounts
+  // require `requestAssets()` which opens the wallet, so we gate it behind a button.
+  const isAutoFetch = userAccountId ? !userAccountId.isPrivate() : false;
 
   const domainPrice = getDomainPrice(domain.length);
 
@@ -46,40 +50,33 @@ export function RegistrationStep({
     () => FUN_TITLES[Math.floor(Math.random() * FUN_TITLES.length)]
   );
 
-  const handleCheckBalance = async () => {
+  const handleCheckBalance = useCallback(async () => {
     try {
-      if (!requestAssets) return
-
       setBalanceStatus("loading");
+      const fetchedBalance = await getUserBalance(MIDEN_FAUCET_ID_BECH32 as string);
 
-      const fetchedBalance = await executeStep(
-        ErrorCodes.BALANCE_CHECK,
-        "Balance check",
-        async () => {
-
-          const assets = await requestAssets();
-
-          const midenAsset = assets.find((asset) => asset.faucetId === MIDEN_FAUCET_ID_BECH32)
-
-          const fetchedBalance = midenAsset?.amount;
-
-          return fetchedBalance
-        }
-      )
-
-      if (!fetchedBalance) {
-        console.error("Balance is undefined")
-        setBalanceStatus("error")
-        return
+      if (fetchedBalance === null) {
+        setBalanceStatus("error");
+        return;
       }
 
-      setBalance(fetchedBalance);
+      setBalance(fetchedBalance.toString());
       setBalanceStatus("loaded");
     } catch (e) {
       console.error(e);
       setBalanceStatus("error");
     }
-  };
+  }, [getUserBalance]);
+
+  // Auto-fetch on first render for public/network accounts. We don't retry
+  // automatically on error — the renderClaimButton path shows a Retry button.
+  const autoFetchedRef = useRef(false);
+  useEffect(() => {
+    if (connected && isAutoFetch && !autoFetchedRef.current) {
+      autoFetchedRef.current = true;
+      handleCheckBalance();
+    }
+  }, [connected, isAutoFetch, handleCheckBalance]);
 
   return (
     <>
@@ -117,7 +114,8 @@ export function RegistrationStep({
                 balanceStatus,
                 domainPrice,
                 onPurchase,
-                handleCheckBalance
+                handleCheckBalance,
+                isAutoFetch
               )}
             </div>
           </div>
@@ -144,10 +142,20 @@ function renderClaimButton(
   balanceStatus: BalanceStatus,
   domainPrice: number,
   onPurchase: () => void,
-  onCheckBalance: () => void
+  onCheckBalance: () => void,
+  isAutoFetch: boolean
 ) {
-  // Balance Check
+  // Idle: private wallets need an explicit click (it opens the wallet prompt).
+  // Public/network wallets auto-fetch on mount, so we render the loading state
+  // immediately to avoid a flash of the manual button.
   if (balanceStatus === "idle") {
+    if (isAutoFetch) {
+      return (
+        <Button disabled className="w-full px-8 py-8 text-xl" size="lg">
+          Checking MIDEN balance...
+        </Button>
+      );
+    }
     return (
       <Button
         onClick={onCheckBalance}

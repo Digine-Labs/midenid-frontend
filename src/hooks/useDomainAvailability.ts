@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { checkDomainAvailability } from '@/api'
 import { useToast } from '@/hooks/useToast'
 import { ToastCause } from '@/types/toast'
+import { useMidenClient } from '@/contexts/MidenClientContext'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -17,11 +17,11 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
   const [error, setError] = useState<string | null>(null)
   const showToast = useToast()
   const warningShownRef = useRef(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const generationRef = useRef(0)
   const slowWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { checkDomainAvailable, isReady, error: clientError } = useMidenClient()
 
   useEffect(() => {
-    // Reset state when domain is empty
     if (!domain) {
       setStatus('idle')
       setAvailable(null)
@@ -30,24 +30,33 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
       return
     }
 
-    // Abort any in-flight request
-    abortControllerRef.current?.abort()
-    abortControllerRef.current = new AbortController()
+    if (clientError) {
+      setStatus('error')
+      setAvailable(null)
+      setError(clientError.message)
+      return
+    }
 
-    // Reset for new check
+    if (!isReady) {
+      setStatus('loading')
+      setAvailable(null)
+      setError(null)
+      return
+    }
+
+    const generation = ++generationRef.current
+
     setStatus('loading')
     setAvailable(null)
     setError(null)
     warningShownRef.current = false
 
-    // Clear any existing timer
     if (slowWarningTimerRef.current) {
       clearTimeout(slowWarningTimerRef.current)
     }
 
-    // Start slow loading warning timer
     slowWarningTimerRef.current = setTimeout(() => {
-      if (!warningShownRef.current) {
+      if (!warningShownRef.current && generationRef.current === generation) {
         showToast(ToastCause.DOMAIN_CHECK_SLOW)
         warningShownRef.current = true
       }
@@ -55,31 +64,21 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
 
     const checkDomain = async () => {
       try {
-        const result = await checkDomainAvailability(domain)
+        const result = await checkDomainAvailable(domain)
 
-        // Check if request was aborted
-        if (abortControllerRef.current?.signal.aborted) return
+        if (generationRef.current !== generation) return
 
-        // Clear the slow warning timer on completion
         if (slowWarningTimerRef.current) {
           clearTimeout(slowWarningTimerRef.current)
           slowWarningTimerRef.current = null
         }
 
-        if (result.success && result.data) {
-          setAvailable(result.data.available)
-          setStatus('success')
-          setError(null)
-        } else {
-          setAvailable(null)
-          setStatus('error')
-          setError(result.error || 'Failed to check domain availability')
-          showToast(ToastCause.DOMAIN_CHECK_FAILED)
-        }
+        setAvailable(result)
+        setStatus('success')
+        setError(null)
       } catch (err) {
-        if (abortControllerRef.current?.signal.aborted) return
+        if (generationRef.current !== generation) return
 
-        // Clear the slow warning timer on error
         if (slowWarningTimerRef.current) {
           clearTimeout(slowWarningTimerRef.current)
           slowWarningTimerRef.current = null
@@ -99,9 +98,8 @@ export function useDomainAvailability(domain: string): UseDomainAvailabilityResu
         clearTimeout(slowWarningTimerRef.current)
         slowWarningTimerRef.current = null
       }
-      abortControllerRef.current?.abort()
     }
-  }, [domain, showToast])
+  }, [domain, isReady, clientError, checkDomainAvailable, showToast])
 
   return {
     available,

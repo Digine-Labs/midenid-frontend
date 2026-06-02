@@ -24,9 +24,10 @@ import { REGISTER_NOTE_SCRIPT, MIDEN_NAME_CONTRACT_CODE } from "@/shared";
 import { encodeDomain } from "@/utils/encode";
 import { NoteStorage, MidenArrays } from "@miden-sdk/miden-sdk";
 import { getDomainPrice } from "@/shared/pricing";
-import { bech32ToAccountId, instantiateClient } from "@/lib/midenClient";
+import { bech32ToAccountId } from "@/lib/midenClient";
 import { executeStep } from "@/utils/errorHandler";
 import { ErrorCodes } from "@/types/errors";
+import { useMidenClient } from "@/contexts/MidenClientContext";
 
 interface RegisterModalProps {
   domain: string;
@@ -40,6 +41,7 @@ function RegisterModalTrigger({ children }: { children: ReactNode }) {
 
   // Clone the trigger element and add onClick handler
   if (isValidElement(children)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return cloneElement(children as React.ReactElement<any>, {
       onClick: () => setOpen(true),
     });
@@ -55,6 +57,7 @@ function RegisterModalContent({
 }) {
   const domainPrice = getDomainPrice(domain.length);
   const { connected, requestTransaction, address } = useWallet();
+  const { client, isReady: isClientReady } = useMidenClient();
   const { open } = useModal();
   const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
@@ -83,15 +86,13 @@ function RegisterModalContent({
   if (!accountId) return null;
   const handlePurchase = async () => {
     if (connected && accountId && requestTransaction) {
+      if (!isClientReady || !client) {
+        showToast(ToastCause.TRANSACTION_ERROR);
+        return;
+      }
       setIsPurchasing(true);
       setCurrentStep("processing");
       try {
-        const client = await executeStep(
-          ErrorCodes.CLIENT_INIT_FAILED,
-          'Client initialization',
-          async () => await instantiateClient({ accountsToImport: [] })
-        );
-
         faucetId = AccountId.fromBech32(MIDEN_FAUCET_ID_BECH32 as string);
 
         destinationAccountId = AccountId.fromHex(MIDEN_ID_CONTRACT_ADDRESS as string)
