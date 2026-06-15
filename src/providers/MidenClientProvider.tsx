@@ -16,14 +16,25 @@ import {
   MidenClientContext,
   type MidenClientContextValue,
 } from '@/contexts/MidenClientContext';
+import { SyncStatus } from '@/types/sync';
 
 const SYNC_THROTTLE_MS = 1500;
+// How often the background poller triggers a sync. Must be > SYNC_THROTTLE_MS so
+// each tick actually runs instead of being throttled away.
+const SYNC_POLL_INTERVAL_MS = 10_000;
+// Testnet sync is flaky during the v0.13→v0.14 transition; require a couple of
+// consecutive failures before flipping the indicator to red, to avoid flicker.
+const SYNC_FAILURE_THRESHOLD = 2;
 const DOMAIN_TO_OWNER_SLOT = 'naming::domain_to_owner';
 
 export function MidenClientProvider({ children }: { children: ReactNode }) {
   const [client, setClient] = useState<MidenClient | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(SyncStatus.Initializing);
+  const [syncedBlock, setSyncedBlock] = useState<number | null>(null);
   const lastSyncTimeRef = useRef(0);
+  const hasSyncedOnceRef = useRef(false);
+  const consecutiveFailuresRef = useRef(0);
   const mutexRef = useRef<Mutex>(createMutex());
   const { address, requestAssets } = useWallet();
 
@@ -46,8 +57,20 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
           return;
         }
         setClient(c);
+        setSyncStatus(SyncStatus.InitialSync);
+        // Seed the displayed block from local state so a number shows immediately,
+        // before the first network sync lands.
+        try {
+          const height = await mutexRef.current.runExclusive(() => c.getSyncHeight());
+          if (!cancelled) setSyncedBlock(height);
+        } catch {
+          // Best-effort; the first periodic sync will populate it.
+        }
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e : new Error(String(e)));
+        if (!cancelled) {
+          setError(e instanceof Error ? e : new Error(String(e)));
+          setSyncStatus(SyncStatus.Error);
+        }
       }
     })();
     return () => {
@@ -61,14 +84,24 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
   // does a one-account network fetch independent of the global sync.
   const throttledSync = useCallback(async (c: MidenClient) => {
     const now = Date.now();
-    if (now - lastSyncTimeRef.current >= SYNC_THROTTLE_MS) {
-      try {
-        await c.sync();
-      } catch (e) {
-        console.warn('[MidenClientProvider] client.sync() failed (continuing)', e);
+    if (now - lastSyncTimeRef.current < SYNC_THROTTLE_MS) return;
+    try {
+      const summary = await c.sync();
+      const blockNum = summary.blockNum();
+      summary.free();
+      setSyncedBlock(blockNum);
+      hasSyncedOnceRef.current = true;
+      consecutiveFailuresRef.current = 0;
+      setSyncStatus(SyncStatus.Synced);
+    } catch (e) {
+      console.warn('[MidenClientProvider] client.sync() failed (continuing)', e);
+      consecutiveFailuresRef.current += 1;
+      // Only surface red once failures persist; a single blip keeps the prior state.
+      if (consecutiveFailuresRef.current >= SYNC_FAILURE_THRESHOLD) {
+        setSyncStatus(SyncStatus.Error);
       }
-      lastSyncTimeRef.current = now;
     }
+    lastSyncTimeRef.current = now;
   }, []);
 
   const withClient = useCallback(
@@ -85,6 +118,15 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
     if (!client) return;
     await mutexRef.current.runExclusive(() => throttledSync(client));
   }, [client, throttledSync]);
+
+  // Background poller: keeps the sync-status indicator live even when no user
+  // action triggers a sync. Fires once immediately, then on an interval.
+  useEffect(() => {
+    if (!client) return;
+    void syncState();
+    const id = setInterval(() => void syncState(), SYNC_POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [client, syncState]);
 
   const getAccount = useCallback(
     async (accountId: AccountId): Promise<Account | null> => {
@@ -182,6 +224,8 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
       client,
       isReady: client !== null,
       error,
+      syncStatus,
+      syncedBlock,
       userAccountId,
       syncState,
       getAccount,
@@ -194,6 +238,8 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
     [
       client,
       error,
+      syncStatus,
+      syncedBlock,
       userAccountId,
       syncState,
       getAccount,

@@ -1,10 +1,21 @@
 import { createContext, useContext } from 'react';
 import type { Account, AccountId, MidenClient } from '@miden-sdk/miden-sdk';
+import type { SyncStatus } from '@/types/sync';
 
 export interface MidenClientContextValue {
   client: MidenClient | null;
   isReady: boolean;
   error: Error | null;
+  /**
+   * Live block-sync status, driven by the provider's periodic (and on-demand)
+   * `client.sync()` calls. Consumed by the bottom-right `BlockSyncStatus` indicator.
+   */
+  syncStatus: SyncStatus;
+  /**
+   * Latest synced block height (from `SyncSummary.blockNum()` / `getSyncHeight()`),
+   * or null before the first height is known.
+   */
+  syncedBlock: number | null;
   /**
    * AccountId of the connected wallet, decoded from its bech32 address.
    * Null when no wallet is connected (or the address can't be parsed).
