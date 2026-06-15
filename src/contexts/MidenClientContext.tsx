@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { Account, AccountId, MidenClient } from '@miden-sdk/miden-sdk';
 import type { SyncStatus } from '@/types/sync';
+import type { SentNote } from '@/lib/registryNotes';
 
 export interface MidenClientContextValue {
   client: MidenClient | null;
@@ -40,6 +41,13 @@ export interface MidenClientContextValue {
    * (public, network, or already imported).
    */
   getAccountBalance: (accountId: AccountId, faucetId: AccountId) => Promise<bigint>;
+  /**
+   * Register-notes the connected wallet sent to the registry contract within the
+   * last ~1000 blocks (domain, amount paid, block, consumed/waiting status).
+   * Uses a standalone read-only RPC connection; returns [] when no wallet is
+   * connected. See {@link fetchSentRegistryNotes}.
+   */
+  getSentRegistryNotes: () => Promise<SentNote[]>;
 }
 
 export const MidenClientContext = createContext<MidenClientContextValue | null>(null);

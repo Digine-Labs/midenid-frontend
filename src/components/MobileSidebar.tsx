@@ -7,7 +7,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { WalletMultiButton } from '@miden-sdk/miden-wallet-adapter'
+import { WalletMenu } from './WalletMenu'
 import { Separator } from '@/components/ui/separator'
 import { useTheme } from './ThemeProvider'
 import ThemeToggle from './ThemeToggle'
@@ -63,13 +63,11 @@ export function MobileSidebar() {
             </SheetClose>
           </nav>
 
-          {/* Wallet button */}
+          {/* Wallet menu (dropdown opens in a portal above the sheet; not wrapped
+              in SheetClose so tapping the trigger opens the menu instead of
+              closing the sheet) */}
           <div className="py-2 px-3 relative mt-6">
-            <SheetClose asChild>
-              <div>
-                <WalletMultiButton />
-              </div>
-            </SheetClose>
+            <WalletMenu />
           </div>
 
           {/* Theme Toggle */}

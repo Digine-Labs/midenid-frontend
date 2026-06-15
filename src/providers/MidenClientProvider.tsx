@@ -10,6 +10,7 @@ import { AccountId, Word, type Account, type MidenClient } from '@miden-sdk/mide
 import { useWallet } from '@miden-sdk/miden-wallet-adapter';
 import { bech32ToAccountId, instantiateClient } from '@/lib/midenClient';
 import { createMutex, type Mutex } from '@/lib/clientMutex';
+import { fetchSentRegistryNotes, type SentNote } from '@/lib/registryNotes';
 import { MIDEN_ID_CONTRACT_ADDRESS } from '@/shared/constants';
 import { encodeDomain } from '@/utils/encode';
 import {
@@ -219,6 +220,17 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
     [userAccountId, requestAssets, client, getAccountBalance],
   );
 
+  // Notes the connected wallet sent to the registry. Runs on a standalone
+  // read-only RpcClient (see fetchSentRegistryNotes), so it bypasses the client
+  // mutex. Deliberately depends only on `userAccountId` so the callback stays
+  // stable — depending on `syncedBlock` (which the poller bumps every few
+  // seconds) would restart the fetch on every block and it would never settle.
+  // The lib fetches its own chain tip when no hint is given (one extra RPC).
+  const getSentRegistryNotes = useCallback(async (): Promise<SentNote[]> => {
+    if (!userAccountId) return [];
+    return fetchSentRegistryNotes(userAccountId);
+  }, [userAccountId]);
+
   const value = useMemo<MidenClientContextValue>(
     () => ({
       client,
@@ -234,6 +246,7 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
       getDomainOwner,
       getUserBalance,
       getAccountBalance,
+      getSentRegistryNotes,
     }),
     [
       client,
@@ -248,6 +261,7 @@ export function MidenClientProvider({ children }: { children: ReactNode }) {
       getDomainOwner,
       getUserBalance,
       getAccountBalance,
+      getSentRegistryNotes,
     ],
   );
 

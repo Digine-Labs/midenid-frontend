@@ -2,7 +2,6 @@ import { Menubar } from '@/components/ui/menubar'
 import { Separator } from '@/components/ui/separator'
 import { Link } from 'react-router'
 import { MobileSidebar } from './MobileSidebar'
-import { WalletMultiButton } from '@miden-sdk/miden-wallet-adapter'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Github, Send } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
+import { WalletMenu } from './WalletMenu'
 import { useTheme } from './ThemeProvider'
 
 export function SiteHeader() {
@@ -35,15 +35,6 @@ export function SiteHeader() {
           {/* Desktop Navigation & Wallet */}
           <div className="hidden md:flex items-center gap-4">
             <nav className="flex items-center gap-6">
-              <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
-                Home
-              </Link>
-              <div className="relative cursor-pointer text-sm font-medium text-gray-300 dark:text-gray-500">
-                My Domains
-                <span className="absolute -top-2 -right-4 text-[8px] font-semibold text-primary">
-                  SOON
-                </span>
-              </div>
               <a href="https://docs.miden.name/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-primary transition-colors">
                 Docs
               </a>
@@ -94,7 +85,7 @@ export function SiteHeader() {
 
 
             <Separator orientation="vertical" className="h-6" />
-            <WalletMultiButton />
+            <WalletMenu />
 
             <div className="flex items-center">
               <ThemeToggle />
