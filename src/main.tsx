@@ -15,6 +15,7 @@ import { MidenClientProvider } from '@/providers/MidenClientProvider'
 const Home = lazy(() => import('@/pages/home/page'))
 // const Identity = lazy(() => import('./pages/identity/page.tsx'))
 // const MyDomains = lazy(() => import('./pages/my-domains/page.tsx'))
+const Sign = lazy(() => import('./pages/sign/page.tsx'))
 const NotFound = lazy(() => import('./pages/not-found/page.tsx'))
 
 const PageLoader = () => (
@@ -54,6 +55,14 @@ const router = createBrowserRouter([
       //     </Suspense>
       //   )
       // },
+      {
+        path: "sign/:id",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Sign />
+          </Suspense>
+        )
+      },
       {
         path: "*",
         element: (
