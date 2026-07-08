@@ -14,6 +14,20 @@ export const uint8ArrayToHex = (arr: Uint8Array): string => {
 };
 
 /**
+ * Decode a base64 string into a Uint8Array (browser-safe via atob).
+ * @param b64 - Base64-encoded string
+ * @returns Decoded bytes
+ */
+export const base64ToUint8Array = (b64: string): Uint8Array => {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
+
+/**
  * Create a JSON message for signing profile data
  * @param params - Profile data parameters
  * @returns JSON string of the message with timestamp

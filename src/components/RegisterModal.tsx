@@ -56,7 +56,7 @@ function RegisterModalContent({
   domain: string;
 }) {
   const domainPrice = getDomainPrice(domain.length);
-  const { connected, requestTransaction, address } = useWallet();
+  const { connected, requestTransaction, waitForTransaction, address } = useWallet();
   const { client, isReady: isClientReady } = useMidenClient();
   const { open } = useModal();
   const showToast = useToast();
@@ -85,7 +85,7 @@ function RegisterModalContent({
 
   if (!accountId) return null;
   const handlePurchase = async () => {
-    if (connected && accountId && requestTransaction) {
+    if (connected && accountId && requestTransaction && waitForTransaction) {
       if (!isClientReady || !client) {
         showToast(ToastCause.TRANSACTION_ERROR);
         return;
@@ -141,6 +141,7 @@ function RegisterModalContent({
           faucetId: faucetId,
           amount: buyAmount,
           requestTransaction: requestTransaction,
+          waitForTransaction: waitForTransaction,
         })
 
         console.log("note_id:", noteId)
