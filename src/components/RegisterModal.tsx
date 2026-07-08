@@ -28,6 +28,7 @@ import { bech32ToAccountId } from "@/lib/midenClient";
 import { executeStep } from "@/utils/errorHandler";
 import { ErrorCodes } from "@/types/errors";
 import { useMidenClient } from "@/contexts/MidenClientContext";
+import { addSentNote } from "@/lib/sentNotesStore";
 
 interface RegisterModalProps {
   domain: string;
@@ -57,7 +58,7 @@ function RegisterModalContent({
 }) {
   const domainPrice = getDomainPrice(domain.length);
   const { connected, requestTransaction, waitForTransaction, address } = useWallet();
-  const { client, isReady: isClientReady } = useMidenClient();
+  const { client, isReady: isClientReady, syncedBlock } = useMidenClient();
   const { open } = useModal();
   const showToast = useToast();
   const [currentStep, setCurrentStep] = useState<ModalStep>("registration");
@@ -146,6 +147,17 @@ function RegisterModalContent({
 
         console.log("note_id:", noteId)
         setNoteId(noteId);
+
+        // Persist the sent note for this wallet so the Transactions list can
+        // render it with zero RPC calls (status is checked live, per-row).
+        addSentNote(accountId, {
+          noteId,
+          domain,
+          amount: buyAmount.toString(),
+          blockNumber: syncedBlock ?? 0,
+          timestamp: Date.now(),
+        });
+
         setCurrentStep("confirmed");
       } catch (error) {
         console.error("Transaction error:", error);

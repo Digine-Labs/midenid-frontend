@@ -1,10 +1,22 @@
 import { createContext, useContext } from 'react';
 import type { Account, AccountId, MidenClient } from '@miden-sdk/miden-sdk';
+import type { SyncStatus } from '@/types/sync';
+import type { SentNote } from '@/lib/registryNotes';
 
 export interface MidenClientContextValue {
   client: MidenClient | null;
   isReady: boolean;
   error: Error | null;
+  /**
+   * Live block-sync status, driven by the provider's periodic (and on-demand)
+   * `client.sync()` calls. Consumed by the bottom-right `BlockSyncStatus` indicator.
+   */
+  syncStatus: SyncStatus;
+  /**
+   * Latest synced block height (from `SyncSummary.blockNum()` / `getSyncHeight()`),
+   * or null before the first height is known.
+   */
+  syncedBlock: number | null;
   /**
    * AccountId of the connected wallet, decoded from its bech32 address.
    * Null when no wallet is connected (or the address can't be parsed).
@@ -29,6 +41,13 @@ export interface MidenClientContextValue {
    * (public, network, or already imported).
    */
   getAccountBalance: (accountId: AccountId, faucetId: AccountId) => Promise<bigint>;
+  /**
+   * Register-notes the connected wallet sent to the registry contract within the
+   * last ~1000 blocks (domain, amount paid, block, consumed/waiting status).
+   * Uses a standalone read-only RPC connection; returns [] when no wallet is
+   * connected. See {@link fetchSentRegistryNotes}.
+   */
+  getSentRegistryNotes: () => Promise<SentNote[]>;
 }
 
 export const MidenClientContext = createContext<MidenClientContextValue | null>(null);
