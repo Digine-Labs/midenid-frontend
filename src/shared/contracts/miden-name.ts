@@ -5,6 +5,7 @@ use miden::protocol::input_note
 use miden::protocol::output_note
 use miden::protocol::active_note
 use miden::protocol::tx
+use miden::protocol::asset
 use miden::standards::wallets::basic->basic_wallet
 
 # Storage Slots
@@ -21,8 +22,8 @@ const DOMAIN_COUNT_SLOT = word("naming::domain_count")
 const TOTAL_REVENUE_SLOT = word("naming::total_revenue") # protocol total revenue map([0, 0, token_prefix, token_suffix] -> amount)
 const CLAIMED_REVENUE_SLOT = word("naming::claimed_revenue")
 const ONCHAIN_INIT_SLOT = word("naming::onchain_init")
-#const.DOMAIN_EXPIRY_DATES=12 # domain expiry dates map(DOMAIN -> expiry timestamp)
-#const.ONE_YEAR_TIMESTAMP_SLOT=13
+#const DOMAIN_EXPIRY_DATES = word("naming::domain_expiry") # domain expiry dates map(DOMAIN -> expiry timestamp)
+#const ONE_YEAR_TIMESTAMP_SLOT = word("naming::one_year_timestamp")
 
 # Errors
 const ERR_ONLY_OWNER="Only owner"
@@ -57,7 +58,7 @@ const MEM_DOMAIN=0x0020 # WORD
 const MEM_PAYMENT_TOKEN=0x0024 # WORD
 const MEM_REFERRER=0x0028 # WORD
 const MEM_DOMAIN_NEW_OWNER=0x002C # WORD
-#const.MEM_REG_LEN=0x0030 # WORD
+#const MEM_REG_LEN=0x0030 # WORD
 const MEM_RECIPIENT=0x0034 # WORD
 const MEM_NOTE_DETAILS=0x0038 # WORD
 const MEM_REF_RATE=0x003C # WORD
@@ -66,8 +67,8 @@ const MEM_PROTOCOL_FEE_AMT=0x0051 # felt
 const MEM_REFERRER_FEE_AMT=0x0052 # felt
 
 # Constants
-#const.YEAR=31536000 # In seconds
-#const.MAX_REG_LEN=10 # Years
+#const YEAR=31536000 # In seconds
+#const MAX_REG_LEN=10 # Years
 const MAX_NAME_LENGTH=21
 const MAX_REF_RATE=10000 # Basis point
 const REF_RATE_LIMIT=2500 # %25
@@ -89,8 +90,9 @@ pub proc register
     exec._assert_domain_rules
     exec._assert_payment_token
 
-    # []
-    exec._unsafe_receive_asset
+    exec._calculate_domain_price
+    # [price]
+    exec._receive_payment
     # []
     # Update domain owner
     push.0 exec.input_note::get_sender
@@ -101,6 +103,11 @@ pub proc register
     #exec.note::get_sender
     #exec._update_domain_map
     exec._clear_domain_mapping
+
+    exec._calculate_domain_price
+    # [price]
+    exec._increase_total_revenue
+
 
     # []
     exec._after_domain_register
@@ -178,7 +185,7 @@ end
 # Output: []
 pub proc set_price
     exec._assert_only_owner
-    push.PRICES_SLOT[0..2] 
+    push.PRICES_SLOT[0..2]
     exec.native_account::set_map_item dropw
 end
 
@@ -188,28 +195,56 @@ pub proc claim_protocol_revenue
     mem_storew_be.MEM_NOTE_DETAILS dropw
     mem_storew_be.MEM_RECIPIENT dropw
     exec._assert_only_owner
-    # Create note
-
-
+    # Create output note
     padw mem_loadw_be.MEM_RECIPIENT
     padw mem_loadw_be.MEM_NOTE_DETAILS
-    #padw mem_loadw_be.MEM_PAYMENT_TOKEN
-    # Stack must be
-    # [tag, aux, note_type, exec_hint, RECIPIENT]
-    exec.output_note::create # TODO
-    # Create ASSET word
-    # []
+    drop drop
+    # [tag, note_type, RECIPIENT]
+    exec.output_note::create
+    # [note_idx]
     exec._get_remaining_revenue
-    # [claimable_revenue]
+    # [claimable_revenue, note_idx]
     exec._get_asset
-    # [ASSET]
+    # [ASSET_KEY, ASSET_VALUE, note_idx]
+    # 0.15: remove_asset and output_note::add_asset each consume the full (KEY, VALUE)
+    # pair, so duplicate it before removing from the vault.
+    dupw.1 dupw.1
+    # [ASSET_KEY, ASSET_VALUE, ASSET_KEY, ASSET_VALUE, note_idx]
+    exec.native_account::remove_asset
+    # [REMAINING_ASSET_VALUE, ASSET_KEY, ASSET_VALUE, note_idx]
+    dropw
+    # [ASSET_KEY, ASSET_VALUE, note_idx]
+    exec.output_note::add_asset
+    # []
+    exec._set_claimed_to_total
 end
 
-# Input: [TOKEN]
+# Input: [TOKEN, NOTE_DETAILS, RECIPIENT]
 pub proc withdraw_assets
     mem_storew_be.MEM_PAYMENT_TOKEN dropw
+    mem_storew_be.MEM_NOTE_DETAILS dropw
+    mem_storew_be.MEM_RECIPIENT dropw
     exec._assert_only_owner
-    nop
+    # Create output note
+    padw mem_loadw_be.MEM_RECIPIENT
+    padw mem_loadw_be.MEM_NOTE_DETAILS
+    drop drop
+    # [tag, note_type, RECIPIENT]
+    exec.output_note::create
+    # [note_idx]
+    exec._get_balance
+    # [balance, note_idx]
+    exec._get_asset
+    # [ASSET_KEY, ASSET_VALUE, note_idx]
+    # 0.15: duplicate the (KEY, VALUE) pair so it survives remove_asset for the output note.
+    dupw.1 dupw.1
+    # [ASSET_KEY, ASSET_VALUE, ASSET_KEY, ASSET_VALUE, note_idx]
+    exec.native_account::remove_asset
+    # [REMAINING_ASSET_VALUE, ASSET_KEY, ASSET_VALUE, note_idx]
+    dropw
+    # [ASSET_KEY, ASSET_VALUE, note_idx]
+    exec.output_note::add_asset
+    # []
 end
 
 # Internal Methods
@@ -260,12 +295,28 @@ proc _get_remaining_revenue
     # [claimable_revenue]
 end
 
+# Input: [] Memory [PAYMENT_TOKEN]
+# Output: []
+# Sets claimed_revenue = total_revenue for the token
+proc _set_claimed_to_total
+    padw mem_loadw_be.MEM_PAYMENT_TOKEN
+    push.TOTAL_REVENUE_SLOT[0..2] exec.active_account::get_map_item
+    # [TOTAL_VALUE]
+    padw mem_loadw_be.MEM_PAYMENT_TOKEN
+    push.CLAIMED_REVENUE_SLOT[0..2] exec.native_account::set_map_item dropw
+end
+
 # Input: [amt] Memory [PAYMENT_TOKEN]
-# Output: [ASSET]
+# Output: [ASSET_KEY, ASSET_VALUE]
+# 0.15: a fungible asset is an 8-felt (ASSET_KEY, ASSET_VALUE) pair built via the
+# asset helper, which encodes the composition metadata into the key.
 proc _get_asset
-    push.0 swap
     padw mem_loadw_be.MEM_PAYMENT_TOKEN drop drop
-    # [prefix, suffix, amt, 0]
+    # [prefix, suffix, amt]
+    swap push.0
+    # [enable_callbacks=0, suffix, prefix, amt]
+    exec.asset::create_fungible_asset
+    # [ASSET_KEY, ASSET_VALUE]
 end
 
 # Input: [account_prefix, account_suffix] Memory [DOMAIN]
@@ -290,7 +341,7 @@ proc _update_domain_owner
     push.0.0
     # [0,0, prefix, suffix]
     padw mem_loadw_be.MEM_DOMAIN
-    
+
     # [DOMAIN, 0, 0, prefix, suffix]
     push.DOMAIN_TO_OWNER_SLOT[0..2]
     # [slot, DOMAIN, 0, 0, prefix, suffix]
@@ -348,6 +399,12 @@ end
 proc _get_balance
     padw mem_loadw_be.MEM_PAYMENT_TOKEN drop drop swap
     # [suffix, prefix]
+    # 0.15: get_balance takes a full ASSET_KEY; build the fungible vault key
+    # (callbacks disabled) from the faucet id.
+    push.0
+    # [enable_callbacks=0, suffix, prefix]
+    exec.asset::create_fungible_key
+    # [ASSET_KEY]
     exec.active_account::get_balance
     # [balance]
 end
@@ -363,10 +420,6 @@ proc _receive_payment
     swap u32overflowing_sub assertz.err=ERR_VALIDATE_PAYMENT_SUB_OVERFLOW
     lte assert.err=ERR_INSUFFICIENT_AMOUNT_PAID
     # []
-end
-
-proc _unsafe_receive_asset
-    exec.basic_wallet::add_assets_to_account
 end
 
 # Input: [] Memory [PAYMENT_TOKEN]
@@ -452,7 +505,7 @@ proc _validate_domain_length
     # [f3, f2_count, f1_count, length]
     exec._count_chars_in_felt
     # [f3_count, f2_count, f1_count, length]
-    add add 
+    add add
     # [f3+f2+f1, length]
     eq
     # [1 or 0]
@@ -483,7 +536,7 @@ proc _count_chars_in_u32
     gt.0
     if.true
         # [kalan, count]
-        swap 
+        swap
         # [count, kalan]
         add.1 swap
         # [kalan, count + 1]
@@ -493,7 +546,7 @@ proc _count_chars_in_u32
     gt.0
     if.true
         # [kalan, count]
-        swap 
+        swap
         # [count, kalan]
         add.1 swap
         # [kalan, count + 1]
@@ -510,5 +563,4 @@ proc _count_chars_in_u32
         swap add.1 swap
     end
     drop
-end
-`
+end`;

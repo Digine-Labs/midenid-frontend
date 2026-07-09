@@ -1,10 +1,10 @@
-export const MIDEN_ID_CONTRACT_ADDRESS = '0x88f63686037e63406bbb8f5d01adb0';
+export const MIDEN_ID_CONTRACT_ADDRESS = '0xa57d6b12bebc6671339efefba10417';
 // Block at which the registry contract was created. Used as the lower bound for
 // on-chain note lookups (e.g. the Reclaim scan) — there can be no register-notes
 // before this block, so scanning earlier is wasted work.
-export const MIDEN_ID_CONTRACT_CREATION_BLOCK = 226699;
-export const MIDEN_FAUCET_CONTRACT_ADDRESS = '0x0a7d175ed63ec5200fb2ced86f6aa5';
-export const MIDEN_FAUCET_ID_BECH32 = 'mtst1aq9869676clv2gq0kt8dsmm255zs6hs3_qr7qqq9wr6w';
+export const MIDEN_ID_CONTRACT_CREATION_BLOCK = 268698;
+export const MIDEN_FAUCET_CONTRACT_ADDRESS = '0x2458e5446128e6b150b75b8ebd9ce1';
+export const MIDEN_FAUCET_ID_BECH32 = 'mtst1aqj93e2yvy5wdv2skadca0vuuypfnp80_qr7qqq9wr6w';
 export const API_BASE = 'https://midenid-backend.onrender.com';
 // 5 * 1024 * 1024 = 5 MB
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;

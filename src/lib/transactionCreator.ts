@@ -9,9 +9,9 @@ import {
     NoteStorage,
     NoteTag,
     NoteType,
+    NoteScript,
+    NetworkAccountTarget,
     TransactionRequestBuilder,
-    NoteAttachment,
-    NoteExecutionHint,
     MidenClient
 } from '@miden-sdk/miden-sdk';
 import {
@@ -22,6 +22,8 @@ import {
 import { generateRandomSerialNumber, accountIdToBech32 } from "./midenClient";
 import { executeStep } from '@/utils/errorHandler';
 import { ErrorCodes } from '@/types/errors';
+import { base64ToUint8Array } from '@/utils';
+import { REGISTER_NOTE_SCRIPT_COMPILED_B64 } from '@/shared/notes/register-note-compiled';
 
 export interface NoteFromMasmParams {
     client: MidenClient
@@ -34,6 +36,7 @@ export interface NoteFromMasmParams {
     faucetId: AccountId;
     amount: bigint;
     requestTransaction: (tx: MidenTransaction) => Promise<string>;
+    waitForTransaction: (txId: string, timeout?: number) => Promise<{ txHash: string }>;
 }
 
 
@@ -90,6 +93,7 @@ export async function transactionCreator({
     faucetId,
     amount,
     requestTransaction,
+    waitForTransaction,
 }: NoteFromMasmParams): Promise<{ txId: string; noteId: string, blockNumber?: number }> {
     if (typeof window === "undefined") {
         console.warn("webClient() can only run in the browser");
@@ -102,14 +106,25 @@ export async function transactionCreator({
             ErrorCodes.SCRIPT_BUILDER_AND_COMPILER,
             "Script builder or compiler",
             async () => {
-                const script = await client.compile.noteScript({
+                // Prefer the deploy-compiled note script: its MAST root matches the
+                // registry's NetworkAccountNoteAllowlist, so the network auto-consumes
+                // the note. Recompiling from source in the frontend yields a DIFFERENT
+                // root (different bundled std-libs) and the note is silently ignored.
+                if (REGISTER_NOTE_SCRIPT_COMPILED_B64) {
+                    return NoteScript.deserialize(
+                        base64ToUint8Array(REGISTER_NOTE_SCRIPT_COMPILED_B64)
+                    );
+                }
+
+                // Fallback: compile from source. Produces a mismatched root — only
+                // usable where allowlist matching is not required.
+                return client.compile.noteScript({
                     code: noteScript,
                     libraries: [{
                         namespace: libraryName,
                         code: libraryScript
                     }]
-                })
-                return script
+                });
             }
         )
 
@@ -126,18 +141,25 @@ export async function transactionCreator({
                 const noteAssets = new NoteAssets([assets]);
                 const noteTag = NoteTag.withAccountTarget(destinationAccountId);
 
-                const networkTarget = NoteAttachment.newNetworkAccountTarget(destinationAccountId, NoteExecutionHint.always())
-
                 const noteMetadata = new NoteMetadata(
                     senderAccountId,
                     noteType,
                     noteTag
-                ).withAttachment(networkTarget);
+                );
 
-                const note = new Note(
+                // 0.15.5: mark this as a NETWORK note (`NetworkAccountTarget`
+                // attachment) so the node's ntx-builder classifies it and the
+                // public network account at `destinationAccountId` auto-consumes
+                // it. Without the attachment `isNetworkNote()` is false and the
+                // note stays COMMITTED forever. Requires `destinationAccountId`
+                // to be a public account.
+                const networkTarget = new NetworkAccountTarget(destinationAccountId);
+
+                const note = Note.withAttachments(
                     noteAssets,
                     noteMetadata,
-                    new NoteRecipient(serialNumber, script, noteStorage)
+                    new NoteRecipient(serialNumber, script, noteStorage),
+                    [networkTarget.toAttachment()]
                 );
                 return note
             }
@@ -171,12 +193,18 @@ export async function transactionCreator({
                     [],
                 );
 
-                const txId = await requestTransaction({
+                // 0.15 wallet-adapter: requestTransaction only ACKNOWLEDGES the
+                // request and returns a handle (a UUID), not the on-chain tx hash.
+                // The wallet proves + submits asynchronously; waitForTransaction
+                // resolves that handle to the committed result (real txHash).
+                const requestId = await requestTransaction({
                     type: TransactionType.Custom,
                     payload: tx,
                 });
 
-                return txId
+                const output = await waitForTransaction(requestId);
+
+                return output.txHash
             }
         )
 
