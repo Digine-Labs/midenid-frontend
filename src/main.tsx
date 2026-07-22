@@ -7,6 +7,7 @@ import {
   WalletProvider,
   WalletModalProvider,
   MidenWalletAdapter,
+  AllowedPrivateData,
 } from '@miden-sdk/miden-wallet-adapter';
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { Loader2 } from 'lucide-react'
@@ -71,7 +72,11 @@ createRoot(document.getElementById('root')!).render(
     <WalletProvider
       wallets={wallets}
     >
-      <WalletModalProvider>
+      {/* Grant the dApp access to the connected account's private data. The
+          register flow reads the account balance via requestAssets() (Assets)
+          and reclaim consumes private notes via requestConsume() (Notes).
+          Bread enforces this scope; without it requestAssets() → NOT_GRANTED. */}
+      <WalletModalProvider allowedPrivateData={AllowedPrivateData.All}>
         <MidenClientProvider>
           <ThemeProvider>
             <RouterProvider router={router} />
