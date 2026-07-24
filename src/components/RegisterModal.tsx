@@ -25,6 +25,7 @@ import { encodeDomain } from "@/utils/encode";
 import { NoteStorage, MidenArrays } from "@miden-sdk/miden-sdk";
 import { getDomainPrice } from "@/shared/pricing";
 import { bech32ToAccountId } from "@/lib/midenClient";
+import { registerViaMultisig, NotAGuardianAccountError } from "@/lib/registerViaMultisig";
 import { executeStep } from "@/utils/errorHandler";
 import { ErrorCodes } from "@/types/errors";
 import { useMidenClient } from "@/contexts/MidenClientContext";
@@ -57,7 +58,7 @@ function RegisterModalContent({
   domain: string;
 }) {
   const domainPrice = getDomainPrice(domain.length);
-  const { connected, requestTransaction, waitForTransaction, address } = useWallet();
+  const { connected, requestTransaction, waitForTransaction, address, publicKey, signBytes } = useWallet();
   const { client, isReady: isClientReady, syncedBlock } = useMidenClient();
   const { open } = useModal();
   const showToast = useToast();
@@ -131,9 +132,11 @@ function RegisterModalContent({
           )
         );
 
-        const { noteId } = await transactionCreator({
+        const senderAccountId = bech32ToAccountId(accountId);
+
+        const runWalletFlow = () => transactionCreator({
           client,
-          senderAccountId: bech32ToAccountId(accountId),
+          senderAccountId,
           destinationAccountId: destinationAccountId,
           noteScript: REGISTER_NOTE_SCRIPT,
           libraryScript: MIDEN_NAME_CONTRACT_CODE,
@@ -143,7 +146,36 @@ function RegisterModalContent({
           amount: buyAmount,
           requestTransaction: requestTransaction,
           waitForTransaction: waitForTransaction,
-        })
+        });
+
+        // Guardian (multisig) accounts can't authorize a custom tx via the
+        // wallet's requestTransaction — route them through the OZ multisig
+        // propose/sign/execute flow. We can't cheaply detect a guardian account
+        // (it's private, not fetchable), so we attempt the guardian load and
+        // fall back to the wallet flow if the PSM doesn't know the account.
+        let noteId: string;
+        if (publicKey && signBytes) {
+          try {
+            ({ noteId } = await registerViaMultisig({
+              client,
+              senderAccountId,
+              destinationAccountId,
+              noteStorage: noteInputs,
+              faucetId,
+              amount: buyAmount,
+              walletPublicKey: publicKey,
+              signBytes,
+            }));
+          } catch (e) {
+            if (e instanceof NotAGuardianAccountError) {
+              ({ noteId } = await runWalletFlow());
+            } else {
+              throw e;
+            }
+          }
+        } else {
+          ({ noteId } = await runWalletFlow());
+        }
 
         console.log("note_id:", noteId)
         setNoteId(noteId);
