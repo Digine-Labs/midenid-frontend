@@ -10,7 +10,7 @@
  *  1. VITE_GUARDIAN_ENDPOINT must point at the SAME guardian operator the wallet
  *     registered the account with, or `load()` fails. There is no on-chain way to
  *     discover it (the account stores only a guardian commitment, not a URL) — the
- *     wallet doesn't expose it either, so we hardcode one operator's endpoint.
+ *     wallet doesn't expose it either. It defaults to OpenZeppelin's operator.
  *  2. The ECDSA cosigner "invalid public key commitment" bug (OZ guardian #313)
  *     is fixed by #314, released in @openzeppelin/guardian v0.15.2. We force the
  *     `ecdsa` scheme below because the wallet exposes only the 32-byte account
@@ -44,9 +44,13 @@ import { base64ToUint8Array } from '@/utils';
 import { REGISTER_NOTE_SCRIPT_COMPILED_B64 } from '@/shared/notes/register-note-compiled';
 import { generateRandomSerialNumber } from './midenClient';
 
-// The guardian/PSM service the wallet's accounts are registered with. Must match
-// the wallet's guardian, or MultisigClient.load() fails.
-const GUARDIAN_ENDPOINT = import.meta.env.VITE_GUARDIAN_ENDPOINT as string | undefined;
+// Guardian (PSM) operator endpoint. Override per deployment via
+// VITE_GUARDIAN_ENDPOINT; defaults to OpenZeppelin's operator so a fresh build
+// works without extra config. Must match the operator the wallet registered the
+// account with, or MultisigClient.load() fails.
+const GUARDIAN_ENDPOINT =
+  (import.meta.env.VITE_GUARDIAN_ENDPOINT as string | undefined) ??
+  'https://guardian.openzeppelin.com';
 
 /**
  * Thrown when the account isn't found on the guardian/PSM — i.e. it's not a
@@ -85,12 +89,6 @@ function buildRegisterRequest(p: RegisterViaMultisigParams) {
 export async function registerViaMultisig(
   p: RegisterViaMultisigParams,
 ): Promise<{ noteId: string; proposalId: string }> {
-  if (!GUARDIAN_ENDPOINT) {
-    throw new Error(
-      'VITE_GUARDIAN_ENDPOINT is not set — cannot reach the guardian service for the multisig flow.',
-    );
-  }
-
   // 1. Build the registration request FIRST, while the AccountId WASM objects are
   //    still valid. (The guardian load below calls senderAccountId.toString(),
   //    which consumes/frees the WASM object; building afterwards would leave the
