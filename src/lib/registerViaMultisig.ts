@@ -31,6 +31,7 @@ import {
   NetworkAccountTarget,
   TransactionRequest,
   TransactionRequestBuilder,
+  Endpoint,
   type MidenClient,
 } from '@miden-sdk/miden-sdk';
 import {
@@ -48,9 +49,15 @@ import { generateRandomSerialNumber } from './midenClient';
 // VITE_GUARDIAN_ENDPOINT; defaults to OpenZeppelin's operator so a fresh build
 // works without extra config. Must match the operator the wallet registered the
 // account with, or MultisigClient.load() fails.
-const GUARDIAN_ENDPOINT =
+// Strip any trailing slash: the multisig client appends `/state` (etc.) with a
+// leading slash, so an endpoint like `https://guardian.openzeppelin.com/` would
+// produce `//state`, which the guardian routes as 404 (→ misread as "not a
+// guardian account" → wallet fallback → "unauthorized"). Normalise so a trailing
+// slash in the env var is harmless.
+const GUARDIAN_ENDPOINT = (
   (import.meta.env.VITE_GUARDIAN_ENDPOINT as string | undefined) ??
-  'https://guardian.openzeppelin.com';
+  'https://guardian.openzeppelin.com'
+).replace(/\/+$/, '');
 
 /**
  * Thrown when the account isn't found on the guardian/PSM — i.e. it's not a
@@ -116,7 +123,12 @@ export async function registerViaMultisig(
   //    private). A genuine load failure means the PSM doesn't know this account →
   //    treat it as "not a guardian account" so the caller can fall back.
   const accountIdStr = p.senderAccountId.toString();
-  const msClient = new MultisigClient(p.client, { guardianEndpoint: GUARDIAN_ENDPOINT });
+  // 0.16 requires an explicit Miden RPC endpoint (0.15 derived it from the
+  // client). Use the SDK's testnet endpoint so it matches the rest of the app.
+  const msClient = new MultisigClient(p.client, {
+    guardianEndpoint: GUARDIAN_ENDPOINT,
+    midenRpcEndpoint: Endpoint.testnet().toString(),
+  });
 
   // The guardian enforces a strictly-increasing x-timestamp PER ACCOUNT, shared
   // across every client that touches it (wallet + dApp). If another client — or a
@@ -164,14 +176,30 @@ export async function registerViaMultisig(
       }
       break;
     } catch (e) {
-      if (isReplay(e)) {
-        if (i < OFFSETS_MS.length - 1) continue; // escalate and retry
+      const status = (e as { status?: number } | null)?.status;
+      // A 401 here is almost always the per-account MONOTONIC-TIMESTAMP race, not a
+      // bad key. The guardian shares a strictly-increasing x-timestamp high-water
+      // mark across every client that touches the account (wallet + dApp), and the
+      // wallet keeps advancing it. Proven for this account: the digest/key/scheme we
+      // sign are byte-identical to the wallet's OWN successful getState — the only
+      // difference is the timestamp. The 0.16 guardian sanitizes the old "Replay
+      // attack" wording to a generic `authentication_failed`, so detect the race by
+      // STATUS (401), not the legacy string. Escalate our timestamp up the ladder
+      // and retry; only give up once the whole ladder is exhausted.
+      const isAuthRace = status === 401 || isReplay(e);
+      if (isAuthRace) {
+        if (i < OFFSETS_MS.length - 1) continue; // push timestamp further ahead, retry
         throw new Error(
-          `guardian replay-lock: even +${OFFSETS_MS[i]}ms was rejected for ${accountIdStr}. ` +
-            `Another client is holding the account's timestamp ahead of us — retry shortly.`,
+          `guardian rejected authentication for ${accountIdStr} (401) even after escalating ` +
+            `the timestamp to +${OFFSETS_MS[i]}ms. The wallet may be holding the account's ` +
+            `guardian timestamp ahead of us — close the wallet side-panel and retry. If it ` +
+            `persists it's a genuine auth/cosigner mismatch, not the timestamp race.`,
         );
       }
-      // Not a replay → the PSM genuinely doesn't know this account.
+
+      // 404 (or any other non-auth failure) → the PSM genuinely doesn't know this
+      // account (e.g. a Fully-Private / non-guardian wallet, which returns 404).
+      // Signal the caller to fall back to the normal wallet submit flow.
       throw new NotAGuardianAccountError(
         `guardian load failed for ${accountIdStr}: ${e instanceof Error ? e.message : e}`,
       );
