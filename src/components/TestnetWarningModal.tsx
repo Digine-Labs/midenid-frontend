@@ -35,7 +35,7 @@ export function TestnetWarningModal() {
                 Important: Names registered on the testnet may be wiped out during maintenance or new deployments. Registration on testnet does not guarantee name availability or ownership on mainnet.
               </div>
               <div className="font-semibold text-red-600">
-                Miden name is transitioning from testnet version v0.13 to v0.14. During this transition application can behave unpredictably.
+                Heads up: the Miden browser wallet is being deprecated. The Bread wallet is not supported yet — we'll make an announcement once it's ready. For now, Miden Name registration works only with a guardian account secured by OpenZeppelin, or a local wallet.
               </div>
             </div>
           </DialogDescription>
