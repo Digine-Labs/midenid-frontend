@@ -1,4 +1,4 @@
-export const MIDEN_ID_CONTRACT_ADDRESS = '0xa57d6b12bebc6671339efefba10417';
+export const MIDEN_ID_CONTRACT_ADDRESS = '0x9c38a162151098712f076962413ec1';
 // Block at which the registry contract was created. Used as the lower bound for
 // on-chain note lookups (e.g. the Reclaim scan) — there can be no register-notes
 // before this block, so scanning earlier is wasted work.
