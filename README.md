@@ -1,6 +1,6 @@
-# Miden ID Frontend
+# Miden Name Frontend
 
-A decentralized identity and domain name registration system built on the Miden blockchain. This frontend application allows users to register `.miden` domains, manage their digital identity, and connect their social profiles in a Web3 environment.
+ A decentralized identity and domain name registration system built on the Miden blockchain. This frontend application allows users to register `.miden` domains, manage their digital identity, and connect their social profiles in a Web3 environment.
 
 ## Overview
 
