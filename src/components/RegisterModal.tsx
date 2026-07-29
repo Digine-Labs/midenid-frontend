@@ -11,7 +11,7 @@ import {
   MIDEN_FAUCET_ID_BECH32,
   MIDEN_ID_CONTRACT_ADDRESS,
 } from "@/shared/constants";
-import { AccountId, Felt } from "@miden-sdk/miden-sdk";
+import { AccountId } from "@miden-sdk/miden-sdk";
 import { useToast } from "@/hooks/useToast";
 import { ToastCause } from "@/types/toast";
 import { TermsModal } from "@/components/TermsModal";
@@ -115,15 +115,17 @@ function RegisterModalContent({
 
         console.log("faucetId:", faucetId.toString());
 
+        // The Rust registry's register note carries ONLY the four domain limbs.
+        // The assembly note also passed the payment token in felts 0-1, but the
+        // Rust contract reads the faucet out of the vault key of the asset it is
+        // actually handed — so the token cannot be misreported — and takes the
+        // buyer from the note sender. Passing the old 8-felt layout here would
+        // fail to deserialize into the note's fields.
         const noteInputs = await executeStep(
           ErrorCodes.NOTE_INPUTS_CREATION_FAILED,
           'Note inputs creation',
           () => new NoteStorage(
             new MidenArrays.FeltArray([
-              new Felt(faucetId.suffix().asInt()),
-              new Felt(faucetId.prefix().asInt()),
-              new Felt(BigInt(0)),
-              new Felt(BigInt(0)),
               domainWord.toFelts()[0],
               domainWord.toFelts()[1],
               domainWord.toFelts()[2],

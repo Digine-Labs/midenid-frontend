@@ -230,7 +230,38 @@ export async function registerViaMultisig(
   //    request's advice map, and submit the rebuilt request.
   const advice = await multisig.prepareCustomExecution(proposal.id, requestBytes);
   const finalRequest = TransactionRequest.deserialize(requestBytes).extendAdviceMap(advice);
-  await multisig.submitTransaction(finalRequest);
+
+  // 6. `submitTransaction` executes, proves, submits to the node, and only THEN applies
+  //    the result to the local client store. That last step fails for a guardian account
+  //    with "account data wasn't found for account id ...": the account is private, so
+  //    it is not in the shared client's store, and `load()` only anchors it transiently.
+  //
+  //    By the time that throws, the transaction is already accepted by the network — the
+  //    registration has happened and the payment has moved. Letting it propagate reports
+  //    a failure for a transaction that succeeded, and worse, leaves the guardian holding
+  //    an unfinished pending change, so the NEXT registration from this account dies with
+  //    "409 There's already a pending change for this account."
+  //
+  //    So a post-submission local-apply failure is downgraded to a warning. Anything else
+  //    still throws: a failure before submission means nothing reached the chain, and
+  //    swallowing that would report success for a registration that never happened.
+  try {
+    await multisig.submitTransaction(finalRequest);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    const isLocalApplyFailure =
+      message.includes('failed to apply transaction result') ||
+      message.includes("account data wasn't found");
+
+    if (!isLocalApplyFailure) throw e;
+
+    console.warn(
+      '[registerViaMultisig] transaction was submitted to the network, but the local ' +
+        'client could not record it (private guardian account is not in the store). ' +
+        'The registration itself succeeded; local history may be incomplete.',
+      e,
+    );
+  }
 
   return { noteId, proposalId: proposal.id };
 }

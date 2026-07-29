@@ -83,7 +83,9 @@ export interface NoteFromMasmParams {
  * 
  */
 export async function transactionCreator({
-    client,
+    // `client` is still accepted for call-site compatibility but no longer used: the
+    // note script now always comes from the pre-compiled bytes rather than being
+    // assembled through the client.
     senderAccountId,
     destinationAccountId,
     noteScript,
@@ -116,15 +118,19 @@ export async function transactionCreator({
                     );
                 }
 
-                // Fallback: compile from source. Produces a mismatched root — only
-                // usable where allowlist matching is not required.
-                return client.compile.noteScript({
-                    code: noteScript,
-                    libraries: [{
-                        namespace: libraryName,
-                        code: libraryScript
-                    }]
-                });
+                // No source fallback against the Rust registry. The remaining MASM
+                // source (REGISTER_NOTE_SCRIPT / MIDEN_NAME_CONTRACT_CODE) describes
+                // the *assembly* contract — a different contract, with a different
+                // note layout — so compiling it here would build a note the registry
+                // can never consume. It would sit COMMITTED forever with the user's
+                // payment locked inside it. Failing loudly is the safer outcome.
+                void noteScript;
+                void libraryScript;
+                void libraryName;
+                throw new Error(
+                    'REGISTER_NOTE_SCRIPT_COMPILED_B64 is empty. Regenerate it from the ' +
+                    'contracts repo: cargo run -p integration --release --bin export-frontend',
+                );
             }
         )
 

@@ -5,6 +5,7 @@ import { DomainCard } from './components/domain-card'
 import { TestnetWarningModal } from '@/components/TestnetWarningModal'
 import { RoughNotation } from 'react-rough-notation'
 import { useTheme } from '@/components/ThemeProvider'
+import { MAX_DOMAIN_LENGTH } from '@/utils/encode'
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('')
@@ -26,7 +27,7 @@ export default function Home() {
     const filteredValue = match ? match[0] : ''
 
     // Check if length was exceeded
-    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > 20
+    const lengthExceeded = value.replace(/[^a-zA-Z0-9]/g, '').length > MAX_DOMAIN_LENGTH
 
     setInputValue(filteredValue)
 

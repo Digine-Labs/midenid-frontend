@@ -63,6 +63,16 @@ export function encodeChar(chr: string): number | null {
  * @param domain - Domain name (1-20 characters, alphanumeric)
  * @throws Error if domain is empty, too long, or contains invalid characters
  */
+/**
+ * Longest registrable name.
+ *
+ * This is the hard capacity of the encoding — three Felts at seven characters each —
+ * and matches MAX_NAME_LENGTH in the registry contract, which rejects anything longer.
+ * The UI previously capped at 20, which silently made 21-character names unbuyable
+ * even though the chain accepts them.
+ */
+export const MAX_DOMAIN_LENGTH = 21;
+
 export function encodeDomain(domain: string): Word {
   const len = domain.length;
 
@@ -70,8 +80,8 @@ export function encodeDomain(domain: string): Word {
   if (len === 0) {
     throw new Error('Domain name must have at least 1 character');
   }
-  if (len > 20) {
-    throw new Error('Domain name must be at most 20 characters');
+  if (len > MAX_DOMAIN_LENGTH) {
+    throw new Error(`Domain name must be at most ${MAX_DOMAIN_LENGTH} characters`);
   }
 
   // Encode each character

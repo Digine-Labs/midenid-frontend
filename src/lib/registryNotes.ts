@@ -76,9 +76,13 @@ export async function checkNoteStatus(noteId: string): Promise<NoteLiveStatus> {
 }
 
 // Layout of the register note's storage (inputs), from RegisterModal:
-//   [0..3] = TOKEN (faucet suffix, prefix, 0, 0)
-//   [4..7] = DOMAIN word (felt0, felt1, felt2, length)
-const DOMAIN_FELT_OFFSET = 4;
+//   [0..3] = DOMAIN word (felt0, felt1, felt2, length)
+//
+// The assembly note put the payment token in [0..3] and the domain at [4..7]. The
+// Rust registry reads the faucet out of the vault key of the asset the note carries
+// rather than trusting a declared token, so those two felts are gone and the domain
+// starts at 0. Notes sent to the old assembly registry will not decode here.
+const DOMAIN_FELT_OFFSET = 0;
 
 /**
  * Fetches every register-note the connected wallet sent to the registry contract

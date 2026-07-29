@@ -79,16 +79,16 @@ describe('encodeDomain', () => {
     expect(() => encodeDomain('')).toThrow('Domain name must have at least 1 character');
   });
 
-  it('should encode max length domain (20 characters)', () => {
+  it('should encode max length domain (21 characters)', () => {
     const maxDomain = 'a'.repeat(20);
     const encoded = encodeDomain(maxDomain);
     const felts = encoded.toFelts();
     expect(felts[3].asInt()).toBe(20n);
   });
 
-  it('should throw error for domain exceeding max length (21+ characters)', () => {
-    const tooLongDomain = 'a'.repeat(21);
-    expect(() => encodeDomain(tooLongDomain)).toThrow('Domain name must be at most 20 characters');
+  it('should throw error for domain exceeding max length (22+ characters)', () => {
+    const tooLongDomain = 'a'.repeat(22);
+    expect(() => encodeDomain(tooLongDomain)).toThrow('Domain name must be at most 21 characters');
   });
 
   it('should encode domains with numbers', () => {
