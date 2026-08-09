@@ -58,7 +58,8 @@ function RegisterModalContent({
   domain: string;
 }) {
   const domainPrice = getDomainPrice(domain.length);
-  const { connected, requestTransaction, waitForTransaction, address, publicKey, signBytes } = useWallet();
+  const wallet = useWallet();
+  const { connected, requestTransaction, waitForTransaction, address, publicKey, signBytes } = wallet;
   const { client, isReady: isClientReady, syncedBlock } = useMidenClient();
   const { open } = useModal();
   const showToast = useToast();
@@ -148,13 +149,50 @@ function RegisterModalContent({
           waitForTransaction: waitForTransaction,
         });
 
-        // Guardian (multisig) accounts can't authorize a custom tx via the
-        // wallet's requestTransaction — route them through the OZ multisig
-        // propose/sign/execute flow. We can't cheaply detect a guardian account
-        // (it's private, not fetchable), so we attempt the guardian load and
-        // fall back to the wallet flow if the PSM doesn't know the account.
+        // DEFAULT: the wallet's NATIVE flow (requestTransaction) for ALL accounts,
+        // including guardian (multisig) accounts. The current wallet coordinates
+        // guardian signing + state internally, which avoids the MultisigClient
+        // pitfalls we hit on the OZ path: the getState-vs-canonical-delta staleness
+        // that wedges an account after one tx, guardian CORS blocks (e.g. Lambda
+        // Class), stranded pending-delta 409s, and the timestamp-escalation
+        // signature prompts. Verified: Lambda Class does repeat registrations
+        // cleanly via this path.
+        //
+        // The legacy MultisigClient path (registerViaMultisig) is kept behind an
+        // opt-in flag for debugging/fallback: localStorage `forceMultisigFlow=1`
+        // or the URL `?forceMultisigFlow=1`.
+        let lsMultisig: string | null = null;
+        try {
+          lsMultisig = localStorage.getItem('forceMultisigFlow');
+        } catch {
+          /* localStorage unavailable */
+        }
+        const qpMultisig = new URLSearchParams(window.location.search).get('forceMultisigFlow');
+        const forceMultisigFlow = lsMultisig === '1' || qpMultisig === '1';
+
         let noteId: string;
-        if (publicKey && signBytes) {
+        if (forceMultisigFlow && publicKey && signBytes) {
+          console.log(
+            `[RegisterModal] forceMultisigFlow=1 → using legacy MultisigClient path (localStorage=${lsMultisig}, urlParam=${qpMultisig})`,
+          );
+          // Resolve the operator endpoint from the wallet's requestGuardianInfo()
+          // when available; otherwise registerViaMultisig falls back to the
+          // localStorage override / VITE_GUARDIAN_ENDPOINT / default.
+          let guardianEndpoint: string | null = null;
+          const requestGuardianInfo = (
+            wallet as {
+              requestGuardianInfo?: () => Promise<{ guardianEndpoint?: string | null }>;
+            }
+          ).requestGuardianInfo;
+          if (typeof requestGuardianInfo === 'function') {
+            try {
+              const info = await requestGuardianInfo();
+              guardianEndpoint = info?.guardianEndpoint ?? null;
+              console.log('[RegisterModal] wallet guardian info:', info);
+            } catch (e) {
+              console.warn('[RegisterModal] requestGuardianInfo() failed', e);
+            }
+          }
           try {
             ({ noteId } = await registerViaMultisig({
               client,
@@ -165,6 +203,7 @@ function RegisterModalContent({
               amount: buyAmount,
               walletPublicKey: publicKey,
               signBytes,
+              guardianEndpoint,
             }));
           } catch (e) {
             if (e instanceof NotAGuardianAccountError) {
