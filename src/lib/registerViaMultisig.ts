@@ -7,10 +7,11 @@
  * guardian (PSM) service instead.
  *
  * Known constraints:
- *  1. VITE_GUARDIAN_ENDPOINT must point at the SAME guardian operator the wallet
- *     registered the account with, or `load()` fails. There is no on-chain way to
- *     discover it (the account stores only a guardian commitment, not a URL) — the
- *     wallet doesn't expose it either. It defaults to OpenZeppelin's operator.
+ *  1. The guardian endpoint must match the SAME operator the wallet registered the
+ *     account with, or `load()` fails. It's sourced from the wallet's
+ *     `requestGuardianInfo().guardianEndpoint` (see resolveGuardianEndpoint); a
+ *     localStorage `guardianEndpoint` override exists for testing, and it defaults
+ *     to OpenZeppelin's operator.
  *  2. The ECDSA cosigner "invalid public key commitment" bug (OZ guardian #313)
  *     is fixed by #314, released in @openzeppelin/guardian v0.15.2. We force the
  *     `ecdsa` scheme below because the wallet exposes only the 32-byte account
@@ -54,12 +55,12 @@ const GUARDIAN_ENDPOINT_OVERRIDE_KEY = 'guardianEndpoint';
 
 /**
  * Resolve the guardian (PSM) operator endpoint, in priority order:
- *   1. `explicit` — e.g. the wallet's own `requestGuardianInfo().guardianEndpoint`
- *      (the account knows which operator it was registered with).
+ *   1. `explicit` — the wallet's own `requestGuardianInfo().guardianEndpoint`
+ *      (the account knows which operator it was registered with). This is the
+ *      normal source now that the wallet exposes it — no env config needed.
  *   2. localStorage `guardianEndpoint` — a runtime override for testing a different
  *      operator against the same build (no rebuild needed).
- *   3. `VITE_GUARDIAN_ENDPOINT` — build-time deployment config.
- *   4. OpenZeppelin's operator — default so a fresh build works with no config.
+ *   3. OpenZeppelin's operator — default so it works with no config at all.
  *
  * The endpoint MUST match the operator the wallet registered the account with, or
  * `MultisigClient.load()` fails. Any trailing slash is stripped: the multisig
@@ -77,16 +78,13 @@ function resolveGuardianEndpoint(explicit?: string | null): string {
   const raw =
     (explicit && explicit.trim()) ||
     (override && override.trim()) ||
-    (import.meta.env.VITE_GUARDIAN_ENDPOINT as string | undefined) ||
     DEFAULT_GUARDIAN_ENDPOINT;
   const endpoint = raw.replace(/\/+$/, '');
   const source = explicit
     ? 'wallet/guardian-info'
     : override
       ? 'localStorage override'
-      : import.meta.env.VITE_GUARDIAN_ENDPOINT
-        ? 'VITE_GUARDIAN_ENDPOINT'
-        : 'default';
+      : 'default';
   console.log(`[registerViaMultisig] guardian endpoint: ${endpoint} (source: ${source})`);
   return endpoint;
 }

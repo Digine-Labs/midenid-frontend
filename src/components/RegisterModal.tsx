@@ -177,7 +177,7 @@ function RegisterModalContent({
           );
           // Resolve the operator endpoint from the wallet's requestGuardianInfo()
           // when available; otherwise registerViaMultisig falls back to the
-          // localStorage override / VITE_GUARDIAN_ENDPOINT / default.
+          // localStorage `guardianEndpoint` override / default.
           let guardianEndpoint: string | null = null;
           const requestGuardianInfo = (
             wallet as {
