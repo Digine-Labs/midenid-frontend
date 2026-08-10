@@ -69,14 +69,21 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <WalletProvider
-      wallets={wallets}
-    >
       {/* Grant the dApp access to the connected account's private data. The
           register flow reads the account balance via requestAssets() (Assets)
           and reclaim consumes private notes via requestConsume() (Notes).
-          Bread enforces this scope; without it requestAssets() → NOT_GRANTED. */}
-      <WalletModalProvider allowedPrivateData={AllowedPrivateData.All}>
+          Bread enforces this scope; without it requestAssets() → NOT_GRANTED.
+
+          This MUST be on WalletProvider, not WalletModalProvider: WalletProvider
+          is what calls `adapter.connect(privateDataPermission, network,
+          allowedPrivateData)`. WalletModalProvider (reactui) ignores the prop
+          entirely, so putting it there leaves connect at the default
+          AllowedPrivateData.None → NOT_GRANTED. */}
+    <WalletProvider
+      wallets={wallets}
+      allowedPrivateData={AllowedPrivateData.All}
+    >
+      <WalletModalProvider>
         <MidenClientProvider>
           <ThemeProvider>
             <RouterProvider router={router} />

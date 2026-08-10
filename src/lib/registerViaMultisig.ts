@@ -7,10 +7,11 @@
  * guardian (PSM) service instead.
  *
  * Known constraints:
- *  1. VITE_GUARDIAN_ENDPOINT must point at the SAME guardian operator the wallet
- *     registered the account with, or `load()` fails. There is no on-chain way to
- *     discover it (the account stores only a guardian commitment, not a URL) — the
- *     wallet doesn't expose it either. It defaults to OpenZeppelin's operator.
+ *  1. The guardian endpoint must match the SAME operator the wallet registered the
+ *     account with, or `load()` fails. It's sourced from the wallet's
+ *     `requestGuardianInfo().guardianEndpoint` (see resolveGuardianEndpoint); a
+ *     localStorage `guardianEndpoint` override exists for testing, and it defaults
+ *     to OpenZeppelin's operator.
  *  2. The ECDSA cosigner "invalid public key commitment" bug (OZ guardian #313)
  *     is fixed by #314, released in @openzeppelin/guardian v0.15.2. We force the
  *     `ecdsa` scheme below because the wallet exposes only the 32-byte account
@@ -45,19 +46,48 @@ import { base64ToUint8Array } from '@/utils';
 import { REGISTER_NOTE_SCRIPT_COMPILED_B64 } from '@/shared/notes/register-note-compiled';
 import { generateRandomSerialNumber } from './midenClient';
 
-// Guardian (PSM) operator endpoint. Override per deployment via
-// VITE_GUARDIAN_ENDPOINT; defaults to OpenZeppelin's operator so a fresh build
-// works without extra config. Must match the operator the wallet registered the
-// account with, or MultisigClient.load() fails.
-// Strip any trailing slash: the multisig client appends `/state` (etc.) with a
-// leading slash, so an endpoint like `https://guardian.openzeppelin.com/` would
-// produce `//state`, which the guardian routes as 404 (→ misread as "not a
-// guardian account" → wallet fallback → "unauthorized"). Normalise so a trailing
-// slash in the env var is harmless.
-const GUARDIAN_ENDPOINT = (
-  (import.meta.env.VITE_GUARDIAN_ENDPOINT as string | undefined) ??
-  'https://guardian.openzeppelin.com'
-).replace(/\/+$/, '');
+const DEFAULT_GUARDIAN_ENDPOINT = 'https://guardian.openzeppelin.com';
+// Runtime override key. Set from the browser console to point the SAME build at a
+// different guardian operator (e.g. Lambda Class) without rebuilding:
+//   localStorage.setItem('guardianEndpoint', 'https://<operator>'); location.reload();
+// Clear with localStorage.removeItem('guardianEndpoint').
+const GUARDIAN_ENDPOINT_OVERRIDE_KEY = 'guardianEndpoint';
+
+/**
+ * Resolve the guardian (PSM) operator endpoint, in priority order:
+ *   1. `explicit` — the wallet's own `requestGuardianInfo().guardianEndpoint`
+ *      (the account knows which operator it was registered with). This is the
+ *      normal source now that the wallet exposes it — no env config needed.
+ *   2. localStorage `guardianEndpoint` — a runtime override for testing a different
+ *      operator against the same build (no rebuild needed).
+ *   3. OpenZeppelin's operator — default so it works with no config at all.
+ *
+ * The endpoint MUST match the operator the wallet registered the account with, or
+ * `MultisigClient.load()` fails. Any trailing slash is stripped: the multisig
+ * client appends `/state` (etc.) with a leading slash, so `.../` would produce
+ * `//state` → 404 (misread as "not a guardian account" → wallet fallback →
+ * "unauthorized").
+ */
+function resolveGuardianEndpoint(explicit?: string | null): string {
+  let override: string | null = null;
+  try {
+    override = localStorage.getItem(GUARDIAN_ENDPOINT_OVERRIDE_KEY);
+  } catch {
+    /* localStorage unavailable — ignore */
+  }
+  const raw =
+    (explicit && explicit.trim()) ||
+    (override && override.trim()) ||
+    DEFAULT_GUARDIAN_ENDPOINT;
+  const endpoint = raw.replace(/\/+$/, '');
+  const source = explicit
+    ? 'wallet/guardian-info'
+    : override
+      ? 'localStorage override'
+      : 'default';
+  console.log(`[registerViaMultisig] guardian endpoint: ${endpoint} (source: ${source})`);
+  return endpoint;
+}
 
 /**
  * Thrown when the account isn't found on the guardian/PSM — i.e. it's not a
@@ -76,6 +106,10 @@ export interface RegisterViaMultisigParams {
   // From useWallet():
   walletPublicKey: Uint8Array;
   signBytes: (data: Uint8Array, kind: 'word' | 'signingInputs') => Promise<Uint8Array>;
+  // Optional: the operator this account is registered with, e.g. from the wallet's
+  // requestGuardianInfo().guardianEndpoint (when available). Takes priority over
+  // the localStorage/env/default resolution. Must match the account's operator.
+  guardianEndpoint?: string | null;
 }
 
 /** Build the SAME network registration note we build on the wallet path. */
@@ -123,10 +157,11 @@ export async function registerViaMultisig(
   //    private). A genuine load failure means the PSM doesn't know this account →
   //    treat it as "not a guardian account" so the caller can fall back.
   const accountIdStr = p.senderAccountId.toString();
+  const guardianEndpoint = resolveGuardianEndpoint(p.guardianEndpoint);
   // 0.16 requires an explicit Miden RPC endpoint (0.15 derived it from the
   // client). Use the SDK's testnet endpoint so it matches the rest of the app.
   const msClient = new MultisigClient(p.client, {
-    guardianEndpoint: GUARDIAN_ENDPOINT,
+    guardianEndpoint,
     midenRpcEndpoint: Endpoint.testnet().toString(),
   });
 
@@ -230,7 +265,150 @@ export async function registerViaMultisig(
   //    request's advice map, and submit the rebuilt request.
   const advice = await multisig.prepareCustomExecution(proposal.id, requestBytes);
   const finalRequest = TransactionRequest.deserialize(requestBytes).extendAdviceMap(advice);
-  await multisig.submitTransaction(finalRequest);
+  try {
+    await multisig.submitTransaction(finalRequest);
+  } catch (e) {
+    // The OZ prover workflow runs `executeRequest → prove → submit(node) →
+    // apply(local store)`. The FINAL apply() step — which only mirrors the new
+    // account state into the local IndexedDB store — can throw
+    //   "failed to apply transaction result: storage error: account data wasn't
+    //    found for account id <acct>"
+    // for a fresh guardian account. By then proof.submit() has ALREADY landed the
+    // transaction on-chain (verified: register note created + consumed by the
+    // registry), so this is a cosmetic local-bookkeeping failure, not a real
+    // registration failure. Swallow ONLY the apply-stage error and treat the
+    // registration as successful.
+    if (isPostSubmitApplyError(e)) {
+      console.warn(
+        '[registerViaMultisig] transaction submitted on-chain but local apply() failed ' +
+          '(cosmetic; the note is already on-chain). Treating as success.',
+        e,
+      );
+      // The local store is now stale (the nonce bump was not mirrored). Best-effort
+      // resync so subsequent reads/registrations see the current state.
+      try {
+        await p.client.sync();
+      } catch {
+        /* non-fatal: the next background sync will reconcile */
+      }
+    } else {
+      // Genuine PRE-submit failure — most importantly the mempool/stored-state
+      // conflict ("...transaction conflicts with current mempool state ... initial
+      // account commitment X does not match the current commitment Y") thrown by
+      // proof.submit() BEFORE apply(), which means NOTHING landed. Before surfacing
+      // it, dump the guardian's delta lifecycle so we can tell a guardian
+      // canonicalization gap from a client-side divergence (per OZ CONCEPTS.md /
+      // TROUBLESHOOTING.md). Read-only — never changes the outcome, always rethrows.
+      if (isGuardianStateConflict(e)) {
+        await logGuardianDeltaDiagnostics(msClient, multisig, accountIdStr).catch((de) =>
+          console.warn('[guardian-diag] diagnostics failed', de),
+        );
+      }
+      throw e;
+    }
+  }
 
   return { noteId, proposalId: proposal.id };
+}
+
+/**
+ * True for the OZ prover-workflow error thrown by the LOCAL `submission.apply()`
+ * step (mirroring state into the client store) — which runs AFTER the node has
+ * already accepted the transaction. Matching on the "apply transaction result"
+ * wording keeps genuine "failed to submit proven transaction" errors (mempool
+ * conflicts, RPC rejections) propagating as real failures.
+ */
+function isPostSubmitApplyError(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return msg.includes('failed to apply transaction result');
+}
+
+/**
+ * True for the node's pre-submit rejection when the transaction's initial account
+ * commitment doesn't match the account's current on-chain/mempool commitment —
+ * i.e. we built on stale state the guardian served via `load()`.
+ */
+function isGuardianStateConflict(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return (
+    msg.includes('conflicts with current mempool state') ||
+    msg.includes('does not match the current commitment')
+  );
+}
+
+/** Minimal structural views of the OZ objects we introspect (fields we read). */
+interface DeltaLike {
+  nonce?: number;
+  prevCommitment?: string;
+  newCommitment?: string;
+  // DeltaObject.status is itself an object: { status: 'candidate'|'canonical'|
+  // 'retained'|'discarded'|...; reason?: 'retry_exhausted'|'diverged'|... }.
+  status?: { status?: string; reason?: string } | string;
+}
+interface GuardianDeltaApi {
+  getDeltaProposals(accountId: string): Promise<DeltaLike[]>;
+  getDeltaSince(accountId: string, fromNonce: number): Promise<DeltaLike>;
+}
+interface StateIntrospectable {
+  verifyStateCommitment(): Promise<{ localCommitment: string; onChainCommitment: string }>;
+}
+
+function summarizeDelta(d: DeltaLike | undefined | null): unknown {
+  if (!d || typeof d !== 'object') return d;
+  const status = typeof d.status === 'object' ? d.status?.status : d.status;
+  const reason = typeof d.status === 'object' ? d.status?.reason : undefined;
+  return {
+    nonce: d.nonce,
+    status,
+    reason,
+    prevCommitment: d.prevCommitment,
+    newCommitment: d.newCommitment,
+  };
+}
+
+/**
+ * READ-ONLY guardian delta diagnostics. Prints, on a stored-state conflict, enough
+ * to classify the failure without guessing (see OZ CONCEPTS.md canonicalization
+ * lifecycle):
+ *  - guardian/local commitment vs on-chain (via verifyStateCommitment): MATCH means
+ *    the conflict is elsewhere; MISMATCH means the guardian is behind/diverged.
+ *  - each known delta's { nonce, status, reason, prev/newCommitment }: a `canonical`
+ *    delta means the tx actually landed (our load()/stale handling is the bug); a
+ *    `retained` delta whose newCommitment == the on-chain commitment is a guardian
+ *    reconcile gap (file OZ issue); a `retained`/`discarded` delta whose
+ *    newCommitment != on-chain is a client-side divergence (fix our build/submit).
+ * Never throws into the caller — diagnostics must not mask the real error.
+ */
+async function logGuardianDeltaDiagnostics(
+  msClient: MultisigClient,
+  multisig: StateIntrospectable,
+  accountId: string,
+): Promise<void> {
+  try {
+    const v = await multisig.verifyStateCommitment();
+    const match = v.localCommitment === v.onChainCommitment;
+    console.log(
+      `[guardian-diag] commitments: guardian/local=${v.localCommitment} on-chain=${v.onChainCommitment} ` +
+        `→ ${match ? 'MATCH' : 'MISMATCH (guardian stored state behind/diverged from chain)'}`,
+    );
+  } catch (e) {
+    console.warn('[guardian-diag] verifyStateCommitment failed', e);
+  }
+
+  const guardian = (msClient as unknown as { guardianClient: GuardianDeltaApi }).guardianClient;
+  try {
+    const since = await guardian.getDeltaSince(accountId, 0);
+    console.log('[guardian-diag] getDeltaSince(nonce=0):', summarizeDelta(since));
+  } catch (e) {
+    console.warn('[guardian-diag] getDeltaSince failed', e);
+  }
+  try {
+    const proposals = await guardian.getDeltaProposals(accountId);
+    console.log(
+      `[guardian-diag] ${Array.isArray(proposals) ? proposals.length : '?'} delta proposal(s):`,
+      Array.isArray(proposals) ? proposals.map(summarizeDelta) : proposals,
+    );
+  } catch (e) {
+    console.warn('[guardian-diag] getDeltaProposals failed', e);
+  }
 }
